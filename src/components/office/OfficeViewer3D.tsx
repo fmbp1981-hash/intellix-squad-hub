@@ -84,9 +84,6 @@ function Rooms() {
           </mesh>
         );
       })()}
-        <boxGeometry args={[0.2, 1.2, 0.8]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.4} />
-      </mesh>
     </group>
   );
 }
