@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AgentState, SquadState, SquadId } from '@/types';
+import { AVAILABLE_SQUADS, type AgentState, type SquadState, type SquadId } from '@/types';
 import {
   DRIVE_DOOR,
   ROOM_BY_SQUAD,
@@ -143,10 +143,7 @@ export function useOfficeChoreography(
   const poses = Array.from(posesRef.current.values()).map((p) => ({ ...p }));
   const squadId = squadState?.squad as SquadId | undefined;
   const squadColor = squadId
-    ? // eslint-disable-next-line @typescript-eslint/no-var-requires
-      (require('@/types').AVAILABLE_SQUADS as { id: string; color: string }[]).find(
-        (s) => s.id === squadId,
-      )?.color ?? null
+    ? AVAILABLE_SQUADS.find((s) => s.id === squadId)?.color ?? null
     : null;
 
   return {
