@@ -10,7 +10,7 @@ import { RunStatusBadge } from '@/components/workspace/RunStatusBadge';
 import { AgentList } from '@/components/run/AgentList';
 import { HandoffCard } from '@/components/run/HandoffCard';
 import { RunTimer } from '@/components/run/RunTimer';
-import { OfficeViewerPlaceholder } from '@/components/run/OfficeViewerPlaceholder';
+import { OfficeViewer } from '@/components/office/OfficeViewer';
 
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -240,7 +240,7 @@ export default function RunDashboard() {
             </div>
           )}
 
-          <OfficeViewerPlaceholder />
+          <OfficeViewer squadState={state} />
 
           <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
             <div className="space-y-3">
