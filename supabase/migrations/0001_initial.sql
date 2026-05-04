@@ -1,6 +1,6 @@
 CREATE TABLE user_roles (
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  role text NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'analyst', 'viewer')),
+  role text NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'analyst', 'viewer')),
   created_at timestamptz DEFAULT now()
 );
 
@@ -28,7 +28,7 @@ CREATE TABLE workspaces (
 
 CREATE TABLE workspace_phases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
   name text NOT NULL,
   order_index integer NOT NULL,
   status text DEFAULT 'pending' CHECK (status IN ('pending','active','completed')),
@@ -37,7 +37,7 @@ CREATE TABLE workspace_phases (
 
 CREATE TABLE squad_runs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
   phase_id uuid REFERENCES workspace_phases(id),
   squad_name text NOT NULL,
   status text DEFAULT 'pending' CHECK (status IN ('pending','running','completed','failed')),
@@ -52,6 +52,22 @@ CREATE TABLE squad_runs (
   created_by uuid REFERENCES auth.users(id)
 );
 
+-- Indexes on high-frequency FK columns (RLS policy subqueries + JOINs)
+CREATE INDEX ON workspace_phases (workspace_id);
+CREATE INDEX ON squad_runs (workspace_id);
+CREATE INDEX ON squad_runs (phase_id);
+CREATE INDEX idx_user_roles_user_role ON user_roles (user_id, role);
+
+-- updated_at auto-update trigger
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER workspaces_updated_at
+  BEFORE UPDATE ON workspaces
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- RLS
 ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workspace_phases ENABLE ROW LEVEL SECURITY;
@@ -65,7 +81,9 @@ CREATE POLICY "admin_all_phases" ON workspace_phases FOR ALL
   USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 CREATE POLICY "admin_all_runs" ON squad_runs FOR ALL
   USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
-CREATE POLICY "admin_self_roles" ON user_roles FOR ALL
+CREATE POLICY "admin_self_roles" ON user_roles FOR SELECT
   USING (user_id = auth.uid());
+CREATE POLICY "admin_write_roles" ON user_roles FOR ALL
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 CREATE POLICY "admin_all_templates" ON templates FOR ALL
   USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
