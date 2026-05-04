@@ -28,9 +28,9 @@ export function WorkspaceForm() {
     resolver: zodResolver(schema),
   })
   const router = useRouter()
-  const supabase = createClient()
 
   async function onSubmit(data: FormData) {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const slug = `${slugify(data.clientName)}-${Date.now()}`
 
