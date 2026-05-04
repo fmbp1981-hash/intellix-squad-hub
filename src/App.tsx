@@ -11,6 +11,9 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
+import WorkspacesList from "./pages/workspaces/WorkspacesList";
+import NewWorkspace from "./pages/workspaces/NewWorkspace";
+import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 
 const queryClient = new QueryClient();
 
@@ -32,36 +35,9 @@ const App = () => (
               }
             >
               <Route path="/" element={<Navigate to="/workspaces" replace />} />
-              <Route
-                path="/workspaces"
-                element={
-                  <Placeholder
-                    title="Workspaces"
-                    step="Prompt 3"
-                    description="Lista de engagements e CRUD de workspaces será implementada aqui."
-                  />
-                }
-              />
-              <Route
-                path="/workspaces/new"
-                element={
-                  <Placeholder
-                    title="Novo Workspace"
-                    step="Prompt 3"
-                    description="Formulário de criação com cliente, engagement e template."
-                  />
-                }
-              />
-              <Route
-                path="/workspaces/:id"
-                element={
-                  <Placeholder
-                    title="Workspace Overview"
-                    step="Prompt 3"
-                    description="Visão geral do engagement, squads disponíveis e runs recentes."
-                  />
-                }
-              />
+              <Route path="/workspaces" element={<WorkspacesList />} />
+              <Route path="/workspaces/new" element={<NewWorkspace />} />
+              <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
               <Route
                 path="/workspaces/:id/run/:squad"
                 element={
