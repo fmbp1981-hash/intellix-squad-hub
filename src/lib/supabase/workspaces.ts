@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { Workspace, SquadRun, Template } from '../../types';
+import type { Workspace, SquadRun, Template, RunStatus } from '../../types';
 
 // ---------- Templates ----------
 export async function getTemplates(): Promise<Template[]> {
@@ -72,6 +72,42 @@ export async function updateWorkspaceDrive(
 }
 
 // ---------- Squad Runs ----------
+export interface RunsSummary {
+  total: number;
+  latestStatus: RunStatus | null;
+}
+
+export async function getRunsSummaryByWorkspaces(
+  ids: string[],
+): Promise<Map<string, RunsSummary>> {
+  const result = new Map<string, RunsSummary>();
+  if (ids.length === 0) return result;
+
+  const { data, error } = await supabase
+    .from('squad_runs')
+    .select('workspace_id, status, created_at')
+    .in('workspace_id', ids)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  for (const row of (data ?? []) as Array<{
+    workspace_id: string;
+    status: RunStatus;
+    created_at: string;
+  }>) {
+    const current = result.get(row.workspace_id);
+    if (!current) {
+      result.set(row.workspace_id, { total: 1, latestStatus: row.status });
+    } else {
+      result.set(row.workspace_id, {
+        total: current.total + 1,
+        latestStatus: current.latestStatus,
+      });
+    }
+  }
+  return result;
+}
+
 export async function getSquadRuns(workspace_id: string): Promise<SquadRun[]> {
   const { data, error } = await supabase
     .from('squad_runs')
