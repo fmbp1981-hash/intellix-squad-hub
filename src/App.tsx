@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import WorkspacesList from "./pages/workspaces/WorkspacesList";
 import NewWorkspace from "./pages/workspaces/NewWorkspace";
 import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
+import RunDashboard from "./pages/workspaces/RunDashboard";
 
 const queryClient = new QueryClient();
 
@@ -38,16 +39,7 @@ const App = () => (
               <Route path="/workspaces" element={<WorkspacesList />} />
               <Route path="/workspaces/new" element={<NewWorkspace />} />
               <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
-              <Route
-                path="/workspaces/:id/run/:squad"
-                element={
-                  <Placeholder
-                    title="Escritório Virtual"
-                    step="Prompt 5"
-                    description="Dashboard ao vivo Phaser 2D com agentes animados em tempo real."
-                  />
-                }
-              />
+              <Route path="/workspaces/:id/run/:squad" element={<RunDashboard />} />
               <Route
                 path="/workspaces/:id/runs"
                 element={
