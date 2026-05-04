@@ -1,8 +1,10 @@
+export type AgentStatus = 'idle' | 'working' | 'done' | 'checkpoint' | 'delivering'
+
 export interface Agent {
   id: string
   name: string
   icon: string
-  status: 'idle' | 'working' | 'done' | 'checkpoint' | 'delivering'
+  status: AgentStatus
   desk: { col: number; row: number }
   gender?: 'male' | 'female'
 }
