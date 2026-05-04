@@ -128,6 +128,22 @@ export async function getSquadRun(runId: string): Promise<SquadRun | null> {
   return data as SquadRun;
 }
 
+export async function getLatestRunFor(
+  workspace_id: string,
+  squad_name: string,
+): Promise<SquadRun | null> {
+  const { data, error } = await supabase
+    .from('squad_runs')
+    .select('*')
+    .eq('workspace_id', workspace_id)
+    .eq('squad_name', squad_name)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  return (data ?? null) as SquadRun | null;
+}
+
 export interface CreateSquadRunPayload {
   workspace_id: string;
   squad_name: string;
