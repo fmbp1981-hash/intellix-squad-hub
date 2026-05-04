@@ -1,0 +1,7 @@
+project_id = "hynadwlwrscvjubryqlg"
+
+[functions.squad-run-start]
+verify_jwt = true
+
+[functions.squad-state-update]
+verify_jwt = false
