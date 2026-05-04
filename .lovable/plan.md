@@ -1,28 +1,52 @@
 
-# Prompt 2 — Tipos TypeScript + Camada de Acesso ao Supabase
+# Prompt 3 — Workspaces (CRUD)
 
-Schema SQL já foi aplicado manualmente no Supabase pelo desenvolvedor. Esta etapa cria apenas o **espelho TypeScript** das tabelas e a **camada de serviço** que o frontend usará para falar com o banco.
+Implementar as três páginas de gerenciamento de workspaces consumindo a camada `src/lib/supabase/workspaces.ts` criada no Prompt 2.
 
 ## Arquivos a criar
 
-### 1. `src/types/index.ts`
-Tipos compartilhados de toda a aplicação:
-- Enums: `UserRole`, `AgentStatus`, `SquadStatus`, `RunStatus`, `PhaseStatus`.
-- Interfaces de domínio em tempo real: `AgentState`, `HandoffInfo`, `SquadState`.
-- Espelhos das tabelas: `Template`, `Workspace`, `WorkspacePhase`, `SquadRun`.
-- Constante `AVAILABLE_SQUADS` (6 squads: RH, Financeiro, Comercial, Operações, TI, Marketing) com `id`, `label`, `icon`, `color` — `as const` para inferir `SquadId`.
+### Componentes — `src/components/workspace/`
+- **`WorkspaceCard.tsx`** — Card clicável com badge de status (derivado do run mais recente), nome do cliente, engagement, data formatada (`pt-BR`), ícone Google Drive (cyan, clicável, abre em nova aba) quando `drive_folder_url` existe, e contador de runs no rodapé.
+- **`WorkspaceCardSkeleton.tsx`** — Skeleton pulsando para o loading state.
+- **`WorkspaceForm.tsx`** — Form React Hook Form + Zod com Cliente (obrig.), Engagement (obrig.), Descrição (textarea opcional), Template (Select shadcn opcional com opção "Sem template" + descrição do template selecionado renderizada abaixo).
+- **`SquadCard.tsx`** — Card de squad com ícone, nome, borda colorida (cor do squad), botão "Rodar Squad" → `/workspaces/:id/run/:squadId`.
+- **`RunStatusBadge.tsx`** — Badge colorido por status (`running` violeta pulsante, `completed` verde, `failed` vermelho, `pending` cinza).
+- **`RecentRunsList.tsx`** — Lista de até 5 runs com badge, nome do squad (label do `AVAILABLE_SQUADS`), timestamp relativo (`pt-BR`) e link "Ver output" para runs completed.
 
-### 2. `src/lib/supabase/workspaces.ts`
-Funções tipadas que encapsulam todo acesso às tabelas (nada de chamadas `supabase.from(...)` espalhadas pelos componentes):
-- **Templates:** `getTemplates()`
-- **Workspaces:** `getWorkspaces()`, `getWorkspace(id)`, `createWorkspace(payload)` (gera `slug` automático), `updateWorkspaceDrive(id, folderId, folderUrl)`
-- **Squad Runs:** `getSquadRuns(workspace_id)`, `getSquadRun(runId)`, `createSquadRun(payload)` (status inicial `running`, `started_at = now`)
+### Páginas — `src/pages/workspaces/`
+- **`WorkspacesList.tsx`** (`/workspaces`)
+  - Header: título "Workspaces" + botão `+ Novo Workspace` (gradiente brand) → `/workspaces/new`.
+  - Carrega via `useQuery(['workspaces'], getWorkspaces)`.
+  - Para cada workspace, busca contagem/status mais recente dos runs em uma única query agrupada (`getRunsSummaryByWorkspaces`) — adicionar essa função em `workspaces.ts`.
+  - Grid responsivo: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`.
+  - Empty state: ícone `FolderPlus` + texto + CTA "Criar primeiro workspace".
+  - Loading: 3 `WorkspaceCardSkeleton`.
+
+- **`NewWorkspace.tsx`** (`/workspaces/new`)
+  - Header com botão voltar + título "Novo Workspace".
+  - `WorkspaceForm` no centro (max-w-2xl, dentro de Card).
+  - Carrega templates via `useQuery(['templates'], getTemplates)` para alimentar o Select.
+  - Submit: `createWorkspace({ ..., owner_id: user.id })` → toast sucesso → fire-and-forget `supabase.functions.invoke('drive-setup', { body: { workspaceId } })` → navega para `/workspaces/:newId`.
+  - Tratamento de erro com toast.
+
+- **`WorkspaceOverview.tsx`** (`/workspaces/:id`)
+  - Header: client_name (h1 font-display), engagement_name (h2 muted), badge do template (se houver).
+  - Botão "📁 Abrir pasta no Drive" (variant outline, cyan) se `drive_folder_url` presente.
+  - Seção "Squads disponíveis": grid 2-3 colunas de `SquadCard`. Squads filtrados pelo `template.squads` quando houver template, senão `AVAILABLE_SQUADS` completo.
+  - Seção "Runs recentes": `RecentRunsList` com últimos 5 (`getSquadRuns(id).slice(0,5)`).
+  - Loading state e tratamento 404 (workspace não existe → mensagem + botão voltar).
+
+## Arquivos a editar
+
+- **`src/App.tsx`** — Trocar os 3 `Placeholder` por `WorkspacesList`, `NewWorkspace`, `WorkspaceOverview`. Os outros placeholders (run/squad, runs, runs/runId, settings) permanecem para os próximos prompts.
+- **`src/lib/supabase/workspaces.ts`** — Adicionar `getRunsSummaryByWorkspaces(ids: string[])` retornando `Map<workspaceId, { total: number; latestStatus: RunStatus | null }>` (uma única query `select workspace_id, status, created_at`).
 
 ## Detalhes técnicos
-- TS strict, sem `any`. Casts explícitos `as Workspace[]` etc. para alinhar com o tipo de retorno do Supabase JS.
-- Erros do Supabase são propagados via `throw` (a UI vai capturar com try/catch + toast). Exceção: `getWorkspace` e `getSquadRun` retornam `null` quando não encontram.
-- `slug` do workspace = `kebab-case(client_name) + '-' + timestamp`, garantindo unicidade.
-- Nada de UI nesta etapa — tudo será consumido nos prompts 3+.
+- **TanStack Query** para todas as chamadas (cache automático, invalidação após `createWorkspace`).
+- Tudo dark mode usando os tokens semânticos (`bg-card`, `border-border`, `text-foreground`, etc.) — sem cores hardcoded.
+- Slug e datas via `Intl.DateTimeFormat('pt-BR')`.
+- A Edge Function `drive-setup` ainda não existe (Prompt 7) — o invoke é fire-and-forget com `.catch` silencioso, então a UX funciona mesmo sem a function ainda; quando ela for implementada, a pasta começa a aparecer.
+- Sem alterações no Supabase nesta etapa.
 
 ## Próximo passo
-Após implementação, peço o **Prompt 3** (Workspaces — CRUD: lista, formulário de criação, página de overview).
+Após aprovação e implementação, peço o **Prompt 4** (Squad Runs + Edge Function `squad-run-start`).
