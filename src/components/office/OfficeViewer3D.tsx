@@ -75,11 +75,15 @@ function Rooms() {
         );
       })}
       {/* Drive door */}
-      <mesh position={[...gridToWorld(DRIVE_DOOR.col, DRIVE_DOOR.row), 0.6][0] === 0 ? [0, 0.6, 0] : [
-        gridToWorld(DRIVE_DOOR.col, DRIVE_DOOR.row)[0],
-        0.6,
-        gridToWorld(DRIVE_DOOR.col, DRIVE_DOOR.row)[1],
-      ]}>
+      {(() => {
+        const [dx, dz] = gridToWorld(DRIVE_DOOR.col, DRIVE_DOOR.row);
+        return (
+          <mesh position={[dx, 0.6, dz]}>
+            <boxGeometry args={[0.2, 1.2, 0.8]} />
+            <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.4} />
+          </mesh>
+        );
+      })()}
         <boxGeometry args={[0.2, 1.2, 0.8]} />
         <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.4} />
       </mesh>
