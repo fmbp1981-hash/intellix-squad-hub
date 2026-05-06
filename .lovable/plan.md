@@ -1,53 +1,84 @@
-## 1. Escritório – tela preta
+## Objetivo
 
-**Causa:** `Phaser.Scale.RESIZE` combinado com container que mede `clientWidth=0` em alguns layouts, e a `OfficeScene` é instanciada sem `data` em `init`, então quando `setAgents` chega antes de `create()` ele nunca renderiza. Além disso, o `useIsAdmin` faz a tela aguardar e quando libera o container ainda não está medido.
+Substituir a tela atual do `/office` (atualmente em branco / pontos genéricos) por um **escritório virtual da IntelliX.AI** no estilo planta baixa de departamentos (referência da imagem enviada), com um **toggle 2D ↔ 3D** e usando o design system da plataforma (violeta `#7c3aed` + ciano `#06b6d4`, fundo `#0a0a0f`, cards `#13131a`).
 
-**Correções em `src/pages/office/OfficePage.tsx` e `src/game/office/OfficeScene.ts`:**
-- Trocar `scale.mode` para `Phaser.Scale.FIT` com `width=1000, height=600` fixos (canvas sempre visível, sem depender do clientWidth).
-- Garantir que a criação do Phaser ocorra **somente após** `isAdmin === true` (atualmente o `useEffect` roda independente do gate, mas o container só existe quando admin). Adicionar dependência `[isAdmin]`.
-- No `OfficeScene.create()`: chamar `renderAgents()` mesmo com array vazio (já faz) e expor um flag `ready` para que `setAgents` chamado antes de `create` guarde os dados e re-renderize após o ready.
-- Remover o uso de Realtime no canal `run_steps` quando o usuário não tem permissão (com a nova política de `realtime.messages` admin-only, admins continuam recebendo — ok). Adicionar `try/catch` defensivo.
+Não usaremos novas dependências — Phaser já está no projeto. O 3D será uma **projeção isométrica** desenhada no próprio Phaser (mesma cena, câmera com transform isométrico), o que mantém o bundle leve e funciona bem com os agentes em movimento.
 
-## 2. Consolidar Configurações em um único menu
+---
 
-**Sidebar (`src/components/layout/AppSidebar.tsx`):** substituir os dois itens "WhatsApp" e "Modelos LLM" por um único item **"Configurações"** apontando para `/settings`.
+## O que será construído
 
-**Nova página `src/pages/settings/SettingsPage.tsx`:** layout com `Tabs` (shadcn) contendo duas abas:
-- **WhatsApp** → renderiza o conteúdo atual do `WhatsAppSettings`.
-- **Modelos LLM** → renderiza o conteúdo atual do `ModelSettings` (refatorado, ver item 3).
+### 1. Layout do escritório (planta baixa IntelliX)
+Grid de 15×11 células com salas departamentais e áreas comuns:
 
-**Roteamento (`src/App.tsx`):** rota `/settings` passa a renderizar `SettingsPage`. Manter `/settings/whatsapp` e `/settings/models` como redirects para `/settings?tab=whatsapp|models` por compatibilidade.
+```
+┌─────────────┬───────────┬─────────────┐
+│  COMERCIAL  │ MARKETING │ FINANCEIRO  │
+├──────┬──┬───┴──┬────────┴──┬──────────┤
+│ COPA │WC│ REUNIÃO          │  (porta  │
+│      │  │                  │   DRIVE) │
+├──────┴──┴────┬─────┬───────┼──────────┤
+│      RH      │ OPS │GESTÃO │    TI    │
+└──────────────┴─────┴───────┴──────────┘
+```
 
-## 3. Seleção de LLM com dropdowns Provider → Modelo
+Cada sala terá:
+- Bloco colorido com a cor do departamento (paleta IntelliX adaptada)
+- Pílula de label no canto superior esquerdo
+- Mesas (retângulos) distribuídas dentro da sala
+- Borda sutil em violeta/ciano para reforçar o design system
 
-**Refatorar `ModelSettings`** (`src/pages/settings/ModelSettings.tsx`):
-- Substituir os `<Input>` de `model` e `fallback_model` por dois `<Select>` (shadcn) em cascata:
-  1. **Provider**: dropdown com `google`, `openai`, `anthropic` (lista enxuta, expansível depois).
-  2. **Modelo**: dropdown que mostra apenas modelos válidos do provider selecionado.
-- Catálogo local em `src/lib/llm-catalog.ts`:
+### 2. Agentes
+- Carregados de `agent_configs` (join com `squad_configs`) — já é feito hoje
+- Cada agente é posicionado **na mesa do seu squad** (mapeamento squad → sala)
+- Aparência: círculo com cor do papel + emoji/ícone do role + label com nome
+- Pulso em ciano quando `run_steps` está `processing` (já implementado, manter)
+- Tooltip ao passar o mouse com nome / role / squad
+
+### 3. Toggle 2D ↔ 3D
+- Botão no topo direito da tela (`<Tabs>` com ícones de mapa / cubo)
+- **2D**: vista superior tradicional (a planta acima)
+- **3D**: mesma cena projetada em **isométrica** (ângulo 30°), paredes "extrudadas" 24px, mesas com sombra — implementado com `Phaser.Display.Color` + `setRotation`/`setScale` em containers, sem dependências novas
+- Trocar o modo recria a cena Phaser (estado dos agentes preservado em ref)
+
+### 4. Visual / Design System
+- Fundo do canvas `#0a0a0f`, grid sutil `#1a1a24`
+- Header "INTELLIX.AI · HQ" em violeta com gradient brand
+- Cores das salas mapeadas pra paleta da plataforma (verde/laranja/ciano/violeta/âmbar/rosa)
+- Container do canvas com `border-border`, `rounded-xl`, `shadow-card`
+- Loader com `Loader2` (já existente)
+
+---
+
+## Arquivos
+
+**Editados**
+- `src/pages/office/OfficePage.tsx` — adiciona toggle 2D/3D, monta cena conforme modo, header IntelliX
+- `src/game/office/OfficeScene.ts` — reescrito: desenha salas/mesas/labels da planta, posiciona agentes por squad, suporta `mode: '2d' | 'iso'`
+
+**Criados**
+- `src/game/office/officeFloorplan.ts` — definição das salas (id, label, cor, rect, mesas) e mapeamento squad → sala. Reaproveita ideias do `src/components/office/officeLayout.ts` mas adaptado às cores IntelliX
+- `src/game/office/isoProjection.ts` — helpers `toIso(x, y)` para o modo 3D
+
+**Não alterados**
+- `OfficeViewer2D.tsx` (legado usado em `RunDashboard`) — fica como está pra não quebrar a tela de run
+
+---
+
+## Detalhes técnicos
+
+- Toggle controlado por `useState<'2d'|'iso'>('2d')`; `useEffect` destrói o `Phaser.Game` e recria com o novo modo (cena recebe `init({ mode })`)
+- Posicionamento dos agentes:
   ```ts
-  export const LLM_CATALOG = {
-    google: ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"],
-    openai: ["openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5-nano"],
-  };
+  const room = SQUAD_ROOM[agent.squad] ?? 'gestao';
+  const desk = deskPositions(room, agentsInRoom.length)[indexInRoom];
   ```
-- O campo `provider` do registro continua sendo derivado do prefixo do model (`model.split('/')[0]`) e salvo na coluna `provider`.
-- Repetir o par (Provider, Modelo) para o **fallback** com a mesma lógica, com opção "Nenhum".
-- Manter `temperature` e `max_tokens` como inputs numéricos.
+- Modo isométrico: cada `(col,row)` vira `(x = (col-row)*CELL*0.86, y = (col+row)*CELL*0.5)`, salas ganham um retângulo de "parede" deslocado em `-24px` no Y para dar profundidade
+- Realtime de `run_steps` continua igual (canal Supabase já existe)
 
-## 4. Corrigir warning React (refs em `Select`/`Badge` no `JobsPage`)
+---
 
-`Select` da Radix exige um filho que aceite `ref`. Garantir que `SelectTrigger` envolva qualquer wrapper customizado, e `Badge` precisa estar com `forwardRef` (já é exportado como função). Investigar e adicionar `React.forwardRef` em `Badge` se necessário, e remover qualquer wrapper sem ref no `JobsPage`. (Warning não-bloqueante, mas será corrigido.)
+## Fora de escopo
 
-## Arquivos afetados
-
-- `src/pages/office/OfficePage.tsx` (correção tela preta)
-- `src/game/office/OfficeScene.ts` (defensive setAgents pré-create)
-- `src/components/layout/AppSidebar.tsx` (1 menu Configurações)
-- `src/App.tsx` (rota consolidada + redirects)
-- `src/pages/settings/SettingsPage.tsx` (novo, com Tabs)
-- `src/pages/settings/ModelSettings.tsx` (dropdowns provider/modelo)
-- `src/lib/llm-catalog.ts` (novo)
-- `src/components/ui/badge.tsx` (forwardRef se necessário)
-
-Aprova para eu implementar?
+- Sprites de personagens (estilo pixel-art da segunda imagem) — usaremos círculos+ícones para manter coerência com o resto do design system; podemos evoluir depois para sprites se quiser
+- Editor de layout (drag-and-drop de salas)
