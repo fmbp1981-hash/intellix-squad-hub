@@ -73,6 +73,56 @@ export type Database = {
           },
         ]
       }
+      agent_prompts: {
+        Row: {
+          agent_key: string | null
+          cost_cents: number | null
+          created_at: string
+          id: string
+          model: string | null
+          prompt: string
+          response: string | null
+          run_id: string | null
+          step_number: number | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          agent_key?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt: string
+          response?: string | null
+          run_id?: string | null
+          step_number?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          agent_key?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt?: string
+          response?: string | null
+          run_id?: string | null
+          step_number?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_prompts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -288,6 +338,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      engagement_plans: {
+        Row: {
+          auto_advance: boolean
+          completed_squads: Json
+          created_at: string
+          current_squad: string | null
+          id: string
+          squads_ordered: Json
+          status: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          auto_advance?: boolean
+          completed_squads?: Json
+          created_at?: string
+          current_squad?: string | null
+          id?: string
+          squads_ordered?: Json
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          auto_advance?: boolean
+          completed_squads?: Json
+          created_at?: string
+          current_squad?: string | null
+          id?: string
+          squads_ordered?: Json
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_plans_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       engagements: {
         Row: {
@@ -668,15 +762,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          categories: Json
+          channels: Json
+          created_at: string
+          digest_interval_minutes: number
+          digest_mode: boolean
+          id: string
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categories?: Json
+          channels?: Json
+          created_at?: string
+          digest_interval_minutes?: number
+          digest_mode?: boolean
+          id?: string
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categories?: Json
+          channels?: Json
+          created_at?: string
+          digest_interval_minutes?: number
+          digest_mode?: boolean
+          id?: string
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
+          category: string | null
           channel: Database["public"]["Enums"]["notification_channel"]
           created_at: string
           error: string | null
           id: string
           link: string | null
+          priority: string
           read_at: string | null
+          scheduled_for: string
           sent_at: string | null
           status: Database["public"]["Enums"]["notification_status"]
           title: string
@@ -684,12 +820,15 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          category?: string | null
           channel?: Database["public"]["Enums"]["notification_channel"]
           created_at?: string
           error?: string | null
           id?: string
           link?: string | null
+          priority?: string
           read_at?: string | null
+          scheduled_for?: string
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"]
           title: string
@@ -697,12 +836,15 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          category?: string | null
           channel?: Database["public"]["Enums"]["notification_channel"]
           created_at?: string
           error?: string | null
           id?: string
           link?: string | null
+          priority?: string
           read_at?: string | null
+          scheduled_for?: string
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"]
           title?: string
@@ -763,6 +905,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pipeline_step_outputs: {
+        Row: {
+          agent_key: string | null
+          agent_name: string | null
+          cost_cents: number | null
+          created_at: string
+          duration_ms: number | null
+          id: string
+          output_markdown: string | null
+          run_id: string | null
+          status: string
+          step_number: number
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          agent_key?: string | null
+          agent_name?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          output_markdown?: string | null
+          run_id?: string | null
+          status?: string
+          step_number: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          agent_key?: string | null
+          agent_name?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          output_markdown?: string | null
+          run_id?: string | null
+          status?: string
+          step_number?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_step_outputs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       run_queue: {
         Row: {
@@ -874,6 +1069,50 @@ export type Database = {
           },
         ]
       }
+      squad_checkpoints: {
+        Row: {
+          context_md: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string | null
+          status: string
+          step_number: number
+        }
+        Insert: {
+          context_md?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id?: string | null
+          status?: string
+          step_number: number
+        }
+        Update: {
+          context_md?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id?: string | null
+          status?: string
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_checkpoints_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_configs: {
         Row: {
           active: boolean
@@ -884,6 +1123,7 @@ export type Database = {
           id: string
           key: string
           name: string
+          squad_type: string
           updated_at: string
         }
         Insert: {
@@ -895,6 +1135,7 @@ export type Database = {
           id?: string
           key: string
           name: string
+          squad_type?: string
           updated_at?: string
         }
         Update: {
@@ -906,6 +1147,7 @@ export type Database = {
           id?: string
           key?: string
           name?: string
+          squad_type?: string
           updated_at?: string
         }
         Relationships: []
@@ -1087,6 +1329,41 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_contexts: {
+        Row: {
+          content: string
+          context_type: string
+          created_at: string
+          id: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          content?: string
+          context_type: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          content?: string
+          context_type?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_contexts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_phases: {
         Row: {
           created_at: string | null
@@ -1203,7 +1480,12 @@ export type Database = {
         | "failed"
         | "aborted"
       notification_channel: "app" | "whatsapp" | "email"
-      notification_status: "pending" | "sent" | "failed" | "skipped"
+      notification_status:
+        | "pending"
+        | "sent"
+        | "failed"
+        | "skipped"
+        | "digested"
       run_step_status:
         | "pending"
         | "running"
@@ -1359,7 +1641,7 @@ export const Constants = {
         "aborted",
       ],
       notification_channel: ["app", "whatsapp", "email"],
-      notification_status: ["pending", "sent", "failed", "skipped"],
+      notification_status: ["pending", "sent", "failed", "skipped", "digested"],
       run_step_status: ["pending", "running", "completed", "failed", "skipped"],
     },
   },
