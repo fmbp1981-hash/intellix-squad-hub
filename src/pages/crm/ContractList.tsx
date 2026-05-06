@@ -32,8 +32,9 @@ export default function ContractList() {
   };
 
   const updateStatus = async (id: string, status: ContractStatus) => {
-    const update: Record<string, unknown> = { status };
-    if (status === "signed") update.signed_at = new Date().toISOString();
+    const update = status === "signed"
+      ? { status, signed_at: new Date().toISOString() }
+      : { status };
     const { error } = await supabase.from("contracts").update(update).eq("id", id);
     if (error) toast.error(error.message);
   };
