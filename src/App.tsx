@@ -26,6 +26,10 @@ import DealKanban from "./pages/crm/DealKanban";
 import ContractList from "./pages/crm/ContractList";
 import InvoiceList from "./pages/crm/InvoiceList";
 import EngagementList from "./pages/crm/EngagementList";
+import ProjectsList from "./pages/projects/ProjectsList";
+import NewProject from "./pages/projects/NewProject";
+import ProjectOverview from "./pages/projects/ProjectOverview";
+import ProductBacklogPage from "./pages/projects/ProductBacklogPage";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +89,16 @@ const App = () => (
                 <Route path="invoices" element={<InvoiceList />} />
                 <Route path="engagements" element={<EngagementList />} />
               </Route>
+
+              <Route path="/projects" element={<ProjectsList />} />
+              <Route path="/projects/new" element={<NewProject />} />
+              <Route path="/projects/:id" element={<ProjectOverview />} />
+              <Route path="/projects/:id/backlog" element={<ProductBacklogPage />} />
+              <Route path="/projects/:id/board" element={<Placeholder title="Sprint Board" step="Lote B" description="Kanban com drag-and-drop chega no próximo lote." />} />
+              <Route path="/projects/:id/sprints" element={<Placeholder title="Sprints" step="Lote C" description="Lista de sprints + cerimônias." />} />
+              <Route path="/projects/:id/metrics" element={<Placeholder title="Métricas" step="Lote C" description="Velocity, Burndown, CFD, Cycle Time." />} />
+              <Route path="/projects/:id/impediments" element={<Placeholder title="Impedimentos" step="Lote C" description="Impediment Log com SLA." />} />
+              <Route path="/projects/:id/roadmap" element={<Placeholder title="Roadmap" step="Lote C" description="Release Plan visual." />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
