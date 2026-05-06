@@ -31,6 +31,9 @@ import NewProject from "./pages/projects/NewProject";
 import ProjectOverview from "./pages/projects/ProjectOverview";
 import ProductBacklogPage from "./pages/projects/ProductBacklogPage";
 import SprintBoardPage from "./pages/projects/SprintBoardPage";
+import SprintsPage from "./pages/projects/SprintsPage";
+import ProjectMetricsPage from "./pages/projects/ProjectMetricsPage";
+import ImpedimentsPage from "./pages/projects/ImpedimentsPage";
 
 const queryClient = new QueryClient();
 
@@ -96,9 +99,9 @@ const App = () => (
               <Route path="/projects/:id" element={<ProjectOverview />} />
               <Route path="/projects/:id/backlog" element={<ProductBacklogPage />} />
               <Route path="/projects/:id/board" element={<SprintBoardPage />} />
-              <Route path="/projects/:id/sprints" element={<Placeholder title="Sprints" step="Lote C" description="Lista de sprints + cerimônias." />} />
-              <Route path="/projects/:id/metrics" element={<Placeholder title="Métricas" step="Lote C" description="Velocity, Burndown, CFD, Cycle Time." />} />
-              <Route path="/projects/:id/impediments" element={<Placeholder title="Impedimentos" step="Lote C" description="Impediment Log com SLA." />} />
+              <Route path="/projects/:id/sprints" element={<SprintsPage />} />
+              <Route path="/projects/:id/metrics" element={<ProjectMetricsPage />} />
+              <Route path="/projects/:id/impediments" element={<ImpedimentsPage />} />
               <Route path="/projects/:id/roadmap" element={<Placeholder title="Roadmap" step="Lote C" description="Release Plan visual." />} />
             </Route>
 
