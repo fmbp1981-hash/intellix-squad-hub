@@ -64,6 +64,36 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          at: string
+          diff: Json
+          entity: string
+          entity_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          at?: string
+          diff?: Json
+          entity: string
+          entity_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          at?: string
+          diff?: Json
+          entity?: string
+          entity_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       briefings: {
         Row: {
           body: string
@@ -180,6 +210,48 @@ export type Database = {
           started_at?: string | null
           status?: Database["public"]["Enums"]["internal_job_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          error: string | null
+          id: string
+          link: string | null
+          read_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"]
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          error?: string | null
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          error?: string | null
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -586,6 +658,8 @@ export type Database = {
         | "completed"
         | "failed"
         | "aborted"
+      notification_channel: "app" | "whatsapp" | "email"
+      notification_status: "pending" | "sent" | "failed" | "skipped"
       run_step_status:
         | "pending"
         | "running"
@@ -739,6 +813,8 @@ export const Constants = {
         "failed",
         "aborted",
       ],
+      notification_channel: ["app", "whatsapp", "email"],
+      notification_status: ["pending", "sent", "failed", "skipped"],
       run_step_status: ["pending", "running", "completed", "failed", "skipped"],
     },
   },
