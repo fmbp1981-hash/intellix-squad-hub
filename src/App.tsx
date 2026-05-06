@@ -17,7 +17,15 @@ import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
 import SettingsPage from "./pages/settings/SettingsPage";
 import OfficePage from "./pages/office/OfficePage";
+import OfficeGestao from "./pages/office/OfficeGestao";
 import JobsPage from "./pages/jobs/JobsPage";
+import CrmLayout from "./pages/crm/CrmLayout";
+import CrmDashboard from "./pages/crm/CrmDashboard";
+import LeadList from "./pages/crm/LeadList";
+import DealKanban from "./pages/crm/DealKanban";
+import ContractList from "./pages/crm/ContractList";
+import InvoiceList from "./pages/crm/InvoiceList";
+import EngagementList from "./pages/crm/EngagementList";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +75,16 @@ const App = () => (
               <Route path="/settings/whatsapp" element={<Navigate to="/settings?tab=whatsapp" replace />} />
               <Route path="/settings/models" element={<Navigate to="/settings?tab=models" replace />} />
               <Route path="/office" element={<OfficePage />} />
+              <Route path="/office/gestao" element={<OfficeGestao />} />
               <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/crm" element={<CrmLayout />}>
+                <Route index element={<CrmDashboard />} />
+                <Route path="leads" element={<LeadList />} />
+                <Route path="deals" element={<DealKanban />} />
+                <Route path="contracts" element={<ContractList />} />
+                <Route path="invoices" element={<InvoiceList />} />
+                <Route path="engagements" element={<EngagementList />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<NotFound />} />
