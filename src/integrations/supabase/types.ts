@@ -472,6 +472,48 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_pipeline_stages: {
+        Row: {
+          color: string
+          created_at: string
+          enabled: boolean
+          id: string
+          is_lost: boolean
+          is_won: boolean
+          key: string
+          name: string
+          order: number
+          probability: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_lost?: boolean
+          is_won?: boolean
+          key: string
+          name: string
+          order: number
+          probability?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_lost?: boolean
+          is_won?: boolean
+          key?: string
+          name?: string
+          order?: number
+          probability?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deal_ai_insights: {
         Row: {
           created_by: string | null
@@ -648,6 +690,48 @@ export type Database = {
           status?: string
           subject?: string
           template?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          html: string
+          id: string
+          key: string
+          name: string
+          subject: string
+          text: string | null
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          html: string
+          id?: string
+          key: string
+          name: string
+          subject: string
+          text?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          html?: string
+          id?: string
+          key?: string
+          name?: string
+          subject?: string
+          text?: string | null
+          updated_at?: string
+          variables?: Json
         }
         Relationships: []
       }
