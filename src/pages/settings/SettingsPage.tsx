@@ -29,10 +29,10 @@ export default function SettingsPage() {
           <TabsTrigger value="models">Modelos LLM</TabsTrigger>
         </TabsList>
         <TabsContent value="whatsapp" className="mt-4">
-          <WhatsAppSettings embedded />
+          <WhatsAppSettings />
         </TabsContent>
         <TabsContent value="models" className="mt-4">
-          <ModelSettings embedded />
+          <ModelSettings />
         </TabsContent>
       </Tabs>
     </div>

@@ -15,8 +15,7 @@ import WorkspacesList from "./pages/workspaces/WorkspacesList";
 import NewWorkspace from "./pages/workspaces/NewWorkspace";
 import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
-import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
-import ModelSettings from "./pages/settings/ModelSettings";
+import SettingsPage from "./pages/settings/SettingsPage";
 import OfficePage from "./pages/office/OfficePage";
 import JobsPage from "./pages/jobs/JobsPage";
 
@@ -64,9 +63,9 @@ const App = () => (
                   />
                 }
               />
-              <Route path="/settings" element={<Navigate to="/settings/whatsapp" replace />} />
-              <Route path="/settings/whatsapp" element={<WhatsAppSettings />} />
-              <Route path="/settings/models" element={<ModelSettings />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/whatsapp" element={<Navigate to="/settings?tab=whatsapp" replace />} />
+              <Route path="/settings/models" element={<Navigate to="/settings?tab=models" replace />} />
               <Route path="/office" element={<OfficePage />} />
               <Route path="/jobs" element={<JobsPage />} />
             </Route>
