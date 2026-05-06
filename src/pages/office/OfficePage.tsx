@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import { Navigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, LayoutGrid, Box } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { OfficeScene, type AgentSprite } from "@/game/office/OfficeScene";
+import { OfficeScene, type AgentSprite, type OfficeMode } from "@/game/office/OfficeScene";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function OfficePage() {
   const { isAdmin, loading } = useIsAdmin();
@@ -12,50 +13,58 @@ export default function OfficePage() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<OfficeScene | null>(null);
   const [agents, setAgents] = useState<AgentSprite[]>([]);
+  const [mode, setMode] = useState<OfficeMode>("2d");
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("agent_configs")
-        .select("id, name, role, position_x, position_y, squad_configs(name)")
+        .select("id, name, role, squad_configs(name)")
         .eq("active", true);
       const mapped: AgentSprite[] = (data ?? []).map((a: any) => ({
         id: a.id,
         name: a.name,
         role: a.role,
         squad: a.squad_configs?.name ?? "—",
-        x: a.position_x ?? 0,
-        y: a.position_y ?? 0,
       }));
       setAgents(mapped);
     })();
   }, []);
 
+  // Build / rebuild Phaser game when mode changes
   useEffect(() => {
     if (loading || !isAdmin) return;
-    if (!containerRef.current || gameRef.current) return;
+    if (!containerRef.current) return;
     const scene = new OfficeScene();
     sceneRef.current = scene;
-    gameRef.current = new Phaser.Game({
+    const game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: containerRef.current,
-      width: 1000,
-      height: 600,
-      backgroundColor: "#0b1120",
+      width: 1100,
+      height: 640,
+      backgroundColor: "#0a0a0f",
       scene,
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      callbacks: {
+        postBoot: () => {
+          scene.scene.start("OfficeScene", { mode, agents });
+        },
+      },
     });
+    gameRef.current = game;
     return () => {
-      gameRef.current?.destroy(true);
+      game.destroy(true);
       gameRef.current = null;
       sceneRef.current = null;
     };
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin, mode]);
 
+  // Push agent updates to scene
   useEffect(() => {
     sceneRef.current?.setAgents(agents);
   }, [agents]);
 
+  // Realtime activity
   useEffect(() => {
     const channel = supabase
       .channel("office-runs")
@@ -66,7 +75,7 @@ export default function OfficePage() {
           const row = payload.new ?? payload.old;
           if (!row?.agent_id) return;
           sceneRef.current?.setActive(row.agent_id, row.status === "processing");
-        }
+        },
       )
       .subscribe();
     return () => {
@@ -85,16 +94,33 @@ export default function OfficePage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4">
-        <h1 className="text-2xl font-semibold">Escritório Virtual</h1>
-        <p className="text-sm text-muted-foreground">
-          Visualização em tempo real dos agentes ativos.
-        </p>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              IntelliX.AI
+            </span>{" "}
+            · Escritório Virtual
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Visualização em tempo real dos agentes ativos por departamento.
+          </p>
+        </div>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as OfficeMode)}>
+          <TabsList>
+            <TabsTrigger value="2d" className="gap-1.5">
+              <LayoutGrid className="h-4 w-4" /> 2D
+            </TabsTrigger>
+            <TabsTrigger value="iso" className="gap-1.5">
+              <Box className="h-4 w-4" /> 3D
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       <div
         ref={containerRef}
-        className="overflow-hidden rounded-lg border border-border bg-card"
-        style={{ height: 600 }}
+        className="overflow-hidden rounded-xl border border-border bg-card shadow-card"
+        style={{ height: 640 }}
       />
     </div>
   );
