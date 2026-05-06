@@ -77,27 +77,25 @@ export default function RunDashboard() {
     if (!id || !squad || !user) return;
     setStarting(true);
     try {
-      const newRun = await createSquadRun({
-        workspace_id: id,
-        squad_name: squad,
-        created_by: user.id,
+      const { data, error } = await supabase.functions.invoke('run-start', {
+        body: { squad_key: squad, workspace_id: id, input: {} },
       });
-      setRun(newRun);
-
-      const { error } = await supabase.functions.invoke('squad-run-start', {
-        body: { workspaceId: id, squadName: squad, runId: newRun.id },
-      });
-
       if (error) {
         toast.error('Erro ao iniciar o squad', {
-          description: 'Verifique se o servidor VPS está disponível.',
+          description: error.message ?? 'Falha desconhecida',
         });
         return;
+      }
+      if (data?.run_id) {
+        const fresh = await import('@/api/squadRuns').then((m) =>
+          m.getSquadRunById(data.run_id),
+        );
+        if (fresh) setRun(fresh);
       }
       toast.success('Squad iniciado!', { description: 'Aguardando agentes…' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
-      toast.error('Falha ao criar run', { description: message });
+      toast.error('Falha ao iniciar squad', { description: message });
     } finally {
       setStarting(false);
     }
