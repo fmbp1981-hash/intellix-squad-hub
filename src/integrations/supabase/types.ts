@@ -17,6 +17,7 @@ export type Database = {
       agent_configs: {
         Row: {
           active: boolean
+          agent_key: string | null
           created_at: string
           id: string
           llm_config_key: string
@@ -26,10 +27,13 @@ export type Database = {
           position_y: number
           role: Database["public"]["Enums"]["agent_role"]
           squad_id: string
+          squad_name: string | null
+          system_prompt: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          agent_key?: string | null
           created_at?: string
           id?: string
           llm_config_key?: string
@@ -39,10 +43,13 @@ export type Database = {
           position_y?: number
           role: Database["public"]["Enums"]["agent_role"]
           squad_id: string
+          squad_name?: string | null
+          system_prompt?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          agent_key?: string | null
           created_at?: string
           id?: string
           llm_config_key?: string
@@ -52,6 +59,8 @@ export type Database = {
           position_y?: number
           role?: Database["public"]["Enums"]["agent_role"]
           squad_id?: string
+          squad_name?: string | null
+          system_prompt?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -132,6 +141,118 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          client_cnpj: string | null
+          client_name: string
+          created_at: string
+          deal_id: string | null
+          end_date: string | null
+          id: string
+          payment_terms: Json
+          scope_md: string
+          signed_at: string | null
+          start_date: string
+          status: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          client_cnpj?: string | null
+          client_name: string
+          created_at?: string
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string
+          payment_terms?: Json
+          scope_md: string
+          signed_at?: string | null
+          start_date: string
+          status?: string
+          total_value: number
+          updated_at?: string
+        }
+        Update: {
+          client_cnpj?: string | null
+          client_name?: string
+          created_at?: string
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string
+          payment_terms?: Json
+          scope_md?: string
+          signed_at?: string | null
+          start_date?: string
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          company_name: string
+          created_at: string
+          expected_close: string | null
+          id: string
+          lead_id: string | null
+          lost_reason: string | null
+          pricing_model: string | null
+          probability: number | null
+          proposal_url: string | null
+          scope_summary: string
+          status: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          expected_close?: string | null
+          id?: string
+          lead_id?: string | null
+          lost_reason?: string | null
+          pricing_model?: string | null
+          probability?: number | null
+          proposal_url?: string | null
+          scope_summary: string
+          status?: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          expected_close?: string | null
+          id?: string
+          lead_id?: string | null
+          lost_reason?: string | null
+          pricing_model?: string | null
+          probability?: number | null
+          proposal_url?: string | null
+          scope_summary?: string
+          status?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       directives: {
         Row: {
           active: boolean
@@ -168,19 +289,193 @@ export type Database = {
         }
         Relationships: []
       }
+      engagements: {
+        Row: {
+          blocker_note: string | null
+          contract_id: string | null
+          created_at: string
+          end_date: string | null
+          health: string
+          id: string
+          name: string
+          start_date: string
+          status: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          blocker_note?: string | null
+          contract_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          health?: string
+          id?: string
+          name: string
+          start_date: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          blocker_note?: string | null
+          contract_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          health?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagements_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagements_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gestao_briefings: {
+        Row: {
+          content_markdown: string
+          created_at: string
+          directives_json: Json
+          id: string
+          insights: Json
+          job_id: string | null
+          recommendations: Json
+          trigger_question: string | null
+          triggered_by: string
+          type: string
+        }
+        Insert: {
+          content_markdown: string
+          created_at?: string
+          directives_json?: Json
+          id?: string
+          insights?: Json
+          job_id?: string | null
+          recommendations?: Json
+          trigger_question?: string | null
+          triggered_by?: string
+          type: string
+        }
+        Update: {
+          content_markdown?: string
+          created_at?: string
+          directives_json?: Json
+          id?: string
+          insights?: Json
+          job_id?: string | null
+          recommendations?: Json
+          trigger_question?: string | null
+          triggered_by?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      gestao_directives: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          briefing_id: string | null
+          cancelled_reason: string | null
+          completed_at: string | null
+          created_at: string
+          dispatched_at: string | null
+          dispatched_job_id: string | null
+          id: string
+          job_id: string
+          job_input: Json
+          okr_id: string | null
+          priority: string
+          rationale: string | null
+          status: string
+          target_department: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          briefing_id?: string | null
+          cancelled_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatched_at?: string | null
+          dispatched_job_id?: string | null
+          id?: string
+          job_id: string
+          job_input?: Json
+          okr_id?: string | null
+          priority?: string
+          rationale?: string | null
+          status?: string
+          target_department: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          briefing_id?: string | null
+          cancelled_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatched_at?: string | null
+          dispatched_job_id?: string | null
+          id?: string
+          job_id?: string
+          job_input?: Json
+          okr_id?: string | null
+          priority?: string
+          rationale?: string | null
+          status?: string
+          target_department?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gestao_directives_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "gestao_briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gestao_directives_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_jobs: {
         Row: {
           completed_at: string | null
           created_at: string
           created_by: string | null
           department: string | null
+          estimated_tokens: number | null
           id: string
+          job_id: string | null
+          job_input: Json
           kind: Database["public"]["Enums"]["internal_job_kind"]
           output_markdown: string | null
+          parent_directive_id: string | null
           payload: Json
           scheduled_for: string | null
+          sla_deadline: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["internal_job_status"]
+          trigger_source: string | null
           updated_at: string
         }
         Insert: {
@@ -188,13 +483,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department?: string | null
+          estimated_tokens?: number | null
           id?: string
+          job_id?: string | null
+          job_input?: Json
           kind: Database["public"]["Enums"]["internal_job_kind"]
           output_markdown?: string | null
+          parent_directive_id?: string | null
           payload?: Json
           scheduled_for?: string | null
+          sla_deadline?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["internal_job_status"]
+          trigger_source?: string | null
           updated_at?: string
         }
         Update: {
@@ -202,13 +503,131 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           department?: string | null
+          estimated_tokens?: number | null
           id?: string
+          job_id?: string | null
+          job_input?: Json
           kind?: Database["public"]["Enums"]["internal_job_kind"]
           output_markdown?: string | null
+          parent_directive_id?: string | null
           payload?: Json
           scheduled_for?: string | null
+          sla_deadline?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["internal_job_status"]
+          trigger_source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_jobs_parent_directive_id_fkey"
+            columns: ["parent_directive_id"]
+            isOneToOne: false
+            referencedRelation: "gestao_directives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          contract_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          issue_date: string
+          milestone: string | null
+          number: string
+          paid_at: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          contract_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          issue_date: string
+          milestone?: string | null
+          number: string
+          paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          milestone?: string | null
+          number?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          geography: string | null
+          id: string
+          last_contact_at: string | null
+          notes: string | null
+          score: number | null
+          score_reasons: Json
+          segment: string | null
+          source: string
+          status: string
+          ticket_estimate: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          geography?: string | null
+          id?: string
+          last_contact_at?: string | null
+          notes?: string | null
+          score?: number | null
+          score_reasons?: Json
+          segment?: string | null
+          source: string
+          status?: string
+          ticket_estimate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          geography?: string | null
+          id?: string
+          last_contact_at?: string | null
+          notes?: string | null
+          score?: number | null
+          score_reasons?: Json
+          segment?: string | null
+          source?: string
+          status?: string
+          ticket_estimate?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -293,36 +712,54 @@ export type Database = {
       }
       okrs: {
         Row: {
+          active: boolean
           created_at: string
+          current_value: number | null
           department: string
           id: string
+          key_result: string | null
           key_results: Json
+          metric_unit: string | null
           objective: string
           owner_id: string | null
           progress: number
           quarter: string
+          status: string
+          target_value: number | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
+          current_value?: number | null
           department: string
           id?: string
+          key_result?: string | null
           key_results?: Json
+          metric_unit?: string | null
           objective: string
           owner_id?: string | null
           progress?: number
           quarter: string
+          status?: string
+          target_value?: number | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           created_at?: string
+          current_value?: number | null
           department?: string
           id?: string
+          key_result?: string | null
           key_results?: Json
+          metric_unit?: string | null
           objective?: string
           owner_id?: string | null
           progress?: number
           quarter?: string
+          status?: string
+          target_value?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -566,6 +1003,36 @@ export type Database = {
         }
         Relationships: []
       }
+      token_usage: {
+        Row: {
+          budget_usd: number | null
+          id: string
+          period_month: string
+          scope: string
+          total_cost_usd: number
+          total_tokens: number
+          updated_at: string
+        }
+        Insert: {
+          budget_usd?: number | null
+          id?: string
+          period_month: string
+          scope: string
+          total_cost_usd?: number
+          total_tokens?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_usd?: number | null
+          id?: string
+          period_month?: string
+          scope?: string
+          total_cost_usd?: number
+          total_tokens?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -711,6 +1178,10 @@ export type Database = {
     }
     Functions: {
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      trigger_crm_event: {
+        Args: { p_event: string; p_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       agent_role:
