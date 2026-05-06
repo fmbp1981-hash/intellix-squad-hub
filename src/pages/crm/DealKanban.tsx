@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCrm } from "@/hooks/useCrm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import type { Deal, DealStatus } from "@/types";
 
 const STATUSES: DealStatus[] = ["discovery","proposal","negotiation","won","lost","stalled"];
@@ -80,6 +80,16 @@ export default function DealKanban() {
                       <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                     </Select>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="outline" className="h-7 text-xs flex-1 gap-1" onClick={async () => {
+                        toast.info("Gerando insights da IA…");
+                        const { data, error } = await supabase.functions.invoke("ai-deal-coach", { body: { dealId: d.id } });
+                        if (error || data?.error) toast.error(data?.error ?? error?.message ?? "erro");
+                        else toast.success(`IA: ${data?.insight?.win_probability}% de probabilidade`);
+                      }}>
+                        <Sparkles className="h-3 w-3" /> IA
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>

@@ -25,7 +25,10 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
   },
   {
     label: "Configurações",
-    items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }],
+    items: [
+      { to: "/settings", label: "Configurações", icon: SettingsIcon },
+      { to: "/settings/integrations", label: "Integrações", icon: Briefcase },
+    ],
   },
 ];
 

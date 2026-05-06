@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ListChecks, LayoutGrid, BarChart3, AlertTriangle, Calendar, Briefcase, FileText, Sparkles, Loader2, CheckCircle2, RefreshCw } from "lucide-react";
+import { AIAssistantPanel } from "@/components/ai/AIAssistantPanel";
 import { toast } from "sonner";
 
 const planningMeta: Record<string, { label: string; tone: string }> = {
@@ -103,10 +104,13 @@ export default function ProjectOverview() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <header className="space-y-1">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">{project.client_name ?? "Projeto"}</p>
-        <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-        {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{project.client_name ?? "Projeto"}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+          {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
+        </div>
+        <AIAssistantPanel context="project" entityId={project.id} entityLabel={project.name} />
       </header>
 
       {(deal || contract) && (

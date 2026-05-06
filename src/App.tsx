@@ -26,6 +26,10 @@ import DealKanban from "./pages/crm/DealKanban";
 import ContractList from "./pages/crm/ContractList";
 import InvoiceList from "./pages/crm/InvoiceList";
 import EngagementList from "./pages/crm/EngagementList";
+import CrmForecast from "./pages/crm/CrmForecast";
+import CrmActivities from "./pages/crm/CrmActivities";
+import CrmAutomations from "./pages/crm/CrmAutomations";
+import IntegrationsPage from "./pages/settings/IntegrationsPage";
 import ProjectsList from "./pages/projects/ProjectsList";
 import NewProject from "./pages/projects/NewProject";
 import ProjectOverview from "./pages/projects/ProjectOverview";
@@ -89,10 +93,14 @@ const App = () => (
                 <Route index element={<CrmDashboard />} />
                 <Route path="leads" element={<LeadList />} />
                 <Route path="deals" element={<DealKanban />} />
+                <Route path="forecast" element={<CrmForecast />} />
+                <Route path="activities" element={<CrmActivities />} />
+                <Route path="automations" element={<CrmAutomations />} />
                 <Route path="contracts" element={<ContractList />} />
                 <Route path="invoices" element={<InvoiceList />} />
                 <Route path="engagements" element={<EngagementList />} />
               </Route>
+              <Route path="/settings/integrations" element={<IntegrationsPage />} />
 
               <Route path="/projects" element={<ProjectsList />} />
               <Route path="/projects/new" element={<NewProject />} />
