@@ -14,6 +14,202 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_configs: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          llm_config_key: string
+          name: string
+          persona: string | null
+          position_x: number
+          position_y: number
+          role: Database["public"]["Enums"]["agent_role"]
+          squad_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          llm_config_key?: string
+          name: string
+          persona?: string | null
+          position_x?: number
+          position_y?: number
+          role: Database["public"]["Enums"]["agent_role"]
+          squad_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          llm_config_key?: string
+          name?: string
+          persona?: string | null
+          position_x?: number
+          position_y?: number
+          role?: Database["public"]["Enums"]["agent_role"]
+          squad_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_configs_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squad_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          priority: number
+          run_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          priority?: number
+          run_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          priority?: number
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_queue_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_steps: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          cost_cents: number | null
+          created_at: string
+          error: string | null
+          id: string
+          input: Json
+          latency_ms: number | null
+          output_markdown: string | null
+          run_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["run_step_status"]
+          step_index: number
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          latency_ms?: number | null
+          output_markdown?: string | null
+          run_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["run_step_status"]
+          step_index: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          latency_ms?: number | null
+          output_markdown?: string | null
+          run_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["run_step_status"]
+          step_index?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_steps_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_configs: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_llm_config: string
+          department: string
+          description: string | null
+          id: string
+          key: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_llm_config?: string
+          department: string
+          description?: string | null
+          id?: string
+          key: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_llm_config?: string
+          department?: string
+          description?: string | null
+          id?: string
+          key?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       squad_runs: {
         Row: {
           completed_at: string | null
@@ -215,10 +411,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      agent_role:
+        | "lead-analyst"
+        | "specialist"
+        | "strategist"
+        | "reviewer"
+        | "manager"
+      run_step_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "skipped"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -345,6 +552,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      agent_role: [
+        "lead-analyst",
+        "specialist",
+        "strategist",
+        "reviewer",
+        "manager",
+      ],
+      run_step_status: ["pending", "running", "completed", "failed", "skipped"],
+    },
   },
 } as const
