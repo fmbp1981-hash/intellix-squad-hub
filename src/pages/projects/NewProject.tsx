@@ -97,6 +97,28 @@ export default function NewProject() {
         <p className="text-sm text-muted-foreground">Configure os parâmetros iniciais do projeto.</p>
       </header>
 
+      <div className="flex gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+        <Info className="h-4 w-4 shrink-0 text-primary" />
+        <p className="text-muted-foreground">
+          Projetos são criados <strong className="text-foreground">automaticamente</strong> quando um Deal é marcado como <em>Won</em> no CRM.
+          Use este formulário para projetos internos ou sem origem comercial.
+        </p>
+      </div>
+
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Acionar Agente de Operações</p>
+              <p className="text-xs text-muted-foreground">A IA detalha escopo, gera épicos, backlog e delega squads.</p>
+            </div>
+          </div>
+          <Switch checked={triggerAI} onCheckedChange={setTriggerAI} />
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Identificação</CardTitle>
