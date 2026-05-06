@@ -120,7 +120,7 @@ const App = () => (
                 <Route path="invoices" element={<InvoiceList />} />
                 <Route path="engagements" element={<EngagementList />} />
               </Route>
-              <Route path="/settings/integrations" element={<IntegrationsPage />} />
+              
 
               <Route path="/projects" element={<ProjectsList />} />
               <Route path="/projects/new" element={<NewProject />} />
