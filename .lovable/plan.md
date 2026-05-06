@@ -1,84 +1,49 @@
-## Objetivo
+## Escopo
 
-Substituir a tela atual do `/office` (atualmente em branco / pontos genéricos) por um **escritório virtual da IntelliX.AI** no estilo planta baixa de departamentos (referência da imagem enviada), com um **toggle 2D ↔ 3D** e usando o design system da plataforma (violeta `#7c3aed` + ciano `#06b6d4`, fundo `#0a0a0f`, cards `#13131a`).
+Implementar o **Prompt B** completo: Ágata (COO digital) + CRM nativo + crons + triggers + UI. Como é um bloco grande, vou executar em **3 ondas** dentro do mesmo loop, sem pedir aprovação a cada passo.
 
-Não usaremos novas dependências — Phaser já está no projeto. O 3D será uma **projeção isométrica** desenhada no próprio Phaser (mesma cena, câmera com transform isométrico), o que mantém o bundle leve e funciona bem com os agentes em movimento.
-
----
-
-## O que será construído
-
-### 1. Layout do escritório (planta baixa IntelliX)
-Grid de 15×11 células com salas departamentais e áreas comuns:
-
-```
-┌─────────────┬───────────┬─────────────┐
-│  COMERCIAL  │ MARKETING │ FINANCEIRO  │
-├──────┬──┬───┴──┬────────┴──┬──────────┤
-│ COPA │WC│ REUNIÃO          │  (porta  │
-│      │  │                  │   DRIVE) │
-├──────┴──┴────┬─────┬───────┼──────────┤
-│      RH      │ OPS │GESTÃO │    TI    │
-└──────────────┴─────┴───────┴──────────┘
-```
-
-Cada sala terá:
-- Bloco colorido com a cor do departamento (paleta IntelliX adaptada)
-- Pílula de label no canto superior esquerdo
-- Mesas (retângulos) distribuídas dentro da sala
-- Borda sutil em violeta/ciano para reforçar o design system
-
-### 2. Agentes
-- Carregados de `agent_configs` (join com `squad_configs`) — já é feito hoje
-- Cada agente é posicionado **na mesa do seu squad** (mapeamento squad → sala)
-- Aparência: círculo com cor do papel + emoji/ícone do role + label com nome
-- Pulso em ciano quando `run_steps` está `processing` (já implementado, manter)
-- Tooltip ao passar o mouse com nome / role / squad
-
-### 3. Toggle 2D ↔ 3D
-- Botão no topo direito da tela (`<Tabs>` com ícones de mapa / cubo)
-- **2D**: vista superior tradicional (a planta acima)
-- **3D**: mesma cena projetada em **isométrica** (ângulo 30°), paredes "extrudadas" 24px, mesas com sombra — implementado com `Phaser.Display.Color` + `setRotation`/`setScale` em containers, sem dependências novas
-- Trocar o modo recria a cena Phaser (estado dos agentes preservado em ref)
-
-### 4. Visual / Design System
-- Fundo do canvas `#0a0a0f`, grid sutil `#1a1a24`
-- Header "INTELLIX.AI · HQ" em violeta com gradient brand
-- Cores das salas mapeadas pra paleta da plataforma (verde/laranja/ciano/violeta/âmbar/rosa)
-- Container do canvas com `border-border`, `rounded-xl`, `shadow-card`
-- Loader com `Loader2` (já existente)
+> Algumas tabelas referenciadas pelo prompt (`gestao_briefings`, `gestao_directives`, `token_usage`, `agent_configs.system_prompt`, `okrs.key_result/target_value/current_value/active`) **não existem ainda no banco** — aparentemente são premissas do "Prompt A". Vou criá-las nesta migração para o sistema funcionar de ponta a ponta. Se você já as tem com nomes diferentes, me avise antes de eu rodar a migration.
 
 ---
 
-## Arquivos
+## Onda 1 — Banco
 
-**Editados**
-- `src/pages/office/OfficePage.tsx` — adiciona toggle 2D/3D, monta cena conforme modo, header IntelliX
-- `src/game/office/OfficeScene.ts` — reescrito: desenha salas/mesas/labels da planta, posiciona agentes por squad, suporta `mode: '2d' | 'iso'`
+**Migration única** (`20260506_prompt_b.sql`):
+- Tabelas CRM: `leads`, `deals`, `contracts`, `invoices`, `engagements` (com RLS admin, índices, triggers `updated_at`, realtime)
+- Tabelas Ágata: `gestao_briefings`, `gestao_directives`, `token_usage` (com RLS admin)
+- Ajustes: adicionar colunas em `okrs` (`key_result`, `target_value`, `current_value`, `metric_unit`, `status`, `active`) e em `agent_configs` (`system_prompt`, `agent_key`, `squad_name`) e em `internal_jobs` (`job_id`, `job_input`, `trigger_source`, `parent_directive_id`, `estimated_tokens`, `sla_deadline`)
+- Triggers `pg_net` para `crm-event-handler` em lead qualified / deal won / contract signed / engagement blocked
+- 4 cron jobs `pg_cron`: daily_standup (11h UTC), weekly_review (dom 21h UTC), notification dispatcher (5min), overdue check (12h UTC)
+- Seed inicial dos OKRs Q2 2026
 
-**Criados**
-- `src/game/office/officeFloorplan.ts` — definição das salas (id, label, cor, rect, mesas) e mapeamento squad → sala. Reaproveita ideias do `src/components/office/officeLayout.ts` mas adaptado às cores IntelliX
-- `src/game/office/isoProjection.ts` — helpers `toIso(x, y)` para o modo 3D
+> ⚠️ Você precisará rodar manualmente após a migration:
+> ```sql
+> ALTER DATABASE postgres SET app.supabase_url = 'https://hynadwlwrscvjubryqlg.supabase.co';
+> ALTER DATABASE postgres SET app.internal_secret = '<valor do INTERNAL_SECRET>';
+> ```
+> e habilitar `pg_cron` + `pg_net` no painel se ainda não estiverem.
 
-**Não alterados**
-- `OfficeViewer2D.tsx` (legado usado em `RunDashboard`) — fica como está pra não quebrar a tela de run
+## Onda 2 — Edge Functions e secrets
 
----
+- Pedir secret `INTERNAL_SECRET` se não existir
+- Criar `_shared/agata-context-builder.ts` e `_shared/job-catalog.ts`
+- Atualizar `_shared/llm-provider.ts` com `extractDirectivesJson` / `extractDecisionsForFelipe`
+- Novas functions: `gestao-trigger`, `internal-job-dispatch`, `gestao-directive-dispatch`, `crm-event-handler`
+- Patch em `run-step` para parsear output da Ágata (squad `intellix-gestao`) e gravar briefing + directives
 
-## Detalhes técnicos
+## Onda 3 — Frontend
 
-- Toggle controlado por `useState<'2d'|'iso'>('2d')`; `useEffect` destrói o `Phaser.Game` e recria com o novo modo (cena recebe `init({ mode })`)
-- Posicionamento dos agentes:
-  ```ts
-  const room = SQUAD_ROOM[agent.squad] ?? 'gestao';
-  const desk = deskPositions(room, agentsInRoom.length)[indexInRoom];
-  ```
-- Modo isométrico: cada `(col,row)` vira `(x = (col-row)*CELL*0.86, y = (col+row)*CELL*0.5)`, salas ganham um retângulo de "parede" deslocado em `-24px` no Y para dar profundidade
-- Realtime de `run_steps` continua igual (canal Supabase já existe)
+- Tipos em `src/types/index.ts` (Lead, Deal, Contract, Invoice, Engagement, OKR, GestaoBriefing, GestaoDirective)
+- Hooks: `useGestao`, `useCrm`, `useOKRs`
+- Componentes Gestão: `BriefingViewer`, `DirectiveCard`, `DirectiveKanban`, `OKRPanel`, `OKREditor`, `AskAgataChat`, `GestaoStatusCard`
+- Componentes CRM: `LeadCard/Form/StatusBadge`, `DealCard/KanbanBoard/Form`, `ContractCard/Form`, `InvoiceTable`, `EngagementCard/HealthBadge`, `FunnelChart`
+- Páginas: `/office/gestao`, `/crm` (dashboard), `/crm/leads`, `/crm/leads/:id`, `/crm/deals`, `/crm/deals/:id`, `/crm/contracts`, `/crm/contracts/:id`, `/crm/invoices`, `/crm/engagements`
+- Atualizar `AppSidebar` com itens **CRM** e **Ágata** e o `App.tsx` com as rotas
 
----
+## Notas
 
-## Fora de escopo
+- O system prompt da Ágata precisa ser colado por você em `agent_configs` após o deploy (não tenho o conteúdo do `IntelliX_Skills_Specification_v2.md`).
+- "Empty states" estarão em todas as listas.
+- Vou usar `react-hook-form + zod` (já no projeto) para forms e `recharts` para o `FunnelChart`.
 
-- Sprites de personagens (estilo pixel-art da segunda imagem) — usaremos círculos+ícones para manter coerência com o resto do design system; podemos evoluir depois para sprites se quiser
-- Editor de layout (drag-and-drop de salas)
+Posso seguir?
