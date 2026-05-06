@@ -62,16 +62,9 @@ const App = () => (
                   />
                 }
               />
-              <Route
-                path="/settings"
-                element={
-                  <Placeholder
-                    title="Configurações"
-                    step="v2"
-                    description="Configurações do workspace e da plataforma."
-                  />
-                }
-              />
+              <Route path="/settings" element={<Navigate to="/settings/whatsapp" replace />} />
+              <Route path="/settings/whatsapp" element={<WhatsAppSettings />} />
+              <Route path="/settings/models" element={<ModelSettings />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
