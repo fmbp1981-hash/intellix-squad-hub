@@ -23,6 +23,12 @@ export default function DealKanban() {
   const { deals } = useCrm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ company_name: "", scope_summary: "", value: "", probability: "50" });
+  const [stages, setStages] = useState<Stage[]>([]);
+
+  useEffect(() => {
+    supabase.from("crm_pipeline_stages").select("key,name,order,color,enabled").eq("enabled", true).order("order")
+      .then(({ data }) => setStages((data ?? []) as Stage[]));
+  }, []);
 
   const create = async () => {
     if (!form.company_name || !form.value) return toast.error("Preencha empresa e valor");
