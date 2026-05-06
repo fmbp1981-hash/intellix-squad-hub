@@ -87,9 +87,7 @@ export default function RunDashboard() {
         return;
       }
       if (data?.run_id) {
-        const fresh = await import('@/api/squadRuns').then((m) =>
-          m.getSquadRunById(data.run_id),
-        );
+        const fresh = await getSquadRun(data.run_id);
         if (fresh) setRun(fresh);
       }
       toast.success('Squad iniciado!', { description: 'Aguardando agentes…' });
