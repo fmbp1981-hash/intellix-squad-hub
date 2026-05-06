@@ -4,13 +4,15 @@ import { toast } from "sonner";
 
 export interface SendEmailParams {
   to: string;
-  subject: string;
+  subject?: string;
   html?: string;
   text?: string;
   from?: string;
   replyTo?: string;
   tags?: { name: string; value: string }[];
   template?: string;
+  template_key?: string;
+  variables?: Record<string, string | number>;
   related_entity_type?: string;
   related_entity_id?: string;
   silent?: boolean;
