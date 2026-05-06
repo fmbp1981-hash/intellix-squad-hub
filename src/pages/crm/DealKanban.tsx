@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +11,13 @@ import { toast } from "sonner";
 import { Plus, Sparkles } from "lucide-react";
 import type { Deal, DealStatus } from "@/types";
 
-const STATUSES: DealStatus[] = ["discovery","proposal","negotiation","won","lost","stalled"];
-const COLS: Array<{ key: DealStatus; label: string }> = [
-  { key: "discovery", label: "Discovery" },
-  { key: "proposal", label: "Proposta" },
-  { key: "negotiation", label: "Negociação" },
-  { key: "won", label: "Won" },
-  { key: "lost", label: "Lost" },
-  { key: "stalled", label: "Stalled" },
-];
+interface Stage {
+  key: string;
+  name: string;
+  order: number;
+  color: string;
+  enabled: boolean;
+}
 
 export default function DealKanban() {
   const { deals } = useCrm();
