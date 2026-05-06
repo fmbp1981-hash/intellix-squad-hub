@@ -1,4 +1,4 @@
-// Send Email via Resend (gateway de conectores Lovable)
+// Send Email via Resend (gateway de conectores Lovable) - com suporte a templates
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -16,23 +16,33 @@ const DEFAULT_FROM = "Plataforma <onboarding@resend.dev>";
 
 interface Payload {
   to: string;
-  subject: string;
+  subject?: string;
   html?: string;
   text?: string;
   from?: string;
   replyTo?: string;
   tags?: { name: string; value: string }[];
-  template?: string;
+  template?: string;          // legado/free-form
+  template_key?: string;      // referência à tabela email_templates
+  variables?: Record<string, string | number>;
   related_entity_type?: string;
   related_entity_id?: string;
 }
 
+function render(tpl: string, vars: Record<string, string | number> = {}): string {
+  return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => {
+    const v = vars[k];
+    return v === undefined || v === null ? "" : String(v);
+  });
+}
+
 function validate(body: any): { ok: true; data: Payload } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "body inválido" };
-  const { to, subject, html, text } = body;
-  if (typeof to !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { ok: false, error: "to inválido" };
-  if (typeof subject !== "string" || !subject.trim()) return { ok: false, error: "subject obrigatório" };
-  if (!html && !text) return { ok: false, error: "html ou text obrigatório" };
+  if (typeof body.to !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.to)) return { ok: false, error: "to inválido" };
+  if (!body.template_key) {
+    if (typeof body.subject !== "string" || !body.subject.trim()) return { ok: false, error: "subject obrigatório" };
+    if (!body.html && !body.text) return { ok: false, error: "html ou text obrigatório" };
+  }
   return { ok: true, data: body as Payload };
 }
 
@@ -48,15 +58,33 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { to, subject, html, text, from, replyTo, tags, template, related_entity_type, related_entity_id } = v.data;
-
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    let { to, subject, html, text, from, replyTo, tags, template, template_key, variables, related_entity_type, related_entity_id } = v.data;
+
+    // Resolver template_key
+    if (template_key) {
+      const { data: tpl, error: tplErr } = await supabase
+        .from("email_templates")
+        .select("*")
+        .eq("key", template_key)
+        .eq("enabled", true)
+        .maybeSingle();
+      if (tplErr || !tpl) {
+        return new Response(JSON.stringify({ error: `template_key '${template_key}' não encontrado` }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      subject = subject ?? render(tpl.subject, variables);
+      html = html ?? render(tpl.html, variables);
+      if (!text && tpl.text) text = render(tpl.text, variables);
+      template = template ?? template_key;
+    }
 
     const { data: log } = await supabase
       .from("email_log")
       .insert({
         recipient: to,
-        subject,
+        subject: subject!,
         body_html: html ?? null,
         template,
         related_entity_type,
@@ -66,29 +94,18 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    // Sem credenciais ainda → log como skipped, resposta amigável
     if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
       const reason = !LOVABLE_API_KEY
         ? "LOVABLE_API_KEY ausente"
         : "Conector Resend não conectado (RESEND_API_KEY ausente)";
-      if (log?.id) {
-        await supabase.from("email_log").update({ status: "skipped", error: reason }).eq("id", log.id);
-      }
+      if (log?.id) await supabase.from("email_log").update({ status: "skipped", error: reason }).eq("id", log.id);
       return new Response(
-        JSON.stringify({
-          skipped: true,
-          reason,
-          hint: "Conecte a Resend pelo painel de Conectores da Lovable.",
-        }),
+        JSON.stringify({ skipped: true, reason, hint: "Conecte a Resend pelo painel de Conectores da Lovable." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const payload: Record<string, unknown> = {
-      from: from ?? DEFAULT_FROM,
-      to: [to],
-      subject,
-    };
+    const payload: Record<string, unknown> = { from: from ?? DEFAULT_FROM, to: [to], subject };
     if (html) payload.html = html;
     if (text) payload.text = text;
     if (replyTo) payload.reply_to = replyTo;
@@ -108,12 +125,9 @@ Deno.serve(async (req) => {
 
     if (!resp.ok) {
       const errMsg = `Resend [${resp.status}]: ${JSON.stringify(data)}`;
-      if (log?.id) {
-        await supabase.from("email_log").update({ status: "failed", error: errMsg }).eq("id", log.id);
-      }
+      if (log?.id) await supabase.from("email_log").update({ status: "failed", error: errMsg }).eq("id", log.id);
       return new Response(JSON.stringify({ error: errMsg }), {
-        status: resp.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

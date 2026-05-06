@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,20 +11,24 @@ import { toast } from "sonner";
 import { Plus, Sparkles } from "lucide-react";
 import type { Deal, DealStatus } from "@/types";
 
-const STATUSES: DealStatus[] = ["discovery","proposal","negotiation","won","lost","stalled"];
-const COLS: Array<{ key: DealStatus; label: string }> = [
-  { key: "discovery", label: "Discovery" },
-  { key: "proposal", label: "Proposta" },
-  { key: "negotiation", label: "Negociação" },
-  { key: "won", label: "Won" },
-  { key: "lost", label: "Lost" },
-  { key: "stalled", label: "Stalled" },
-];
+interface Stage {
+  key: string;
+  name: string;
+  order: number;
+  color: string;
+  enabled: boolean;
+}
 
 export default function DealKanban() {
   const { deals } = useCrm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ company_name: "", scope_summary: "", value: "", probability: "50" });
+  const [stages, setStages] = useState<Stage[]>([]);
+
+  useEffect(() => {
+    supabase.from("crm_pipeline_stages").select("key,name,order,color,enabled").eq("enabled", true).order("order")
+      .then(({ data }) => setStages((data ?? []) as Stage[]));
+  }, []);
 
   const create = async () => {
     if (!form.company_name || !form.value) return toast.error("Preencha empresa e valor");
@@ -66,11 +70,13 @@ export default function DealKanban() {
         <Card className="p-8 text-center text-muted-foreground">Nenhum deal ainda.</Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {COLS.map((col) => {
+          {stages.map((col) => {
             const items = deals.filter((d) => d.status === col.key);
             return (
               <div key={col.key} className="space-y-2">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground">{col.label} ({items.length})</h3>
+                <h3 className="text-xs font-semibold uppercase flex items-center gap-1" style={{ color: col.color }}>
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: col.color }} /> {col.name} ({items.length})
+                </h3>
                 {items.map((d) => (
                   <Card key={d.id} className="p-3 space-y-2">
                     <p className="font-semibold text-sm">{d.company_name}</p>
@@ -78,7 +84,7 @@ export default function DealKanban() {
                     <p className="text-sm font-bold">R$ {Number(d.value).toLocaleString("pt-BR")}</p>
                     <Select value={d.status} onValueChange={(v) => move(d, v as DealStatus)}>
                       <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      <SelectContent>{stages.map((s) => <SelectItem key={s.key} value={s.key}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-7 text-xs flex-1 gap-1" onClick={async () => {

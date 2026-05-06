@@ -39,13 +39,74 @@ async function dispatchWebhooks(event: string, payload: any) {
   }).catch((e) => console.error("webhook dispatcher", e));
 }
 
+const NOTIFICATION_MAP: Record<string, { title: (e: any) => string; body: (e: any) => string; priority: string; link: (e: any) => string | null; category: string }> = {
+  lead_qualified: {
+    title: (e) => `Lead qualificado: ${e?.company_name ?? "novo lead"}`,
+    body: (e) => `Score ${e?.score ?? "—"}. Avalie a abertura de proposta.`,
+    priority: "normal", category: "crm",
+    link: (e) => e?.id ? `/crm/leads` : null,
+  },
+  deal_won: {
+    title: (e) => `🎉 Deal ganho: ${e?.company_name ?? ""}`,
+    body: (e) => `Valor: R$ ${Number(e?.value ?? 0).toLocaleString("pt-BR")}. Kickoff em andamento.`,
+    priority: "high", category: "crm",
+    link: () => "/crm/deals",
+  },
+  deal_lost: {
+    title: (e) => `Deal perdido: ${e?.company_name ?? ""}`,
+    body: (e) => e?.lost_reason ? `Motivo: ${e.lost_reason}` : "Revise causa-raiz.",
+    priority: "normal", category: "crm",
+    link: () => "/crm/deals",
+  },
+  contract_signed: {
+    title: () => "Contrato assinado",
+    body: (e) => `Contrato ${e?.id?.slice(0,8) ?? ""} pronto para faturamento.`,
+    priority: "high", category: "crm",
+    link: () => "/crm/contracts",
+  },
+  engagement_blocked: {
+    title: (e) => `Engagement bloqueado: ${e?.name ?? ""}`,
+    body: (e) => e?.blocker_note ?? "Verifique o impedimento.",
+    priority: "high", category: "crm",
+    link: () => "/crm/engagements",
+  },
+};
+
+async function dispatchNotifications(supa: any, eventType: string, entity: any) {
+  const cfg = NOTIFICATION_MAP[eventType];
+  if (!cfg) return;
+
+  // Resolver destinatários: admins (fallback universal). Owner/assignee se existir.
+  const recipients = new Set<string>();
+  if (entity?.owner_id) recipients.add(entity.owner_id);
+  if (entity?.assigned_to) recipients.add(entity.assigned_to);
+  if (recipients.size === 0) {
+    const { data: admins } = await supa.from("user_roles").select("user_id").eq("role", "admin");
+    (admins ?? []).forEach((a: any) => recipients.add(a.user_id));
+  }
+  if (recipients.size === 0) return;
+
+  const rows = Array.from(recipients).map((user_id) => ({
+    user_id,
+    title: cfg.title(entity),
+    body: cfg.body(entity),
+    category: cfg.category,
+    priority: cfg.priority,
+    link: cfg.link(entity),
+    channel: "app",
+    status: "pending",
+  }));
+  await supa.from("notifications").insert(rows).then(({ error }: any) => {
+    if (error) console.error("notifications insert", error);
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supa = adminClient();
   const { eventType, entityId } = await req.json().catch(() => ({}));
 
-  // fan-out genérico
   let entityForAutomation: any = { id: entityId };
   if (eventType === "deal_won" || eventType === "deal_stage_changed" || eventType === "deal_lost") {
     const { data } = await supa.from("deals").select("*").eq("id", entityId).maybeSingle();
@@ -53,9 +114,16 @@ Deno.serve(async (req) => {
   } else if (eventType === "lead_qualified" || eventType === "lead_created") {
     const { data } = await supa.from("leads").select("*").eq("id", entityId).maybeSingle();
     entityForAutomation = data ?? entityForAutomation;
+  } else if (eventType === "contract_signed") {
+    const { data } = await supa.from("contracts").select("*").eq("id", entityId).maybeSingle();
+    entityForAutomation = data ?? entityForAutomation;
+  } else if (eventType === "engagement_blocked") {
+    const { data } = await supa.from("engagements").select("*").eq("id", entityId).maybeSingle();
+    entityForAutomation = data ?? entityForAutomation;
   }
   runAutomations(eventType, entityForAutomation);
   dispatchWebhooks(eventType, entityForAutomation);
+  await dispatchNotifications(supa, eventType, entityForAutomation);
 
 
   switch (eventType) {
