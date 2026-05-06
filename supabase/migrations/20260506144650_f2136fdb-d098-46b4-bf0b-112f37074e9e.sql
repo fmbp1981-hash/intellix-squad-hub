@@ -1,0 +1,1 @@
+ALTER TYPE public.internal_job_kind ADD VALUE IF NOT EXISTS 'gestao';
