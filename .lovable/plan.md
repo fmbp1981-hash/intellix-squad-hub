@@ -1,107 +1,59 @@
-# Lote D — IA, CRM Avançado e Integrações
+## Estrutura de Integração com Resend
 
-Fechamento da plataforma com camada de inteligência transversal, evolução do CRM (forecast, automações, comunicação) e integrações externas para produtividade do time.
+Vou preparar toda a estrutura de código para a integração com Resend. As credenciais (API key + conector) você adiciona depois — o código já estará pronto para funcionar assim que a `RESEND_API_KEY` estiver disponível.
 
-## 1. Camada de IA transversal (Operations + Commercial Agents)
+### 1. Edge Function `send-email` (refatorar)
+Arquivo: `supabase/functions/send-email/index.ts`
 
-**Edge Function `ai-assistant` (novo)** — gateway único de IA conversacional contextual:
-- Recebe `{ context: 'project'|'deal'|'sprint'|'global', entityId, prompt, history }`
-- Carrega contexto da entidade no servidor (RLS-aware via service role + user check)
-- Streaming SSE usando Lovable AI Gateway (`google/gemini-3-flash-preview` default)
-- Modos: `ask` (Q&A), `summarize`, `next_actions`, `risk_analysis`
+- Validação de payload com Zod (`to`, `subject`, `html`/`text`, `from?`, `replyTo?`, `tags?`).
+- Headers CORS padronizados.
+- Chamada via **gateway Lovable**: `https://connector-gateway.lovable.dev/resend/emails`
+  - `Authorization: Bearer ${LOVABLE_API_KEY}`
+  - `X-Connection-Api-Key: ${RESEND_API_KEY}`
+- Fallback amigável quando `RESEND_API_KEY` não está configurada (retorna 503 com mensagem clara em vez de quebrar).
+- Logging em `email_log` (status: `sent` | `failed` | `skipped_no_key`) com `provider_message_id`, `error`, `to`, `subject`.
+- Remetente padrão: `Plataforma <onboarding@resend.dev>` (sandbox), sobrescrevível via parâmetro `from`.
 
-**Edge Function `ai-deal-coach` (novo)** — Commercial Agent:
-- Analisa deal (histórico, atividades, lead score, estágio, valor)
-- Retorna: probabilidade de fechamento, próximas ações sugeridas, riscos, e-mail de follow-up draft
-- Persistência em nova tabela `deal_ai_insights` (deal_id, generated_at, score, recommendations jsonb, draft_email)
+### 2. Helper compartilhado
+Arquivo: `supabase/functions/_shared/email.ts`
 
-**Edge Function `ai-sprint-coach` (novo)** — Operations Agent contínuo:
-- Analisa sprint ativa: burndown, throughput, impedimentos, capacidade
-- Detecta riscos (atraso, scope creep, blocker antigo) e gera alertas em `sprint_ai_alerts`
-- Sugere replanejamento ou redistribuição de tarefas
+- Função `sendEmail({ to, subject, html, text?, from?, tags? })` reutilizável por outras edge functions (`crm-automation-runner`, `crm-event-handler`, futuros disparos).
+- Centraliza chamada ao `send-email` para evitar duplicação.
 
-**UI:**
-- Componente `<AIAssistantPanel />` reusável (drawer lateral) plugado em ProjectOverview, DealKanban e SprintBoardPage
-- Card "Insights da IA" em DealKanban (detail drawer) e SprintsPage
+### 3. Atualizar `crm-automation-runner`
+- Substituir invocação direta da action `send_email` para usar o helper compartilhado.
+- Garantir que o erro do envio não quebra o pipeline da automação (log + continue).
 
-## 2. CRM Avançado
+### 4. Refatorar `src/pages/settings/IntegrationsPage.tsx`
+- **Cartão Resend** com:
+  - Status visual (Conectado / Pendente) — detectado via teste de envio.
+  - Instrução curta: "Conecte a Resend pelo painel de Conectores da Lovable" (link para docs/painel).
+  - Botão **"Enviar e-mail de teste"** → chama `send-email` com payload mínimo para o e-mail do usuário logado.
+  - Aviso: "Para produção, verifique seu domínio no painel da Resend".
+- Remover o campo manual de API key (não é mais necessário com o conector).
+- Manter intacta a seção de Outbound Webhooks.
 
-**Forecast & Pipeline Analytics (`/crm/forecast`)**
-- Nova página com: pipeline weighted forecast (valor × probabilidade × stage), velocity de fechamento, win rate por origem/owner, ciclo médio
-- Charts (recharts): forecast por mês (3 meses), funil de conversão, performance por vendedor
+### 5. Hook frontend `useSendEmail`
+Arquivo: `src/hooks/useSendEmail.ts`
 
-**Automações de CRM (tabela nova `crm_automations`)**
-- Triggers: `lead_created`, `deal_stage_changed`, `deal_idle_X_days`, `contract_expiring`
-- Actions: `assign_owner`, `create_task`, `send_notification`, `trigger_ai_coach`, `send_whatsapp`
-- UI: `/crm/automations` com builder simples (lista de regras condição → ação)
-- Edge function `crm-automation-runner` consome eventos do `crm-event-handler` e executa regras
+- Wrapper sobre `supabase.functions.invoke('send-email', ...)` com tipagem, toast de sucesso/erro e estado de loading. Pronto para uso em qualquer formulário/ação.
 
-**Atividades & Timeline unificada**
-- Tabela `crm_activities` (call, email, meeting, note, whatsapp_sent) ligada a lead/deal/contact
-- Componente `<ActivityTimeline />` renderizado em detalhe de Deal e Lead
-- Auto-log de eventos do sistema (stage change, AI insights gerados, mensagens WhatsApp enviadas)
+### 6. Tabela `email_log` (verificar)
+- Já criada no Lote D. Confirmar colunas necessárias (`to`, `subject`, `status`, `provider_message_id`, `error`, `created_at`). Se faltar algo, migration mínima de ajuste.
 
-**Lead Scoring automático**
-- Edge function `lead-score-calculator` (cron diário + on-update)
-- Considera: origem, engajamento, completude de dados, tempo no estágio
-- Atualiza `leads.score` e dispara `lead_qualified` quando ≥ 80
+---
 
-## 3. Integrações externas
+### Arquivos que serão criados/editados
+- ✏️ `supabase/functions/send-email/index.ts` (refatorado p/ gateway)
+- 🆕 `supabase/functions/_shared/email.ts`
+- ✏️ `supabase/functions/crm-automation-runner/index.ts` (usar helper)
+- ✏️ `src/pages/settings/IntegrationsPage.tsx`
+- 🆕 `src/hooks/useSendEmail.ts`
 
-**E-mail (Resend)**
-- Edge function `send-email` (template + tracking)
-- Usado para: follow-ups gerados pela IA, notificações de impedimento crítico, contratos assinados, faturas
-- Conector: solicitar `RESEND_API_KEY` quando confirmado
+### Próximos passos depois da estrutura
+Quando quiser ativar de fato:
+1. Conectar Resend pelo painel de Conectores (1 clique).
+2. Testar envio pelo botão na página de Integrações.
+3. Verificar domínio próprio na Resend para sair do sandbox.
 
-**Calendar (Google Calendar via connector)**
-- Sincroniza meetings de `crm_activities` (type=meeting) com o calendário do owner
-- Edge function `calendar-sync` usando gateway de connectors
-
-**Slack/Teams (notificações em tempo real)**
-- Connector standard (Slack ou Microsoft Teams)
-- Edge function `notification-dispatcher` (já existe) ganha provider Slack/Teams além de WhatsApp/in-app
-- Eventos: deal won, impedimento crítico, sprint completada, alerta da IA
-
-**Webhooks de saída (`outbound_webhooks`)**
-- Tabela com URL + eventos assinados + secret HMAC
-- UI em `/settings/integrations` para clientes plugarem ERPs/Zapier/n8n
-
-## 4. Banco de dados — novas tabelas
-
-- `deal_ai_insights` (id, deal_id, generated_at, win_probability, recommendations jsonb, draft_email text, model)
-- `sprint_ai_alerts` (id, sprint_id, project_id, severity, type, message, suggested_action, acknowledged_at)
-- `crm_automations` (id, name, trigger_type, conditions jsonb, actions jsonb, enabled, created_by)
-- `crm_activities` (id, type, subject, body, lead_id, deal_id, contact_id, owner_id, occurred_at, metadata jsonb)
-- `outbound_webhooks` (id, url, events text[], secret, enabled, created_by)
-- `email_log` (id, to, subject, template, status, provider_id, related_entity_type, related_entity_id)
-
-Todas com RLS baseada em `has_role` + ownership.
-
-## 5. UI / Rotas novas
-
-- `/crm/forecast` — Forecast & analytics
-- `/crm/automations` — Builder de automações
-- `/crm/activities` — Timeline global (filtrável)
-- `/settings/integrations` — Conectores (e-mail, calendar, Slack/Teams, webhooks)
-- Drawer `<AIAssistantPanel />` em Projects, Deals, Sprints
-- Sidebar atualizada (Lote D adiciona itens ao menu CRM e Settings)
-
-## 6. Detalhes técnicos
-
-- Streaming SSE conforme padrão Lovable AI (line-by-line, [DONE], CRLF, 429/402 toasts)
-- Tool calling para outputs estruturados (deal coach, sprint coach)
-- Realtime: novas tabelas com `replica identity full` + publication para insights/alerts em tempo real
-- Edge functions seguem padrão atual (CORS, validação Zod, JWT-in-code)
-- Connectors usam fluxo `standard_connectors--connect` antes do código que os consome
-- Secrets necessários (solicitados sob demanda): `RESEND_API_KEY` (e-mail). Slack/Teams/Calendar via connector gateway (sem secret manual)
-
-## Ordem de execução proposta
-
-1. Schema (migration única) + RLS
-2. Camada IA: `ai-assistant`, `ai-deal-coach`, `ai-sprint-coach` + painel UI
-3. CRM avançado: forecast, activities timeline, lead scoring
-4. Automações CRM (engine + UI)
-5. Integrações: Resend (e-mail), connectors (Calendar, Slack/Teams), webhooks de saída
-6. Polimento: realtime, sidebar, settings
-
-Posso seguir com a execução nessa ordem.
+Confirma para eu implementar?
