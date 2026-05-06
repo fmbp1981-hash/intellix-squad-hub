@@ -1,4 +1,4 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home, Download } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,10 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
   {
     label: "Projetos Ágeis",
     items: [{ to: "/projects", label: "Projetos", icon: Rocket }],
+  },
+  {
+    label: "Dados",
+    items: [{ to: "/exports", label: "Exportações", icon: Download }],
   },
   {
     label: "Configurações",

@@ -648,6 +648,51 @@ export type Database = {
         }
         Relationships: []
       }
+      drive_setup: {
+        Row: {
+          auto_create_folders: boolean
+          connected_at: string | null
+          connected_by: string | null
+          created_at: string
+          folder_template: Json
+          id: string
+          provider: string
+          root_folder_id: string | null
+          root_folder_url: string | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          auto_create_folders?: boolean
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          folder_template?: Json
+          id?: string
+          provider?: string
+          root_folder_id?: string | null
+          root_folder_url?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          auto_create_folders?: boolean
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          folder_template?: Json
+          id?: string
+          provider?: string
+          root_folder_id?: string | null
+          root_folder_url?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           body_html: string | null
@@ -914,6 +959,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      export_run: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          entity_type: string
+          error_message: string | null
+          file_url: string | null
+          filters: Json
+          format: string
+          id: string
+          requested_by: string
+          row_count: number | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          entity_type: string
+          error_message?: string | null
+          file_url?: string | null
+          filters?: Json
+          format?: string
+          id?: string
+          requested_by: string
+          row_count?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          entity_type?: string
+          error_message?: string | null
+          file_url?: string | null
+          filters?: Json
+          format?: string
+          id?: string
+          requested_by?: string
+          row_count?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       gestao_briefings: {
         Row: {

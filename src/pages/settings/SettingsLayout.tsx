@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Bell, MessageSquare, Cpu, Users, Layers, DollarSign, Mail, Plug, User } from "lucide-react";
+import { Bell, MessageSquare, Cpu, Users, Layers, DollarSign, Mail, Plug, User, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SECTIONS: { label: string; items: { to: string; label: string; icon: any }[] }[] = [
@@ -27,6 +27,7 @@ const SECTIONS: { label: string; items: { to: string; label: string; icon: any }
     label: "Conta",
     items: [
       { to: "/settings/profile", label: "Perfil", icon: User },
+      { to: "/settings/drive", label: "Drive Setup", icon: HardDrive },
       { to: "/settings/integrations", label: "Integrações", icon: Plug },
     ],
   },
