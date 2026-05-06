@@ -17,6 +17,15 @@ import NewWorkspace from "./pages/workspaces/NewWorkspace";
 import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
 import SettingsPage from "./pages/settings/SettingsPage";
+import SettingsLayout from "./pages/settings/SettingsLayout";
+import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
+import ModelSettings from "./pages/settings/ModelSettings";
+import EmailTemplatesPage from "./pages/settings/EmailTemplatesPage";
+import AgentsSettings from "./pages/settings/AgentsSettings";
+import SquadsSettings from "./pages/settings/SquadsSettings";
+import BudgetsSettings from "./pages/settings/BudgetsSettings";
+import ProfileSettings from "./pages/settings/ProfileSettings";
+import { NotificationPreferences } from "./components/notifications/NotificationPreferences";
 import OfficePage from "./pages/office/OfficePage";
 import OfficeGestao from "./pages/office/OfficeGestao";
 import JobsPage from "./pages/jobs/JobsPage";
@@ -85,9 +94,18 @@ const App = () => (
                   />
                 }
               />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/settings/whatsapp" element={<Navigate to="/settings?tab=whatsapp" replace />} />
-              <Route path="/settings/models" element={<Navigate to="/settings?tab=models" replace />} />
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<SettingsPage />} />
+                <Route path="notifications" element={<NotificationPreferences />} />
+                <Route path="whatsapp" element={<WhatsAppSettings />} />
+                <Route path="models" element={<ModelSettings />} />
+                <Route path="email-templates" element={<EmailTemplatesPage />} />
+                <Route path="agents" element={<AgentsSettings />} />
+                <Route path="squads" element={<SquadsSettings />} />
+                <Route path="budgets" element={<BudgetsSettings />} />
+                <Route path="profile" element={<ProfileSettings />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+              </Route>
               <Route path="/office" element={<OfficePage />} />
               <Route path="/office/gestao" element={<OfficeGestao />} />
               <Route path="/jobs" element={<JobsPage />} />
@@ -102,7 +120,7 @@ const App = () => (
                 <Route path="invoices" element={<InvoiceList />} />
                 <Route path="engagements" element={<EngagementList />} />
               </Route>
-              <Route path="/settings/integrations" element={<IntegrationsPage />} />
+              
 
               <Route path="/projects" element={<ProjectsList />} />
               <Route path="/projects/new" element={<NewProject />} />
