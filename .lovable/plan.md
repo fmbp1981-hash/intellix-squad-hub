@@ -1,59 +1,81 @@
-## Estrutura de Integração com Resend
 
-Vou preparar toda a estrutura de código para a integração com Resend. As credenciais (API key + conector) você adiciona depois — o código já estará pronto para funcionar assim que a `RESEND_API_KEY` estiver disponível.
+# Fechamento do Lote D — Integrações & Production-Ready
 
-### 1. Edge Function `send-email` (refatorar)
-Arquivo: `supabase/functions/send-email/index.ts`
+Quatro frentes pendentes para deixar CRM + Projetos Ágeis prontos para produção.
 
-- Validação de payload com Zod (`to`, `subject`, `html`/`text`, `from?`, `replyTo?`, `tags?`).
-- Headers CORS padronizados.
-- Chamada via **gateway Lovable**: `https://connector-gateway.lovable.dev/resend/emails`
-  - `Authorization: Bearer ${LOVABLE_API_KEY}`
-  - `X-Connection-Api-Key: ${RESEND_API_KEY}`
-- Fallback amigável quando `RESEND_API_KEY` não está configurada (retorna 503 com mensagem clara em vez de quebrar).
-- Logging em `email_log` (status: `sent` | `failed` | `skipped_no_key`) com `provider_message_id`, `error`, `to`, `subject`.
-- Remetente padrão: `Plataforma <onboarding@resend.dev>` (sandbox), sobrescrevível via parâmetro `from`.
+## 1. Templates de E-mail (`email_templates`)
 
-### 2. Helper compartilhado
-Arquivo: `supabase/functions/_shared/email.ts`
+**Migration:**
+- Tabela `email_templates`: `id`, `key` (unique, ex: `deal_won_welcome`), `name`, `subject`, `html`, `text`, `description`, `variables jsonb` (lista de placeholders esperados), `enabled`, timestamps.
+- RLS: leitura para qualquer authenticated; escrita apenas `admin` (via `has_role`).
+- Seed inicial com 4 templates: `deal_won_welcome`, `lead_qualified_followup`, `contract_signed_kickoff`, `invoice_overdue_reminder` — usando placeholders `{{nome}}`, `{{empresa}}`, `{{valor}}` etc.
 
-- Função `sendEmail({ to, subject, html, text?, from?, tags? })` reutilizável por outras edge functions (`crm-automation-runner`, `crm-event-handler`, futuros disparos).
-- Centraliza chamada ao `send-email` para evitar duplicação.
+**Edge Function `send-email` (refatorar):**
+- Aceitar `template_key` + `variables` no payload. Quando presente, busca template, faz substituição simples `{{var}}` → valor, popula `subject`/`html`. Mantém compatibilidade com `subject`/`html` diretos.
+- Helper `_shared/email.ts` ganha o mesmo suporte.
 
-### 3. Atualizar `crm-automation-runner`
-- Substituir invocação direta da action `send_email` para usar o helper compartilhado.
-- Garantir que o erro do envio não quebra o pipeline da automação (log + continue).
+**UI — nova página `src/pages/settings/EmailTemplatesPage.tsx`:**
+- Lista de templates com badge de status.
+- Editor (modal) com campos `subject`, `html` (textarea), `text`, `variables` (chips) e botão **Pré-visualizar** (renderiza substituindo com valores fictícios).
+- Botão **Enviar teste** que invoca `send-email` com o template selecionado.
+- Adicionar nova aba "Templates de E-mail" no `IntegrationsPage` ou em `SettingsPage` (preferência: aba dentro de Settings).
 
-### 4. Refatorar `src/pages/settings/IntegrationsPage.tsx`
-- **Cartão Resend** com:
-  - Status visual (Conectado / Pendente) — detectado via teste de envio.
-  - Instrução curta: "Conecte a Resend pelo painel de Conectores da Lovable" (link para docs/painel).
-  - Botão **"Enviar e-mail de teste"** → chama `send-email` com payload mínimo para o e-mail do usuário logado.
-  - Aviso: "Para produção, verifique seu domínio no painel da Resend".
-- Remover o campo manual de API key (não é mais necessário com o conector).
-- Manter intacta a seção de Outbound Webhooks.
+## 2. Notificações in-app no `crm-event-handler`
 
-### 5. Hook frontend `useSendEmail`
-Arquivo: `src/hooks/useSendEmail.ts`
+**Edge Function:**
+- Após cada evento relevante (`lead_qualified`, `deal_won`, `contract_signed`, `engagement_blocked`, `invoice_overdue`), chamar `notification-dispatcher` (já existente) com payload padronizado.
+- Resolver destinatários: `owner_id`/`assigned_to` da entidade; fallback para todos os admins (via `user_roles`).
+- Categoria `crm`, prioridade conforme evento (`deal_won` = high, `engagement_blocked` = high, demais = normal).
+- Inserir registro em `notifications` (já consumida pelo `NotificationBell`) com link contextual (`/crm/deals/:id` etc.).
 
-- Wrapper sobre `supabase.functions.invoke('send-email', ...)` com tipagem, toast de sucesso/erro e estado de loading. Pronto para uso em qualquer formulário/ação.
+## 3. Refinar RLS via `user_roles`
 
-### 6. Tabela `email_log` (verificar)
-- Já criada no Lote D. Confirmar colunas necessárias (`to`, `subject`, `status`, `provider_message_id`, `error`, `created_at`). Se faltar algo, migration mínima de ajuste.
+**Migration de revisão:**
+- Auditar policies das tabelas CRM/Ágil (`deals`, `leads`, `contracts`, `invoices`, `engagements`, `agile_projects`, `crm_automations`, `outbound_webhooks`, `email_log`, novas `email_templates`).
+- Padrão:
+  - SELECT: authenticated (todos os usuários internos visualizam).
+  - INSERT/UPDATE/DELETE em entidades operacionais: authenticated (mantém produtividade do time).
+  - INSERT/UPDATE/DELETE em config sensível (`crm_automations`, `outbound_webhooks`, `email_templates`, `crm_pipelines/stages`): apenas `has_role(auth.uid(),'admin')`.
+- Drop policies legadas conflitantes antes de recriar.
 
----
+## 4. Seed de Pipeline padrão para novos workspaces
 
-### Arquivos que serão criados/editados
-- ✏️ `supabase/functions/send-email/index.ts` (refatorado p/ gateway)
-- 🆕 `supabase/functions/_shared/email.ts`
-- ✏️ `supabase/functions/crm-automation-runner/index.ts` (usar helper)
-- ✏️ `src/pages/settings/IntegrationsPage.tsx`
-- 🆕 `src/hooks/useSendEmail.ts`
+**Decisão sobre escopo:**
+- Hoje não há tabela `crm_pipelines`/`pipeline_stages` — `deals.stage` é string livre.
+- Criar tabela `crm_pipeline_stages`: `id`, `key`, `name`, `order`, `probability`, `color`, `is_won`, `is_lost`, `enabled`.
+- Seed com stages padrão: `prospeccao` (10%), `qualificacao` (25%), `proposta` (50%), `negociacao` (75%), `fechado_ganho` (100%, is_won), `fechado_perdido` (0%, is_lost).
+- Atualizar `DealKanban` para ler colunas dinamicamente da tabela em vez de hardcoded.
+- RLS: leitura authenticated, escrita admin.
 
-### Próximos passos depois da estrutura
-Quando quiser ativar de fato:
-1. Conectar Resend pelo painel de Conectores (1 clique).
-2. Testar envio pelo botão na página de Integrações.
-3. Verificar domínio próprio na Resend para sair do sandbox.
+## Arquivos
 
-Confirma para eu implementar?
+**Migrations (1 nova):**
+- `supabase/migrations/<timestamp>_lote_d_close.sql` — cria `email_templates`, `crm_pipeline_stages`, seeds, ajusta RLS.
+
+**Edge Functions:**
+- ✏️ `supabase/functions/send-email/index.ts` — suporte a `template_key`.
+- ✏️ `supabase/functions/_shared/email.ts` — idem.
+- ✏️ `supabase/functions/crm-event-handler/index.ts` — disparo de notificações.
+
+**Frontend:**
+- 🆕 `src/pages/settings/EmailTemplatesPage.tsx`
+- 🆕 `src/hooks/useEmailTemplates.ts`
+- ✏️ `src/pages/settings/SettingsPage.tsx` — nova aba "Templates".
+- ✏️ `src/pages/crm/DealKanban.tsx` — colunas dinâmicas.
+
+## Detalhes Técnicos
+
+- Substituição de placeholders: regex simples `/\{\{\s*(\w+)\s*\}\}/g` no servidor (sem libs).
+- `notification-dispatcher` já é internal — chamada via service role, sem CORS.
+- Migrations idempotentes (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`).
+- Sem mudanças em `auth.users` ou schemas reservados.
+
+## Ordem de execução
+
+1. Migration (templates, stages, RLS, seeds).
+2. Refatorar `send-email` + helper.
+3. Atualizar `crm-event-handler` com notificações.
+4. Página de templates + hook + nova aba.
+5. `DealKanban` dinâmico.
+
+Confirma para executar?
