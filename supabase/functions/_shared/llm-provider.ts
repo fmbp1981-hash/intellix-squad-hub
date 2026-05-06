@@ -85,3 +85,26 @@ export async function runLlm(cfg: LlmConfig, messages: LlmMessage[]): Promise<Ll
     throw e;
   }
 }
+
+// ----- Ágata output parsing helpers -----
+export function extractDirectivesJson(output: string): unknown[] {
+  const re = /```json\s*([\s\S]*?)\s*```/g;
+  for (const m of output.matchAll(re)) {
+    try {
+      const p = JSON.parse(m[1]);
+      if (Array.isArray(p?.directives)) return p.directives;
+    } catch { /* try next */ }
+  }
+  return [];
+}
+
+export function extractDecisionsForFelipe(output: string): string[] {
+  const re = /```json\s*([\s\S]*?)\s*```/g;
+  for (const m of output.matchAll(re)) {
+    try {
+      const p = JSON.parse(m[1]);
+      if (Array.isArray(p?.decisions_for_felipe)) return p.decisions_for_felipe;
+    } catch { /* try next */ }
+  }
+  return [];
+}
