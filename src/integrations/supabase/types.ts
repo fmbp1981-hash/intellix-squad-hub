@@ -352,6 +352,168 @@ export type Database = {
           },
         ]
       }
+      crm_activities: {
+        Row: {
+          body: string | null
+          contract_id: string | null
+          created_at: string
+          deal_id: string | null
+          id: string
+          lead_id: string | null
+          metadata: Json
+          occurred_at: string
+          owner_id: string | null
+          subject: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          contract_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          owner_id?: string | null
+          subject: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          contract_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          owner_id?: string | null
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_automation_runs: {
+        Row: {
+          automation_id: string
+          completed_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          error: string | null
+          id: string
+          result: Json
+          started_at: string
+          status: string
+          trigger_event: string
+        }
+        Insert: {
+          automation_id: string
+          completed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          id?: string
+          result?: Json
+          started_at?: string
+          status?: string
+          trigger_event: string
+        }
+        Update: {
+          automation_id?: string
+          completed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          id?: string
+          result?: Json
+          started_at?: string
+          status?: string
+          trigger_event?: string
+        }
+        Relationships: []
+      }
+      crm_automations: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deal_ai_insights: {
+        Row: {
+          created_by: string | null
+          deal_id: string
+          draft_email: string | null
+          generated_at: string
+          id: string
+          model: string | null
+          next_actions: Json
+          recommendations: Json
+          risks: Json
+          summary: string | null
+          win_probability: number | null
+        }
+        Insert: {
+          created_by?: string | null
+          deal_id: string
+          draft_email?: string | null
+          generated_at?: string
+          id?: string
+          model?: string | null
+          next_actions?: Json
+          recommendations?: Json
+          risks?: Json
+          summary?: string | null
+          win_probability?: number | null
+        }
+        Update: {
+          created_by?: string | null
+          deal_id?: string
+          draft_email?: string | null
+          generated_at?: string
+          id?: string
+          model?: string | null
+          next_actions?: Json
+          recommendations?: Json
+          risks?: Json
+          summary?: string | null
+          win_probability?: number | null
+        }
+        Relationships: []
+      }
       deals: {
         Row: {
           company_name: string
@@ -441,6 +603,51 @@ export type Database = {
           squad_key?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_log: {
+        Row: {
+          body_html: string | null
+          created_at: string
+          error: string | null
+          id: string
+          provider_id: string | null
+          recipient: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template?: string | null
         }
         Relationships: []
       }
@@ -1160,6 +1367,48 @@ export type Database = {
         }
         Relationships: []
       }
+      outbound_webhooks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          events: string[]
+          id: string
+          last_delivery_at: string | null
+          last_delivery_status: string | null
+          name: string
+          secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          events?: string[]
+          id?: string
+          last_delivery_at?: string | null
+          last_delivery_status?: string | null
+          name: string
+          secret: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          events?: string[]
+          id?: string
+          last_delivery_at?: string | null
+          last_delivery_status?: string | null
+          name?: string
+          secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       pipeline_step_outputs: {
         Row: {
           agent_key: string | null
@@ -1369,6 +1618,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sprint_ai_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          project_id: string
+          severity: string
+          sprint_id: string
+          suggested_action: string | null
+          type: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          project_id: string
+          severity?: string
+          sprint_id: string
+          suggested_action?: string | null
+          type: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          project_id?: string
+          severity?: string
+          sprint_id?: string
+          suggested_action?: string | null
+          type?: string
+        }
+        Relationships: []
       }
       sprint_metrics: {
         Row: {
