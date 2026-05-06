@@ -11,7 +11,23 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
   const internal = Deno.env.get("INTERNAL_SECRET");
   const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const ok = (internal && auth === `Bearer ${internal}`) || (srv && auth === `Bearer ${srv}`);
+  let ok = (internal && auth === `Bearer ${internal}`) || (srv && auth === `Bearer ${srv}`);
+
+  // Also allow authenticated end-users (manual triggers from /office/gestao)
+  if (!ok && auth.startsWith("Bearer ")) {
+    try {
+      const { createClient } = await import("npm:@supabase/supabase-js@2");
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: auth } } }
+      );
+      const token = auth.replace("Bearer ", "");
+      const { data, error: claimsErr } = await userClient.auth.getClaims(token);
+      if (!claimsErr && data?.claims?.sub) ok = true;
+    } catch (_) { /* ignore */ }
+  }
+
   if (!ok) return jsonResponse({ error: "unauthorized" }, 401);
 
   const body = await req.json().catch(() => ({}));
