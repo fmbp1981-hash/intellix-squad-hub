@@ -25,6 +25,8 @@ import AgentsSettings from "./pages/settings/AgentsSettings";
 import SquadsSettings from "./pages/settings/SquadsSettings";
 import BudgetsSettings from "./pages/settings/BudgetsSettings";
 import ProfileSettings from "./pages/settings/ProfileSettings";
+import DriveSetupSettings from "./pages/settings/DriveSetupSettings";
+import ExportsPage from "./pages/ExportsPage";
 import { NotificationPreferences } from "./components/notifications/NotificationPreferences";
 import OfficePage from "./pages/office/OfficePage";
 import OfficeGestao from "./pages/office/OfficeGestao";
