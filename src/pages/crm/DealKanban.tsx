@@ -74,7 +74,9 @@ export default function DealKanban() {
             const items = deals.filter((d) => d.status === col.key);
             return (
               <div key={col.key} className="space-y-2">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground">{col.label} ({items.length})</h3>
+                <h3 className="text-xs font-semibold uppercase flex items-center gap-1" style={{ color: col.color }}>
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: col.color }} /> {col.name} ({items.length})
+                </h3>
                 {items.map((d) => (
                   <Card key={d.id} className="p-3 space-y-2">
                     <p className="font-semibold text-sm">{d.company_name}</p>
@@ -82,7 +84,7 @@ export default function DealKanban() {
                     <p className="text-sm font-bold">R$ {Number(d.value).toLocaleString("pt-BR")}</p>
                     <Select value={d.status} onValueChange={(v) => move(d, v as DealStatus)}>
                       <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      <SelectContent>{stages.map((s) => <SelectItem key={s.key} value={s.key}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-7 text-xs flex-1 gap-1" onClick={async () => {
