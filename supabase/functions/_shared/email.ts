@@ -4,13 +4,15 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 export interface SendEmailInput {
   to: string;
-  subject: string;
-  html: string;
+  subject?: string;
+  html?: string;
   text?: string;
   from?: string;
   replyTo?: string;
   tags?: { name: string; value: string }[];
   template?: string;
+  template_key?: string;
+  variables?: Record<string, string | number>;
   related_entity_type?: string;
   related_entity_id?: string;
 }
