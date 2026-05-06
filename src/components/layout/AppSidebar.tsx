@@ -28,6 +28,10 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     items: [{ to: "/projects", label: "Projetos", icon: Rocket }],
   },
   {
+    label: "Dados",
+    items: [{ to: "/exports", label: "Exportações", icon: Download }],
+  },
+  {
     label: "Configurações",
     items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }],
   },
