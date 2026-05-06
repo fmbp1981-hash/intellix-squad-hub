@@ -15,6 +15,8 @@ import WorkspacesList from "./pages/workspaces/WorkspacesList";
 import NewWorkspace from "./pages/workspaces/NewWorkspace";
 import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
+import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
+import ModelSettings from "./pages/settings/ModelSettings";
 
 const queryClient = new QueryClient();
 
