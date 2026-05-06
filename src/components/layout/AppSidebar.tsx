@@ -1,4 +1,4 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,21 +7,25 @@ import { cn } from "@/lib/utils";
 
 const groups: { label: string; items: { to: string; label: string; icon: any }[] }[] = [
   {
+    label: "Visão Geral",
+    items: [{ to: "/dashboard", label: "Dashboard", icon: Home }],
+  },
+  {
+    label: "IntelliX",
+    items: [
+      { to: "/office", label: "Escritório", icon: LayoutGrid },
+      { to: "/office/gestao", label: "Ágata", icon: Sparkles },
+      { to: "/crm", label: "CRM", icon: Target },
+      { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ],
+  },
+  {
     label: "Consultoria",
     items: [{ to: "/workspaces", label: "Engagements", icon: Building2 }],
   },
   {
     label: "Projetos Ágeis",
     items: [{ to: "/projects", label: "Projetos", icon: Rocket }],
-  },
-  {
-    label: "IntelliX",
-    items: [
-      { to: "/crm", label: "CRM", icon: Target },
-      { to: "/office/gestao", label: "Ágata", icon: Sparkles },
-      { to: "/office", label: "Escritório", icon: LayoutGrid },
-      { to: "/jobs", label: "Jobs", icon: Briefcase },
-    ],
   },
   {
     label: "Configurações",
