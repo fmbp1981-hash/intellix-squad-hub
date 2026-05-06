@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Webhook, Mail } from "lucide-react";
+import { Plus, Trash2, Webhook, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useSendEmail } from "@/hooks/useSendEmail";
 
 const EVENTS = ["deal_won", "deal_lost", "lead_qualified", "contract_signed", "sprint_completed", "impediment_critical", "*"];
 
@@ -44,19 +45,9 @@ export default function IntegrationsPage() {
         <p className="text-sm text-muted-foreground">E-mail, webhooks de saída e conectores externos.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary" /> E-mail (Resend)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Para enviar e-mails do sistema (follow-ups da IA, contratos, faturas), configure a API key do Resend nos Secrets do projeto como <code className="bg-muted px-1 rounded">RESEND_API_KEY</code>.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Obtenha em: <a className="text-primary underline" href="https://resend.com/api-keys" target="_blank" rel="noreferrer">resend.com/api-keys</a>
-          </p>
-        </CardContent>
-      </Card>
+      <ResendCard />
+
+
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">

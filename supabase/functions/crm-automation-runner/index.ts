@@ -54,13 +54,19 @@ async function runAction(supabase: any, action: any, entity: any, eventType: str
         priority: action.priority ?? "normal",
       });
       break;
-    case "send_email":
-      await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
-        body: JSON.stringify({ to: action.to, subject: action.subject, html: action.body }),
+    case "send_email": {
+      const { sendEmail } = await import("../_shared/email.ts");
+      const r = await sendEmail({
+        to: action.to,
+        subject: action.subject ?? `Evento ${eventType}`,
+        html: action.body ?? "",
+        template: action.template,
+        related_entity_type: entity?.type,
+        related_entity_id: entity?.id,
       });
+      if (!r.ok) console.warn("[automation send_email] falhou (continuando):", r.error);
       break;
+    }
   }
 }
 
