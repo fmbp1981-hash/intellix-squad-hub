@@ -17,6 +17,8 @@ import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
 import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
 import ModelSettings from "./pages/settings/ModelSettings";
+import OfficePage from "./pages/office/OfficePage";
+import JobsPage from "./pages/jobs/JobsPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="/settings" element={<Navigate to="/settings/whatsapp" replace />} />
               <Route path="/settings/whatsapp" element={<WhatsAppSettings />} />
               <Route path="/settings/models" element={<ModelSettings />} />
+              <Route path="/office" element={<OfficePage />} />
+              <Route path="/jobs" element={<JobsPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

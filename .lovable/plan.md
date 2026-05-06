@@ -1,50 +1,26 @@
-## Objetivo
-Conceder admin ao usuário `fmbp1981@gmail.com` e avançar com as próximas entregas pendentes (cena do escritório em Phaser, páginas `/office` e `/jobs`, e cron jobs).
+Admin já concedido via SQL pelo usuário. Próximas entregas:
 
-## Etapa 1 — Conceder admin (migration)
-Rodar migration que insere o papel `admin` para o user_id já identificado:
+## 1. Hook `useIsAdmin`
+Criar `src/hooks/useIsAdmin.ts` consultando `user_roles` para o usuário logado.
 
-```sql
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('ad1cc509-2e51-4223-83e2-119862af770e', 'admin')
-ON CONFLICT DO NOTHING;
-```
+## 2. Página `/office` (Phaser)
+- `src/game/office/OfficeScene.ts`: cena top-down com grid, círculos coloridos por `role`, tooltip no hover, método `setActive(agentId, bool)` para pulsar agente em execução.
+- `src/pages/office/OfficePage.tsx`: monta canvas Phaser, carrega `agent_configs` (com squad_configs join), escuta realtime em `run_steps` para destacar agentes em `processing`.
 
-Após isso o usuário poderá acessar `/settings/whatsapp`, `/settings/models` e demais áreas admin sem rodar SQL manual.
+## 3. Página `/jobs`
+- `src/pages/jobs/JobsPage.tsx`: tabela de `internal_jobs` com filtros (status/kind), painel lateral com payload + `output_markdown` via `react-markdown`, botão "Disparar daily_report" chamando edge function `internal-job-trigger`.
 
-## Etapa 2 — Página `/office` (cena Phaser)
-- Adicionar dependência `phaser`.
-- Criar `src/pages/office/OfficePage.tsx` com canvas Phaser embedado.
-- Criar `src/game/office/OfficeScene.ts`:
-  - Grid 2D top-down representando o escritório.
-  - Sprites placeholder por agente (cor por `role`), posicionados via `agent_configs.position_x/y`.
-  - Estado em tempo real: subscrição Supabase em `squad_runs` e `run_steps` para animar o agente "ativo" (pulso/glow) quando há `run_step` em `processing`.
-  - Tooltip ao hover: nome do agente, squad, último output resumido.
-- Registrar rota `/office` em `src/App.tsx` (admin-only).
+## 4. Roteamento e navegação
+- `src/App.tsx`: registrar rotas `/office` e `/jobs` dentro do `AppLayout` protegido.
+- `src/components/layout/AppSidebar.tsx`: adicionar itens "Escritório" e "Jobs" no menu.
 
-## Etapa 3 — Página `/jobs`
-- Criar `src/pages/jobs/JobsPage.tsx`:
-  - Lista de `internal_jobs` com filtros por `status`, `kind`, `department`.
-  - Detalhe lateral mostrando `payload`, `output_markdown` (render markdown), timestamps.
-  - Botão "Disparar agora" → chama edge function `internal-job-trigger`.
-- Registrar rota `/jobs` em `src/App.tsx` (admin-only).
+## 5. Cron jobs (pg_cron + pg_net)
+Migration habilitando extensões e agendando:
+- `* * * * *` → POST `run-step` (processa fila).
+- `*/5 * * * *` → POST `notification-dispatcher`.
+- `0 11 * * *` (08h BRT) → POST `internal-job-trigger` body `{"kind":"daily_report"}`.
 
-## Etapa 4 — Cron jobs (pg_cron)
-Migration habilitando `pg_cron` + `pg_net` e agendando:
-- A cada 1 min: `POST` para edge function `run-step` (processa fila `run_queue`).
-- A cada 5 min: `POST` para `notification-dispatcher` (envia notificações pendentes).
-- Diário 08:00 BRT: `POST` para `internal-job-trigger` com `kind='daily_report'`.
+Headers usam o anon key do projeto.
 
-Os cron usam o anon key + `CALLBACK_SECRET` no header (já existem nos secrets).
-
-## Detalhes técnicos
-- Phaser roda em `<div ref>` montado no `useEffect`; cleanup com `game.destroy(true)` no unmount.
-- Realtime via `supabase.channel('office').on('postgres_changes', ...)`.
-- Rotas admin protegidas por hook `useIsAdmin()` (verifica `user_roles` via RPC `has_role`).
-- `JobsPage` usa `react-markdown` (já no projeto, se não, adicionar).
-
-## Entregáveis
-- 1 migration (admin role) + 1 migration (cron).
-- 4 arquivos novos: `OfficePage.tsx`, `OfficeScene.ts`, `JobsPage.tsx`, hook `useIsAdmin.ts` (se não existir).
-- `src/App.tsx` atualizado com 2 rotas.
-- `package.json`: adicionar `phaser` (e `react-markdown` se faltar).
+## Dependências
+`react-markdown` já adicionado. `phaser` já presente.

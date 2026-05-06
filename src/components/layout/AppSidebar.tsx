@@ -1,4 +1,4 @@
-import { Building2, Settings, LogOut } from "lucide-react";
+import { Building2, Settings, LogOut, LayoutGrid, Briefcase } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/workspaces", label: "Workspaces", icon: Building2 },
+  { to: "/office", label: "Escritório", icon: LayoutGrid },
+  { to: "/jobs", label: "Jobs", icon: Briefcase },
   { to: "/settings", label: "Configurações", icon: Settings },
 ];
 
