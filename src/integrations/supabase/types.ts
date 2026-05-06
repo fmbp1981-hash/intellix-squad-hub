@@ -126,13 +126,20 @@ export type Database = {
       agile_projects: {
         Row: {
           ai_scrum_master: boolean | null
+          auto_planning_completed_at: string | null
+          auto_planning_error: string | null
+          auto_planning_job_id: string | null
+          auto_planning_status: string
           client_name: string | null
           completed_points: number | null
+          contract_id: string | null
           created_at: string
           current_velocity: number | null
+          deal_id: string | null
           definition_of_done: string | null
           description: string | null
           engagement_id: string | null
+          execution_plan_md: string | null
           id: string
           name: string
           product_owner_id: string | null
@@ -148,13 +155,20 @@ export type Database = {
         }
         Insert: {
           ai_scrum_master?: boolean | null
+          auto_planning_completed_at?: string | null
+          auto_planning_error?: string | null
+          auto_planning_job_id?: string | null
+          auto_planning_status?: string
           client_name?: string | null
           completed_points?: number | null
+          contract_id?: string | null
           created_at?: string
           current_velocity?: number | null
+          deal_id?: string | null
           definition_of_done?: string | null
           description?: string | null
           engagement_id?: string | null
+          execution_plan_md?: string | null
           id?: string
           name: string
           product_owner_id?: string | null
@@ -170,13 +184,20 @@ export type Database = {
         }
         Update: {
           ai_scrum_master?: boolean | null
+          auto_planning_completed_at?: string | null
+          auto_planning_error?: string | null
+          auto_planning_job_id?: string | null
+          auto_planning_status?: string
           client_name?: string | null
           completed_points?: number | null
+          contract_id?: string | null
           created_at?: string
           current_velocity?: number | null
+          deal_id?: string | null
           definition_of_done?: string | null
           description?: string | null
           engagement_id?: string | null
+          execution_plan_md?: string | null
           id?: string
           name?: string
           product_owner_id?: string | null

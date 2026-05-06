@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Info, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const DEFAULT_DOD = `- Critérios de aceite verificados
 - Funcionalidade demonstrável ao PO
@@ -32,6 +34,7 @@ export default function NewProject() {
   const [wipInProgress, setWipInProgress] = useState(5);
   const [wipReview, setWipReview] = useState(3);
   const [dod, setDod] = useState(DEFAULT_DOD);
+  const [triggerAI, setTriggerAI] = useState(true);
 
   const { data: engagements } = useQuery({
     queryKey: ["engagements-list"],
@@ -68,10 +71,16 @@ export default function NewProject() {
           wip_limit_review: wipReview,
           definition_of_done: dod,
           status: "planning",
+          auto_planning_status: triggerAI ? "pending" : "completed",
         })
         .select("id")
         .single();
       if (error) throw error;
+      if (triggerAI && data?.id) {
+        supabase.functions.invoke("operations-detail-project", {
+          body: { project_id: data.id, mode: "initial" },
+        }).catch(() => {});
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -87,6 +96,28 @@ export default function NewProject() {
         <h1 className="text-2xl font-semibold tracking-tight">Novo Projeto Ágil</h1>
         <p className="text-sm text-muted-foreground">Configure os parâmetros iniciais do projeto.</p>
       </header>
+
+      <div className="flex gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+        <Info className="h-4 w-4 shrink-0 text-primary" />
+        <p className="text-muted-foreground">
+          Projetos são criados <strong className="text-foreground">automaticamente</strong> quando um Deal é marcado como <em>Won</em> no CRM.
+          Use este formulário para projetos internos ou sem origem comercial.
+        </p>
+      </div>
+
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Acionar Agente de Operações</p>
+              <p className="text-xs text-muted-foreground">A IA detalha escopo, gera épicos, backlog e delega squads.</p>
+            </div>
+          </div>
+          <Switch checked={triggerAI} onCheckedChange={setTriggerAI} />
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>
