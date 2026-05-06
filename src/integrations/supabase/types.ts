@@ -64,6 +64,161 @@ export type Database = {
           },
         ]
       }
+      briefings: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          source: string | null
+          title: string
+          workspace_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          source?: string | null
+          title: string
+          workspace_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          source?: string | null
+          title?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directives: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          department: string | null
+          id: string
+          issued_by: string | null
+          squad_key: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          issued_by?: string | null
+          squad_key?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          issued_by?: string | null
+          squad_key?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      internal_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          id: string
+          kind: Database["public"]["Enums"]["internal_job_kind"]
+          output_markdown: string | null
+          payload: Json
+          scheduled_for: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["internal_job_status"]
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["internal_job_kind"]
+          output_markdown?: string | null
+          payload?: Json
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["internal_job_status"]
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["internal_job_kind"]
+          output_markdown?: string | null
+          payload?: Json
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["internal_job_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      okrs: {
+        Row: {
+          created_at: string
+          department: string
+          id: string
+          key_results: Json
+          objective: string
+          owner_id: string | null
+          progress: number
+          quarter: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          id?: string
+          key_results?: Json
+          objective: string
+          owner_id?: string | null
+          progress?: number
+          quarter: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          id?: string
+          key_results?: Json
+          objective?: string
+          owner_id?: string | null
+          progress?: number
+          quarter?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       run_queue: {
         Row: {
           attempts: number
@@ -420,6 +575,17 @@ export type Database = {
         | "strategist"
         | "reviewer"
         | "manager"
+      internal_job_kind:
+        | "daily-standup"
+        | "weekly-review"
+        | "on-demand-brief"
+        | "incident-response"
+      internal_job_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "aborted"
       run_step_status:
         | "pending"
         | "running"
@@ -559,6 +725,19 @@ export const Constants = {
         "strategist",
         "reviewer",
         "manager",
+      ],
+      internal_job_kind: [
+        "daily-standup",
+        "weekly-review",
+        "on-demand-brief",
+        "incident-response",
+      ],
+      internal_job_status: [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "aborted",
       ],
       run_step_status: ["pending", "running", "completed", "failed", "skipped"],
     },
