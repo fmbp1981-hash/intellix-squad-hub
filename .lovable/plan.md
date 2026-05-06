@@ -1,81 +1,106 @@
 
-# Fechamento do Lote D — Integrações & Production-Ready
+# Prompt D — Settings + Dashboard + Polish Final
 
-Quatro frentes pendentes para deixar CRM + Projetos Ágeis prontos para produção.
+Entrega o último lote de construção. Dado o tamanho, divido em **5 sub-lotes** sequenciais — cada um deployável e testável isoladamente.
 
-## 1. Templates de E-mail (`email_templates`)
+## Decisões de escopo
 
-**Migration:**
-- Tabela `email_templates`: `id`, `key` (unique, ex: `deal_won_welcome`), `name`, `subject`, `html`, `text`, `description`, `variables jsonb` (lista de placeholders esperados), `enabled`, timestamps.
-- RLS: leitura para qualquer authenticated; escrita apenas `admin` (via `has_role`).
-- Seed inicial com 4 templates: `deal_won_welcome`, `lead_qualified_followup`, `contract_signed_kickoff`, `invoice_overdue_reminder` — usando placeholders `{{nome}}`, `{{empresa}}`, `{{valor}}` etc.
+- **Drive**: Service Account via secret `GOOGLE_SERVICE_ACCOUNT_JSON`. Se ausente, sistema funciona normalmente; botão fica desabilitado com tooltip.
+- **PDF Export**: usar Deno + `https://esm.sh/jspdf` + `html2canvas` é instável em edge. Vou usar **renderização HTML server-side + serviço externo opcional**. Default: gerar HTML estilizado e devolver para o cliente baixar como `.html`; quando `PDFSHIFT_API_KEY` estiver presente, converte para PDF real. Mantém entrega sem nova dependência obrigatória.
+- **PWA**: apenas manifest + ícones (sem service worker), conforme guideline de evitar SW em iframes Lovable.
+- **Tema**: dark-only mantido. Reaproveita tokens existentes em `index.css` e adiciona o que faltar.
+- **Sidebar**: já existe `AppSidebar.tsx` — refatoro/expando, não reescrevo do zero.
+- **Roles**: aproveita `user_roles` + `has_role` já existentes. `admin` tem tudo; checagens server-side via RLS, client-side via `useIsAdmin`.
 
-**Edge Function `send-email` (refatorar):**
-- Aceitar `template_key` + `variables` no payload. Quando presente, busca template, faz substituição simples `{{var}}` → valor, popula `subject`/`html`. Mantém compatibilidade com `subject`/`html` diretos.
-- Helper `_shared/email.ts` ganha o mesmo suporte.
+## Lote D1 — Dashboard executivo
 
-**UI — nova página `src/pages/settings/EmailTemplatesPage.tsx`:**
-- Lista de templates com badge de status.
-- Editor (modal) com campos `subject`, `html` (textarea), `text`, `variables` (chips) e botão **Pré-visualizar** (renderiza substituindo com valores fictícios).
-- Botão **Enviar teste** que invoca `send-email` com o template selecionado.
-- Adicionar nova aba "Templates de E-mail" no `IntegrationsPage` ou em `SettingsPage` (preferência: aba dentro de Settings).
+**Migration:** view `vw_dashboard_feed` (UNION de `squad_runs`, `internal_jobs`, `crm_activities`, `notifications` últimas 24h) + RPC `dashboard_summary()` que retorna JSON consolidado (MRR, pipeline, engagements, sprints, jobs, tokens) em uma chamada.
 
-## 2. Notificações in-app no `crm-event-handler`
+**Hook:** `src/hooks/useDashboard.ts` — `useQuery`-like sem react-query (manter padrão atual com useState/useEffect).
 
-**Edge Function:**
-- Após cada evento relevante (`lead_qualified`, `deal_won`, `contract_signed`, `engagement_blocked`, `invoice_overdue`), chamar `notification-dispatcher` (já existente) com payload padronizado.
-- Resolver destinatários: `owner_id`/`assigned_to` da entidade; fallback para todos os admins (via `user_roles`).
-- Categoria `crm`, prioridade conforme evento (`deal_won` = high, `engagement_blocked` = high, demais = normal).
-- Inserir registro em `notifications` (já consumida pelo `NotificationBell`) com link contextual (`/crm/deals/:id` etc.).
+**Componentes** (`src/components/dashboard/`):
+- `DashboardGreeting.tsx`, `MetricsBar.tsx`, `UnifiedFeedCard.tsx`, `AgileProjectsGrid.tsx`, `OKRProgressCard.tsx`, `CommercialFunnelBar.tsx`, `FinancialHealthCard.tsx`, `TokenUsageCard.tsx`, `QuickActionsBar.tsx`, `DashboardSkeleton.tsx`.
 
-## 3. Refinar RLS via `user_roles`
+**Página:** `src/pages/Dashboard.tsx`. Rota `/dashboard` (já existe em `App.tsx` ou substitui index).
 
-**Migration de revisão:**
-- Auditar policies das tabelas CRM/Ágil (`deals`, `leads`, `contracts`, `invoices`, `engagements`, `agile_projects`, `crm_automations`, `outbound_webhooks`, `email_log`, novas `email_templates`).
-- Padrão:
-  - SELECT: authenticated (todos os usuários internos visualizam).
-  - INSERT/UPDATE/DELETE em entidades operacionais: authenticated (mantém produtividade do time).
-  - INSERT/UPDATE/DELETE em config sensível (`crm_automations`, `outbound_webhooks`, `email_templates`, `crm_pipelines/stages`): apenas `has_role(auth.uid(),'admin')`.
-- Drop policies legadas conflitantes antes de recriar.
+## Lote D2 — Settings expandido
 
-## 4. Seed de Pipeline padrão para novos workspaces
+Reorganizar `SettingsPage` para layout com sidebar interna (substitui Tabs atuais). Sub-rotas:
 
-**Decisão sobre escopo:**
-- Hoje não há tabela `crm_pipelines`/`pipeline_stages` — `deals.stage` é string livre.
-- Criar tabela `crm_pipeline_stages`: `id`, `key`, `name`, `order`, `probability`, `color`, `is_won`, `is_lost`, `enabled`.
-- Seed com stages padrão: `prospeccao` (10%), `qualificacao` (25%), `proposta` (50%), `negociacao` (75%), `fechado_ganho` (100%, is_won), `fechado_perdido` (0%, is_lost).
-- Atualizar `DealKanban` para ler colunas dinamicamente da tabela em vez de hardcoded.
-- RLS: leitura authenticated, escrita admin.
+- `/settings/notifications` — reaproveita `NotificationPreferences` + UI de canais/digest/quiet hours/categorias (matriz editável persistida em `notification_preferences.categories`).
+- `/settings/whatsapp` — `WhatsAppSettings` existente.
+- `/settings/models` — `ModelSettings` + bloco "Testar modelo" (chama `ai-assistant`) e gráfico de custo via Recharts a partir de `token_usage`.
+- `/settings/email-templates` — já feito no fechamento do Lote D anterior.
+- `/settings/agents` — nova página: lista `agent_configs` agrupados por `squad_id`, modal de edição de `persona`/skills (já há `admin_all` RLS).
+- `/settings/squads` — CRUD em `squad_configs`.
+- `/settings/budgets` — CRUD em `token_usage` (campo `budget_usd`) + gráfico histórico.
+- `/settings/profile` — atualiza `auth.users` metadata + timezone (nova coluna em `profiles` se não existir; senão metadata).
+- `/settings/integrations` — mantém atual + nova seção Google Drive.
 
-## Arquivos
+Componente `SettingsLayout.tsx` com sidebar secundária + `<Outlet />`.
 
-**Migrations (1 nova):**
-- `supabase/migrations/<timestamp>_lote_d_close.sql` — cria `email_templates`, `crm_pipeline_stages`, seeds, ajusta RLS.
+## Lote D3 — Drive & Export
 
 **Edge Functions:**
-- ✏️ `supabase/functions/send-email/index.ts` — suporte a `template_key`.
-- ✏️ `supabase/functions/_shared/email.ts` — idem.
-- ✏️ `supabase/functions/crm-event-handler/index.ts` — disparo de notificações.
+- `drive-setup/index.ts` — Service Account JWT (assinatura RS256 manual com Web Crypto), cria estrutura `IntelliX/{client}/{engagement}/{Diagnósticos,Propostas,Planos}`, atualiza `workspaces.drive_folder_id/url`. Migration adiciona essas colunas se não existirem.
+- `export-run/index.ts` — monta HTML branded a partir de `pipeline_step_outputs`. Se `PDFSHIFT_API_KEY` presente, converte para PDF; senão devolve HTML. Upload opcional ao Drive. Atualiza `squad_runs.drive_file_id/url`.
 
-**Frontend:**
-- 🆕 `src/pages/settings/EmailTemplatesPage.tsx`
-- 🆕 `src/hooks/useEmailTemplates.ts`
-- ✏️ `src/pages/settings/SettingsPage.tsx` — nova aba "Templates".
-- ✏️ `src/pages/crm/DealKanban.tsx` — colunas dinâmicas.
+**UI:** botão "Exportar" em `SquadRunDetail` chamando `export-run` e disparando download (Blob).
 
-## Detalhes Técnicos
+**Settings → Integrações:** card Google Drive com status (`configured`/`pending`) + botão "Configurar pasta do workspace".
 
-- Substituição de placeholders: regex simples `/\{\{\s*(\w+)\s*\}\}/g` no servidor (sem libs).
-- `notification-dispatcher` já é internal — chamada via service role, sem CORS.
-- Migrations idempotentes (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`).
-- Sem mudanças em `auth.users` ou schemas reservados.
+## Lote D4 — Polish visual + Error states + Performance
+
+**Design tokens:** auditar `index.css` e `tailwind.config.ts`, adicionar tokens faltantes (`--background-elevated`, cores de departamento, status). Garantir `--background`/`--foreground` HSL.
+
+**Tipografia:** classes utilitárias `.text-display`, `.text-heading`, `.text-subheading`, `.text-body`, `.text-small`, `.text-mono` em `index.css`.
+
+**Scrollbar customizada** em `index.css`.
+
+**Componentes compartilhados:**
+- `src/components/shared/ErrorState.tsx` (variantes network/not_found/permission/server/llm_unavailable).
+- `src/components/shared/ErrorBoundary.tsx` (envolve `<Routes>` em `App.tsx`).
+- `src/components/shared/SkeletonPage.tsx` + skeletons específicos.
+- `src/lib/error-handler.ts` — mapper centralizado + log opcional em `audit_log`.
+
+**Lazy loading:** converter rotas em `App.tsx` para `React.lazy` + `Suspense fallback={<SkeletonPage/>}`.
+
+**Micro-interações:** adicionar utilities CSS (`.hover-lift`, `.click-press`, `.fade-in-up`) e aplicar em cards principais. Sem framer-motion (manter bundle leve).
+
+**`react-countup`** apenas se já estiver no package — caso contrário, animação CSS simples.
+
+## Lote D5 — Auth, Sidebar final, PWA
+
+**Auth:**
+- Conferir `ProtectedRoute` (já existe). Adicionar middleware de role: redirect `/onboarding` se não tem `user_roles`.
+- `Login.tsx` (já existe) — repaginar com fundo/grid isométrico.
+
+**Sidebar:** refatorar `AppSidebar.tsx` para incluir todos os grupos do prompt, com badges (jobs ativos, checkpoints pendentes, status providers). Mobile: hamburger + drawer.
+
+**PWA (sem service worker):**
+- `public/manifest.json` com cores/ícones.
+- Ícones 192 e 512 gerados via script (`/tmp/gen-icons.mjs` usando `canvas` ou ImageMagick) e copiados para `public/`.
+- Adicionar `<link rel="manifest">` em `index.html`.
+- Sem `vite-plugin-pwa`, sem `sw.js`.
+
+## Detalhes técnicos críticos
+
+- **Sem novas deps pesadas.** Usar Recharts (já presente). Sem framer-motion, sem react-query.
+- **Edge functions** seguem padrão `verify_jwt = false` (validação de claims em código onde necessário).
+- **`drive-setup`**: assinar JWT do Service Account com `crypto.subtle.importKey('pkcs8', ...)` + `RSASSA-PKCS1-v1_5`. Token temporário trocado em `https://oauth2.googleapis.com/token`. Sem SDK.
+- **Migrations idempotentes** para `workspaces.drive_folder_id/url` e qualquer outro ajuste.
+- **RPC `dashboard_summary`**: SECURITY DEFINER, retorna JSON. Restrita a usuários autenticados.
 
 ## Ordem de execução
 
-1. Migration (templates, stages, RLS, seeds).
-2. Refatorar `send-email` + helper.
-3. Atualizar `crm-event-handler` com notificações.
-4. Página de templates + hook + nova aba.
-5. `DealKanban` dinâmico.
+1. **D1 Dashboard** — migration + componentes + rota.
+2. **D2 Settings** — refator `SettingsPage` + 5 sub-páginas novas.
+3. **D3 Drive/Export** — 2 edge functions + migration colunas + UI.
+4. **D4 Polish** — tokens, ErrorBoundary, lazy loading.
+5. **D5 Auth/Sidebar/PWA** — sidebar refatorada + manifest + ícones.
 
-Confirma para executar?
+Cada lote termina deployável; eu pauso entre lotes para você validar (ou confirmamos ir direto até o fim).
+
+## Pergunta antes de começar
+
+Quer que eu execute **os 5 lotes em sequência sem pausar**, ou pauso após cada lote para você validar? Se for sem pausar, vai gerar um diff grande mas chega no estado final mais rápido.
