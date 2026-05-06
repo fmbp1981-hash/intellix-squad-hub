@@ -1,7 +1,19 @@
 project_id = "hynadwlwrscvjubryqlg"
 
-[functions.squad-run-start]
-verify_jwt = true
+[functions.run-start]
+verify_jwt = false
 
-[functions.squad-state-update]
+[functions.run-step]
+verify_jwt = false
+
+[functions.run-abort]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.notification-dispatcher]
+verify_jwt = false
+
+[functions.internal-job-trigger]
 verify_jwt = false
