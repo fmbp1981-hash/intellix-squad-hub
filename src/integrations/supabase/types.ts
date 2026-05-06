@@ -213,6 +213,42 @@ export type Database = {
         }
         Relationships: []
       }
+      llm_configs: {
+        Row: {
+          config_key: string
+          fallback_model: string | null
+          fallback_provider: string | null
+          max_tokens: number
+          model: string
+          notes: string | null
+          provider: string
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          max_tokens?: number
+          model: string
+          notes?: string | null
+          provider: string
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          fallback_model?: string | null
+          fallback_provider?: string | null
+          max_tokens?: number
+          model?: string
+          notes?: string | null
+          provider?: string
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -545,6 +581,42 @@ export type Database = {
           created_at?: string | null
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_configs: {
+        Row: {
+          active: boolean
+          admin_number: string
+          created_at: string
+          id: string
+          instance_name: string | null
+          instance_token: string
+          instance_url: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          admin_number: string
+          created_at?: string
+          id?: string
+          instance_name?: string | null
+          instance_token: string
+          instance_url: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          admin_number?: string
+          created_at?: string
+          id?: string
+          instance_name?: string | null
+          instance_token?: string
+          instance_url?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
