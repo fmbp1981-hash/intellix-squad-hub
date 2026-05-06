@@ -106,8 +106,10 @@ const App = () => (
                 <Route path="squads" element={<SquadsSettings />} />
                 <Route path="budgets" element={<BudgetsSettings />} />
                 <Route path="profile" element={<ProfileSettings />} />
+                <Route path="drive" element={<DriveSetupSettings />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
               </Route>
+              <Route path="/exports" element={<ExportsPage />} />
               <Route path="/office" element={<OfficePage />} />
               <Route path="/office/gestao" element={<OfficeGestao />} />
               <Route path="/jobs" element={<JobsPage />} />
