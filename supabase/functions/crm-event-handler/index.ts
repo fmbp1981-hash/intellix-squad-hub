@@ -23,11 +23,40 @@ async function triggerOperationsDetailing(projectId: string, mode: "initial" | "
   }).catch((e) => console.error("operations-detail dispatch error", e));
 }
 
+async function runAutomations(eventType: string, entity: any) {
+  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/crm-automation-runner`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+    body: JSON.stringify({ eventType, entity }),
+  }).catch((e) => console.error("automation runner", e));
+}
+
+async function dispatchWebhooks(event: string, payload: any) {
+  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/outbound-webhook-dispatcher`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+    body: JSON.stringify({ event, payload }),
+  }).catch((e) => console.error("webhook dispatcher", e));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supa = adminClient();
   const { eventType, entityId } = await req.json().catch(() => ({}));
+
+  // fan-out genérico
+  let entityForAutomation: any = { id: entityId };
+  if (eventType === "deal_won" || eventType === "deal_stage_changed" || eventType === "deal_lost") {
+    const { data } = await supa.from("deals").select("*").eq("id", entityId).maybeSingle();
+    entityForAutomation = data ?? entityForAutomation;
+  } else if (eventType === "lead_qualified" || eventType === "lead_created") {
+    const { data } = await supa.from("leads").select("*").eq("id", entityId).maybeSingle();
+    entityForAutomation = data ?? entityForAutomation;
+  }
+  runAutomations(eventType, entityForAutomation);
+  dispatchWebhooks(eventType, entityForAutomation);
+
 
   switch (eventType) {
     case "lead_qualified": {
