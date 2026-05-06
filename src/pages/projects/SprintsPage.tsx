@@ -226,10 +226,14 @@ function CeremonyDialog({ open, onOpenChange, sprintId, type }: any) {
   }, [sprintId, type]);
 
   const save = async () => {
-    await supabase.from("sprints").update({
+    const update: any = {
       [fields[type as keyof typeof fields]]: notes,
       [flags[type as keyof typeof flags]]: true,
-    }).eq("id", sprintId);
+    };
+    await supabase.from("sprints").update(update).eq("id", sprintId);
+    toast.success("Cerimônia registrada");
+    onOpenChange(false);
+  };
     toast.success("Cerimônia registrada");
     onOpenChange(false);
   };
