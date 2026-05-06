@@ -17,3 +17,24 @@ verify_jwt = false
 
 [functions.internal-job-trigger]
 verify_jwt = false
+
+[functions.ai-assistant]
+verify_jwt = false
+
+[functions.ai-deal-coach]
+verify_jwt = false
+
+[functions.ai-sprint-coach]
+verify_jwt = false
+
+[functions.crm-automation-runner]
+verify_jwt = false
+
+[functions.lead-score-calculator]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.outbound-webhook-dispatcher]
+verify_jwt = false
