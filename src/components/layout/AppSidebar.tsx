@@ -1,17 +1,32 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { to: "/workspaces", label: "Workspaces", icon: Building2 },
-  { to: "/crm", label: "CRM", icon: Target },
-  { to: "/office/gestao", label: "Ágata", icon: Sparkles },
-  { to: "/office", label: "Escritório", icon: LayoutGrid },
-  { to: "/jobs", label: "Jobs", icon: Briefcase },
-  { to: "/settings", label: "Configurações", icon: SettingsIcon },
+const groups: { label: string; items: { to: string; label: string; icon: any }[] }[] = [
+  {
+    label: "Consultoria",
+    items: [{ to: "/workspaces", label: "Engagements", icon: Building2 }],
+  },
+  {
+    label: "Projetos Ágeis",
+    items: [{ to: "/projects", label: "Projetos", icon: Rocket }],
+  },
+  {
+    label: "IntelliX",
+    items: [
+      { to: "/crm", label: "CRM", icon: Target },
+      { to: "/office/gestao", label: "Ágata", icon: Sparkles },
+      { to: "/office", label: "Escritório", icon: LayoutGrid },
+      { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }],
+  },
 ];
 
 function getInitials(email: string | undefined | null): string {
@@ -34,23 +49,30 @@ export function AppSidebar() {
         <BrandLogo variant="full" />
       </div>
 
-      <nav className="flex-1 space-y-1 p-3">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                "text-muted-foreground hover:bg-muted hover:text-foreground",
-                isActive &&
-                  "bg-muted text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-brand"
-              )
-            }
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </NavLink>
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+        {groups.map((group) => (
+          <div key={group.label} className="space-y-1">
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </p>
+            {group.items.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  cn(
+                    "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    isActive &&
+                      "bg-muted text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-brand"
+                  )
+                }
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 

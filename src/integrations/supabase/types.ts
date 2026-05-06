@@ -123,6 +123,90 @@ export type Database = {
           },
         ]
       }
+      agile_projects: {
+        Row: {
+          ai_scrum_master: boolean | null
+          client_name: string | null
+          completed_points: number | null
+          created_at: string
+          current_velocity: number | null
+          definition_of_done: string | null
+          description: string | null
+          engagement_id: string | null
+          id: string
+          name: string
+          product_owner_id: string | null
+          project_type: string
+          sprint_duration_days: number
+          status: string
+          total_story_points: number | null
+          updated_at: string
+          velocity_baseline: number | null
+          wip_limit_in_progress: number | null
+          wip_limit_review: number | null
+          workspace_id: string | null
+        }
+        Insert: {
+          ai_scrum_master?: boolean | null
+          client_name?: string | null
+          completed_points?: number | null
+          created_at?: string
+          current_velocity?: number | null
+          definition_of_done?: string | null
+          description?: string | null
+          engagement_id?: string | null
+          id?: string
+          name: string
+          product_owner_id?: string | null
+          project_type?: string
+          sprint_duration_days?: number
+          status?: string
+          total_story_points?: number | null
+          updated_at?: string
+          velocity_baseline?: number | null
+          wip_limit_in_progress?: number | null
+          wip_limit_review?: number | null
+          workspace_id?: string | null
+        }
+        Update: {
+          ai_scrum_master?: boolean | null
+          client_name?: string | null
+          completed_points?: number | null
+          created_at?: string
+          current_velocity?: number | null
+          definition_of_done?: string | null
+          description?: string | null
+          engagement_id?: string | null
+          id?: string
+          name?: string
+          product_owner_id?: string | null
+          project_type?: string
+          sprint_duration_days?: number
+          status?: string
+          total_story_points?: number | null
+          updated_at?: string
+          velocity_baseline?: number | null
+          wip_limit_in_progress?: number | null
+          wip_limit_review?: number | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agile_projects_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agile_projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -440,6 +524,85 @@ export type Database = {
           },
         ]
       }
+      epics: {
+        Row: {
+          acceptance_criteria: string | null
+          business_value: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          moscow: string | null
+          okr_id: string | null
+          priority: number | null
+          project_id: string
+          squad_run_id: string | null
+          status: string
+          story_points_completed: number | null
+          story_points_estimated: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acceptance_criteria?: string | null
+          business_value?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          moscow?: string | null
+          okr_id?: string | null
+          priority?: number | null
+          project_id: string
+          squad_run_id?: string | null
+          status?: string
+          story_points_completed?: number | null
+          story_points_estimated?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acceptance_criteria?: string | null
+          business_value?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          moscow?: string | null
+          okr_id?: string | null
+          priority?: number | null
+          project_id?: string
+          squad_run_id?: string | null
+          status?: string
+          story_points_completed?: number | null
+          story_points_estimated?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epics_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epics_squad_run_id_fkey"
+            columns: ["squad_run_id"]
+            isOneToOne: false
+            referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gestao_briefings: {
         Row: {
           content_markdown: string
@@ -547,6 +710,76 @@ export type Database = {
             columns: ["okr_id"]
             isOneToOne: false
             referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impediments: {
+        Row: {
+          ai_suggested_resolution: string | null
+          created_at: string
+          description: string | null
+          id: string
+          impact: string
+          project_id: string
+          reported_by: string | null
+          resolution: string | null
+          resolved_at: string | null
+          sprint_id: string | null
+          status: string
+          story_id: string | null
+          title: string
+        }
+        Insert: {
+          ai_suggested_resolution?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact: string
+          project_id: string
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          sprint_id?: string | null
+          status?: string
+          story_id?: string | null
+          title: string
+        }
+        Update: {
+          ai_suggested_resolution?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact?: string
+          project_id?: string
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          sprint_id?: string | null
+          status?: string
+          story_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impediments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impediments_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impediments_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
             referencedColumns: ["id"]
           },
         ]
@@ -959,6 +1192,53 @@ export type Database = {
           },
         ]
       }
+      release_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          epics_included: string[] | null
+          id: string
+          project_id: string
+          release_notes: string | null
+          status: string
+          target_date: string | null
+          total_points: number | null
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          epics_included?: string[] | null
+          id?: string
+          project_id: string
+          release_notes?: string | null
+          status?: string
+          target_date?: string | null
+          total_points?: number | null
+          version: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          epics_included?: string[] | null
+          id?: string
+          project_id?: string
+          release_notes?: string | null
+          status?: string
+          target_date?: string | null
+          total_points?: number | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       run_queue: {
         Row: {
           attempts: number
@@ -1065,6 +1345,146 @@ export type Database = {
             columns: ["run_id"]
             isOneToOne: false
             referencedRelation: "squad_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sprint_metrics: {
+        Row: {
+          avg_cycle_time_days: number | null
+          completed_points: number
+          created_at: string
+          id: string
+          ideal_remaining: number
+          project_id: string
+          recorded_date: string
+          remaining_points: number
+          sprint_id: string
+          total_scope: number
+          wip_count: number | null
+        }
+        Insert: {
+          avg_cycle_time_days?: number | null
+          completed_points: number
+          created_at?: string
+          id?: string
+          ideal_remaining: number
+          project_id: string
+          recorded_date: string
+          remaining_points: number
+          sprint_id: string
+          total_scope: number
+          wip_count?: number | null
+        }
+        Update: {
+          avg_cycle_time_days?: number | null
+          completed_points?: number
+          created_at?: string
+          id?: string
+          ideal_remaining?: number
+          project_id?: string
+          recorded_date?: string
+          remaining_points?: number
+          sprint_id?: string
+          total_scope?: number
+          wip_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sprint_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sprint_metrics_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sprints: {
+        Row: {
+          added_points: number | null
+          committed_points: number | null
+          completed_points: number | null
+          created_at: string
+          end_date: string
+          goal: string
+          id: string
+          name: string | null
+          number: number
+          planning_done: boolean | null
+          planning_notes: string | null
+          project_id: string
+          removed_points: number | null
+          retro_actions: Json | null
+          retrospective_done: boolean | null
+          retrospective_notes: string | null
+          review_done: boolean | null
+          review_notes: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          velocity: number | null
+        }
+        Insert: {
+          added_points?: number | null
+          committed_points?: number | null
+          completed_points?: number | null
+          created_at?: string
+          end_date: string
+          goal: string
+          id?: string
+          name?: string | null
+          number: number
+          planning_done?: boolean | null
+          planning_notes?: string | null
+          project_id: string
+          removed_points?: number | null
+          retro_actions?: Json | null
+          retrospective_done?: boolean | null
+          retrospective_notes?: string | null
+          review_done?: boolean | null
+          review_notes?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          velocity?: number | null
+        }
+        Update: {
+          added_points?: number | null
+          committed_points?: number | null
+          completed_points?: number | null
+          created_at?: string
+          end_date?: string
+          goal?: string
+          id?: string
+          name?: string | null
+          number?: number
+          planning_done?: boolean | null
+          planning_notes?: string | null
+          project_id?: string
+          removed_points?: number | null
+          retro_actions?: Json | null
+          retrospective_done?: boolean | null
+          retrospective_notes?: string | null
+          review_done?: boolean | null
+          review_notes?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          velocity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sprints_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1218,6 +1638,53 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          actual_hours: number | null
+          assignee: string | null
+          created_at: string
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          status: string
+          story_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          assignee?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          status?: string
+          story_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_hours?: number | null
+          assignee?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          status?: string
+          story_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           created_at: string | null
@@ -1292,6 +1759,169 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stories: {
+        Row: {
+          acceptance_criteria: string
+          accepted_at: string | null
+          action: string
+          assignee_department: string | null
+          benefit: string
+          blocked: boolean | null
+          blocked_reason: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          epic_id: string | null
+          id: string
+          invest_estimable: boolean | null
+          invest_independent: boolean | null
+          invest_negotiable: boolean | null
+          invest_small: boolean | null
+          invest_testable: boolean | null
+          invest_valuable: boolean | null
+          moscow: string | null
+          persona: string
+          priority: number | null
+          project_id: string
+          sprint_id: string | null
+          started_at: string | null
+          status: string
+          story_points: number | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          acceptance_criteria?: string
+          accepted_at?: string | null
+          action: string
+          assignee_department?: string | null
+          benefit: string
+          blocked?: boolean | null
+          blocked_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          invest_estimable?: boolean | null
+          invest_independent?: boolean | null
+          invest_negotiable?: boolean | null
+          invest_small?: boolean | null
+          invest_testable?: boolean | null
+          invest_valuable?: boolean | null
+          moscow?: string | null
+          persona: string
+          priority?: number | null
+          project_id: string
+          sprint_id?: string | null
+          started_at?: string | null
+          status?: string
+          story_points?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          acceptance_criteria?: string
+          accepted_at?: string | null
+          action?: string
+          assignee_department?: string | null
+          benefit?: string
+          blocked?: boolean | null
+          blocked_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          epic_id?: string | null
+          id?: string
+          invest_estimable?: boolean | null
+          invest_independent?: boolean | null
+          invest_negotiable?: boolean | null
+          invest_small?: boolean | null
+          invest_testable?: boolean | null
+          invest_valuable?: boolean | null
+          moscow?: string | null
+          persona?: string
+          priority?: number | null
+          project_id?: string
+          sprint_id?: string | null
+          started_at?: string | null
+          status?: string
+          story_points?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_story_sprint"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      velocity_history: {
+        Row: {
+          committed: number
+          completed: number
+          created_at: string
+          id: string
+          project_id: string
+          sprint_id: string
+          sprint_number: number
+          velocity: number
+        }
+        Insert: {
+          committed: number
+          completed: number
+          created_at?: string
+          id?: string
+          project_id: string
+          sprint_id: string
+          sprint_number: number
+          velocity: number
+        }
+        Update: {
+          committed?: number
+          completed?: number
+          created_at?: string
+          id?: string
+          project_id?: string
+          sprint_id?: string
+          sprint_number?: number
+          velocity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "velocity_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "agile_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "velocity_history_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_configs: {
         Row: {
