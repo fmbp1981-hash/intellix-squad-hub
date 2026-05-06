@@ -32,24 +32,25 @@ export default function OfficePage() {
   }, []);
 
   useEffect(() => {
+    if (loading || !isAdmin) return;
     if (!containerRef.current || gameRef.current) return;
     const scene = new OfficeScene();
     sceneRef.current = scene;
     gameRef.current = new Phaser.Game({
       type: Phaser.AUTO,
       parent: containerRef.current,
-      width: containerRef.current.clientWidth || 800,
+      width: 1000,
       height: 600,
       backgroundColor: "#0b1120",
       scene,
-      scale: { mode: Phaser.Scale.RESIZE },
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     });
     return () => {
       gameRef.current?.destroy(true);
       gameRef.current = null;
       sceneRef.current = null;
     };
-  }, []);
+  }, [loading, isAdmin]);
 
   useEffect(() => {
     sceneRef.current?.setAgents(agents);

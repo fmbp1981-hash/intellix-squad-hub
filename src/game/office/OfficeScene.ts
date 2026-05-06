@@ -27,13 +27,14 @@ export class OfficeScene extends Phaser.Scene {
   >();
   private tooltip!: Phaser.GameObjects.Text;
   private tooltipBg!: Phaser.GameObjects.Rectangle;
+  private ready = false;
 
   constructor() {
     super("OfficeScene");
   }
 
-  init(data: { agents: AgentSprite[] }) {
-    this.agents = data.agents ?? [];
+  init(data: { agents?: AgentSprite[] }) {
+    if (data?.agents) this.agents = data.agents;
   }
 
   create() {
@@ -64,12 +65,13 @@ export class OfficeScene extends Phaser.Scene {
       .setVisible(false)
       .setDepth(101);
 
+    this.ready = true;
     this.renderAgents();
   }
 
   setAgents(agents: AgentSprite[]) {
     this.agents = agents;
-    if (this.scene.isActive()) this.renderAgents();
+    if (this.ready) this.renderAgents();
   }
 
   private renderAgents() {

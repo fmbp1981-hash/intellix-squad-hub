@@ -1,4 +1,4 @@
-import { Building2, MessageSquare, Cpu, LogOut, LayoutGrid, Briefcase } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,8 +9,7 @@ const navItems = [
   { to: "/workspaces", label: "Workspaces", icon: Building2 },
   { to: "/office", label: "Escritório", icon: LayoutGrid },
   { to: "/jobs", label: "Jobs", icon: Briefcase },
-  { to: "/settings/whatsapp", label: "WhatsApp", icon: MessageSquare },
-  { to: "/settings/models", label: "Modelos LLM", icon: Cpu },
+  { to: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 
 function getInitials(email: string | undefined | null): string {
