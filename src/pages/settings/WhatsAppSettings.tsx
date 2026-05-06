@@ -75,13 +75,10 @@ export default function WhatsAppSettings() {
   if (loading) return <div className="p-6 text-muted-foreground">Carregando…</div>;
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">WhatsApp / Evolution API</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure aqui sua instância Evolution. Sem isso, notificações via WhatsApp são puladas.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">
+        Configure aqui sua instância Evolution. Sem isso, notificações via WhatsApp são puladas.
+      </p>
 
       <Card>
         <CardHeader>
