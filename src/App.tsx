@@ -15,6 +15,8 @@ import WorkspacesList from "./pages/workspaces/WorkspacesList";
 import NewWorkspace from "./pages/workspaces/NewWorkspace";
 import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
 import RunDashboard from "./pages/workspaces/RunDashboard";
+import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
+import ModelSettings from "./pages/settings/ModelSettings";
 
 const queryClient = new QueryClient();
 
@@ -60,16 +62,9 @@ const App = () => (
                   />
                 }
               />
-              <Route
-                path="/settings"
-                element={
-                  <Placeholder
-                    title="Configurações"
-                    step="v2"
-                    description="Configurações do workspace e da plataforma."
-                  />
-                }
-              />
+              <Route path="/settings" element={<Navigate to="/settings/whatsapp" replace />} />
+              <Route path="/settings/whatsapp" element={<WhatsAppSettings />} />
+              <Route path="/settings/models" element={<ModelSettings />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
