@@ -16,16 +16,12 @@ Deno.serve(async (req) => {
   // Also allow authenticated end-users (manual triggers from /office/gestao)
   if (!ok && auth.startsWith("Bearer ")) {
     try {
-      const { createClient } = await import("npm:@supabase/supabase-js@2");
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: auth } } }
-      );
       const token = auth.replace("Bearer ", "");
-      const { data, error: claimsErr } = await userClient.auth.getClaims(token);
-      if (!claimsErr && data?.claims?.sub) ok = true;
-    } catch (_) { /* ignore */ }
+      const { data, error: userErr } = await adminClient().auth.getUser(token);
+      if (!userErr && data?.user?.id) ok = true;
+    } catch (err) {
+      console.warn("gestao-trigger user token validation failed", err);
+    }
   }
 
   if (!ok) return jsonResponse({ error: "unauthorized" }, 401);
