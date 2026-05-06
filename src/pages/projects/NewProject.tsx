@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Info, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const DEFAULT_DOD = `- Critérios de aceite verificados
 - Funcionalidade demonstrável ao PO
