@@ -38,7 +38,7 @@ export default function OfficePage() {
     gameRef.current = new Phaser.Game({
       type: Phaser.AUTO,
       parent: containerRef.current,
-      width: containerRef.current.clientWidth,
+      width: containerRef.current.clientWidth || 800,
       height: 600,
       backgroundColor: "#0b1120",
       scene,

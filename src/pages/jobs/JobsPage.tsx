@@ -84,7 +84,7 @@ export default function JobsPage() {
   const trigger = async () => {
     setTriggering(true);
     const { error } = await supabase.functions.invoke("internal-job-trigger", {
-      body: { kind: "daily_report" },
+      body: { kind: "daily-standup" },
     });
     if (error) {
       toast({
@@ -125,7 +125,7 @@ export default function JobsPage() {
             Atualizar
           </Button>
           <Button size="sm" onClick={trigger} disabled={triggering}>
-            <PlayCircle className="mr-2 h-4 w-4" /> Disparar daily_report
+            <PlayCircle className="mr-2 h-4 w-4" /> Disparar daily-standup
           </Button>
         </div>
       </div>
