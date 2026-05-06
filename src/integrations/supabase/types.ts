@@ -2477,9 +2477,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_dashboard_feed: {
+        Row: {
+          at: string | null
+          id: string | null
+          label: string | null
+          ref_id: string | null
+          status: string | null
+          type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      dashboard_summary: { Args: never; Returns: Json }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       trigger_crm_event: {
         Args: { p_event: string; p_id: string }
