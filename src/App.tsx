@@ -59,7 +59,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Navigate to="/workspaces" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/workspaces" element={<WorkspacesList />} />
               <Route path="/workspaces/new" element={<NewWorkspace />} />
               <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
