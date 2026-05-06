@@ -15,8 +15,8 @@ import { OfficeViewer } from '@/components/office/OfficeViewer';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  createSquadRun,
   getLatestRunFor,
+  getSquadRun,
   getWorkspace,
 } from '@/lib/supabase/workspaces';
 import { AVAILABLE_SQUADS, type SquadRun, type SquadState } from '@/types';
