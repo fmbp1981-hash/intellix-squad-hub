@@ -34,6 +34,7 @@ export default function NewProject() {
   const [wipInProgress, setWipInProgress] = useState(5);
   const [wipReview, setWipReview] = useState(3);
   const [dod, setDod] = useState(DEFAULT_DOD);
+  const [triggerAI, setTriggerAI] = useState(true);
 
   const { data: engagements } = useQuery({
     queryKey: ["engagements-list"],
