@@ -70,7 +70,7 @@ export default function DealKanban() {
         <Card className="p-8 text-center text-muted-foreground">Nenhum deal ainda.</Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {COLS.map((col) => {
+          {stages.map((col) => {
             const items = deals.filter((d) => d.status === col.key);
             return (
               <div key={col.key} className="space-y-2">
