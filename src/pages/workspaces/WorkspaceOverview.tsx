@@ -3,8 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, FolderOpen, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SquadCard } from '@/components/workspace/SquadCard';
 import { RecentRunsList } from '@/components/workspace/RecentRunsList';
+import { EngagementPanel } from '@/components/workspace/EngagementPanel';
+import { EngagementPlanWizard } from '@/components/workspace/EngagementPlanWizard';
+import { WorkspaceContextEditor } from '@/components/workspace/WorkspaceContextEditor';
+import { useEngagementPlan } from '@/hooks/useEngagementPlan';
 import {
   getSquadRuns,
   getTemplates,
@@ -26,6 +31,7 @@ export default function WorkspaceOverview() {
     enabled: !!id,
   });
   const templatesQ = useQuery({ queryKey: ['templates'], queryFn: getTemplates });
+  const { plan } = useEngagementPlan(id);
 
   if (wsQ.isLoading) {
     return (
@@ -58,7 +64,7 @@ export default function WorkspaceOverview() {
   const recentRuns = (runsQ.data ?? []).slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-6 md:p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-6 md:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
         <Link to="/workspaces">
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -96,44 +102,62 @@ export default function WorkspaceOverview() {
         )}
       </header>
 
-      <section>
-        <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
-          Squads disponíveis
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {squads.map((s) => (
-            <SquadCard
-              key={s.id}
-              workspaceId={ws.id}
-              squadId={s.id}
-              label={s.label}
-              icon={s.icon}
-              color={s.color}
-            />
-          ))}
-        </div>
-      </section>
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="engagement">Engagement</TabsTrigger>
+          <TabsTrigger value="context">Contexto</TabsTrigger>
+          <TabsTrigger value="runs">Runs</TabsTrigger>
+        </TabsList>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-foreground">Runs recentes</h2>
-          {(runsQ.data?.length ?? 0) > 5 && (
-            <Link
-              to={`/workspaces/${ws.id}/runs`}
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              Ver histórico completo →
-            </Link>
+        <TabsContent value="overview" className="space-y-6 pt-4">
+          <section>
+            <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
+              Squads disponíveis
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {squads.map((s) => (
+                <SquadCard
+                  key={s.id}
+                  workspaceId={ws.id}
+                  squadId={s.id}
+                  label={s.label}
+                  icon={s.icon}
+                  color={s.color}
+                />
+              ))}
+            </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="engagement" className="pt-4">
+          {plan ? (
+            <EngagementPanel workspaceId={ws.id} />
+          ) : (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="font-display text-base font-semibold mb-1">Criar plano de engagement</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Defina a sequência de squads que será executada para este cliente.
+              </p>
+              <EngagementPlanWizard workspaceId={ws.id} />
+            </div>
           )}
-        </div>
-        {runsQ.isLoading ? (
-          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            Carregando…
-          </div>
-        ) : (
-          <RecentRunsList workspaceId={ws.id} runs={recentRuns} />
-        )}
-      </section>
+        </TabsContent>
+
+        <TabsContent value="context" className="pt-4">
+          <WorkspaceContextEditor workspaceId={ws.id} />
+        </TabsContent>
+
+        <TabsContent value="runs" className="pt-4">
+          {runsQ.isLoading ? (
+            <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              Carregando…
+            </div>
+          ) : (
+            <RecentRunsList workspaceId={ws.id} runs={recentRuns} />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
