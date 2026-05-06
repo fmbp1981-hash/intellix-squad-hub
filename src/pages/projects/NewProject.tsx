@@ -70,10 +70,16 @@ export default function NewProject() {
           wip_limit_review: wipReview,
           definition_of_done: dod,
           status: "planning",
+          auto_planning_status: triggerAI ? "pending" : "completed",
         })
         .select("id")
         .single();
       if (error) throw error;
+      if (triggerAI && data?.id) {
+        supabase.functions.invoke("operations-detail-project", {
+          body: { project_id: data.id, mode: "initial" },
+        }).catch(() => {});
+      }
       return data;
     },
     onSuccess: (data) => {
