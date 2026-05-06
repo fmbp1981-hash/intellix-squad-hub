@@ -94,3 +94,62 @@ export default function IntegrationsPage() {
     </div>
   );
 }
+
+function ResendCard() {
+  const { send, loading } = useSendEmail();
+  const [testTo, setTestTo] = useState("");
+  const [status, setStatus] = useState<"unknown" | "ok" | "pending">("unknown");
+
+  const sendTest = async () => {
+    const to = testTo.trim();
+    if (!to) {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user?.email) { toast.error("Informe um e-mail de destino"); return; }
+      setTestTo(data.user.email);
+    }
+    const dest = to || (await supabase.auth.getUser()).data.user?.email;
+    if (!dest) return;
+    const r = await send({
+      to: dest,
+      subject: "Teste de integração Resend",
+      html: "<h2>Funcionou!</h2><p>Sua integração com Resend está operacional.</p>",
+      template: "integration_test",
+      silent: true,
+    });
+    if (r.ok) { setStatus("ok"); toast.success("E-mail de teste enviado"); }
+    else if (r.skipped) { setStatus("pending"); toast.warning(r.reason ?? "Conector ainda não configurado"); }
+    else { toast.error(r.error ?? "Falha no envio"); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary" /> E-mail (Resend)</CardTitle>
+        {status === "ok" && <Badge className="bg-green-600">Conectado</Badge>}
+        {status === "pending" && <Badge variant="outline">Pendente</Badge>}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          A integração com Resend é feita via <strong>Conectores da Lovable</strong> (sem precisar colar API key).
+          Conecte pelo painel de Conectores → <em>Resend</em>. Depois disso, este cartão fica verde.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="seu@email.com"
+            value={testTo}
+            onChange={(e) => setTestTo(e.target.value)}
+            type="email"
+          />
+          <Button onClick={sendTest} disabled={loading} className="gap-2 shrink-0">
+            <Send className="h-4 w-4" /> {loading ? "Enviando…" : "Enviar teste"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Remetente padrão: <code className="bg-muted px-1 rounded">onboarding@resend.dev</code> (sandbox).
+          Para produção, verifique seu domínio em <a className="text-primary underline" href="https://resend.com/domains" target="_blank" rel="noreferrer">resend.com/domains</a>.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
