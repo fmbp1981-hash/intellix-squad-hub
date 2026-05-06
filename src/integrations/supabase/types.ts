@@ -1195,6 +1195,7 @@ export type Database = {
         | "weekly-review"
         | "on-demand-brief"
         | "incident-response"
+        | "gestao"
       internal_job_status:
         | "pending"
         | "running"
@@ -1348,6 +1349,7 @@ export const Constants = {
         "weekly-review",
         "on-demand-brief",
         "incident-response",
+        "gestao",
       ],
       internal_job_status: [
         "pending",
