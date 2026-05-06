@@ -234,9 +234,6 @@ function CeremonyDialog({ open, onOpenChange, sprintId, type }: any) {
     toast.success("Cerimônia registrada");
     onOpenChange(false);
   };
-    toast.success("Cerimônia registrada");
-    onOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
