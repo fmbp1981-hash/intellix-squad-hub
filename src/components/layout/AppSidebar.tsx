@@ -1,4 +1,4 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home, Download } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
