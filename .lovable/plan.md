@@ -1,105 +1,107 @@
-## Objetivo
-1. Projetos ágeis nascem automaticamente do fechamento comercial (Deal `won` / Contrato `signed`), herdando dados do cliente, escopo, valor e prazos.
-2. Imediatamente após a criação, o **Agente de Operações** (squad IA) entra em ação para detalhar o projeto: gera planejamento, épicos, backlog inicial de user stories/tarefas e delega responsáveis por departamento.
+# Lote D — IA, CRM Avançado e Integrações
 
-## Fluxo end-to-end
+Fechamento da plataforma com camada de inteligência transversal, evolução do CRM (forecast, automações, comunicação) e integrações externas para produtividade do time.
 
-```text
-Lead qualificado → Deal (discovery → proposal → won)
-                                 │
-                                 ▼
-                       trigger_deal_won (DB trigger)
-                                 │
-                                 ▼
-                  crm-event-handler  ("deal_won")
-                       │                    │
-                       ▼                    ▼
-            cria engagement       cria agile_project
-                                            │
-                                            ▼
-                          dispara internal-job: "operations-detail-project"
-                                            │
-                                            ▼
-                    Agente de Operações (LLM via agent_configs)
-                       │
-                       ├─► gera plano de execução (markdown)
-                       ├─► cria épicos em `epics`
-                       ├─► cria user stories em `user_stories` (com INVEST/MoSCoW)
-                       ├─► cria tarefas em `tasks` (assignee_department)
-                       ├─► sugere 1ª sprint em `sprints`
-                       └─► registra diretivas em `directives` para squads envolvidos
+## 1. Camada de IA transversal (Operations + Commercial Agents)
 
-Contrato assinado → atualiza projeto (datas reais, valor final, escopo definitivo)
-                  → reexecuta agente de operações em modo "refinement"
-```
+**Edge Function `ai-assistant` (novo)** — gateway único de IA conversacional contextual:
+- Recebe `{ context: 'project'|'deal'|'sprint'|'global', entityId, prompt, history }`
+- Carrega contexto da entidade no servidor (RLS-aware via service role + user check)
+- Streaming SSE usando Lovable AI Gateway (`google/gemini-3-flash-preview` default)
+- Modos: `ask` (Q&A), `summarize`, `next_actions`, `risk_analysis`
 
-## Mudanças
+**Edge Function `ai-deal-coach` (novo)** — Commercial Agent:
+- Analisa deal (histórico, atividades, lead score, estágio, valor)
+- Retorna: probabilidade de fechamento, próximas ações sugeridas, riscos, e-mail de follow-up draft
+- Persistência em nova tabela `deal_ai_insights` (deal_id, generated_at, score, recommendations jsonb, draft_email)
 
-### 1. Migração SQL
-- `agile_projects`: adicionar `deal_id uuid`, `contract_id uuid`, `auto_planning_status text default 'pending'` (`pending|running|completed|failed`), `auto_planning_job_id uuid`.
-- Índices em `deal_id`, `contract_id`, `engagement_id`.
-- Backfill: criar projetos para deals já em `won` que ainda não tenham projeto vinculado.
+**Edge Function `ai-sprint-coach` (novo)** — Operations Agent contínuo:
+- Analisa sprint ativa: burndown, throughput, impedimentos, capacidade
+- Detecta riscos (atraso, scope creep, blocker antigo) e gera alertas em `sprint_ai_alerts`
+- Sugere replanejamento ou redistribuição de tarefas
 
-### 2. Edge Function `crm-event-handler` (editar)
-- Case `deal_won`:
-  - Cria engagement (mantém)
-  - **NOVO:** verifica idempotência (`deal_id` já existe?) e cria `agile_projects` herdando `company_name`, `scope_summary`, `value`, `expected_close`, defaults de WIP/DoD.
-  - **NOVO:** dispara `internal-job-dispatch` com `department: 'operacoes'`, `job_id: 'operations-detail-project'`, payload contendo `project_id`, `deal_id`, `scope_summary`.
-- Case `contract_signed`:
-  - Atualiza projeto vinculado (datas, valor, escopo final).
-  - Dispara novamente `operations-detail-project` em modo `refinement` se projeto já tinha planejamento.
+**UI:**
+- Componente `<AIAssistantPanel />` reusável (drawer lateral) plugado em ProjectOverview, DealKanban e SprintBoardPage
+- Card "Insights da IA" em DealKanban (detail drawer) e SprintsPage
 
-### 3. Nova Edge Function `operations-detail-project`
-- Recebe `project_id` + contexto (deal, contrato, escopo).
-- Carrega prompt do agente de operações de `agent_configs` (squad `operacoes`).
-- Chama LLM via `lovable_ai` (gateway) com schema estruturado para retornar:
-  ```json
-  {
-    "execution_plan_md": "...",
-    "epics": [{ "title", "description", "business_value", "moscow", "color" }],
-    "stories": [{ "epic_index", "persona", "action", "benefit", "acceptance_criteria", "story_points", "moscow", "assignee_department" }],
-    "tasks": [{ "story_index", "title", "description", "estimated_hours", "assignee_department" }],
-    "first_sprint": { "goal", "duration_days", "story_indexes": [...] },
-    "delegations": [{ "department", "responsibility", "deliverables": [...] }]
-  }
-  ```
-- Persiste em `epics`, `user_stories`, `tasks`, `sprints` e cria `directives` para cada departamento delegado.
-- Atualiza `agile_projects.auto_planning_status` (`running` → `completed|failed`).
-- Registra log em `pipeline_step_outputs` para auditoria.
+## 2. CRM Avançado
 
-### 4. UI — `ProjectsList.tsx`
-- Badge "Origem: Comercial" quando `deal_id` presente.
-- Badge de status do auto-planejamento: `Aguardando IA` / `Planejando…` (animado) / `Pronto` / `Falhou`.
-- Coluna mostrando cliente, valor do deal, data de fechamento.
+**Forecast & Pipeline Analytics (`/crm/forecast`)**
+- Nova página com: pipeline weighted forecast (valor × probabilidade × stage), velocity de fechamento, win rate por origem/owner, ciclo médio
+- Charts (recharts): forecast por mês (3 meses), funil de conversão, performance por vendedor
 
-### 5. UI — `ProjectOverview.tsx`
-- Seção "Origem Comercial": link para Deal, Contrato, valor, data fechamento.
-- Seção "Planejamento da IA de Operações":
-  - Estado em tempo real (Realtime em `agile_projects.auto_planning_status`).
-  - Botão "Replanejar com IA" (refaz `operations-detail-project` em modo refinement).
-  - Visualização do `execution_plan_md` (Markdown).
-  - Lista de delegações criadas (link para `directives`).
+**Automações de CRM (tabela nova `crm_automations`)**
+- Triggers: `lead_created`, `deal_stage_changed`, `deal_idle_X_days`, `contract_expiring`
+- Actions: `assign_owner`, `create_task`, `send_notification`, `trigger_ai_coach`, `send_whatsapp`
+- UI: `/crm/automations` com builder simples (lista de regras condição → ação)
+- Edge function `crm-automation-runner` consome eventos do `crm-event-handler` e executa regras
 
-### 6. UI — `NewProject.tsx`
-- Banner: "Projetos são criados automaticamente quando um Deal é marcado como Won. Use este formulário apenas para projetos internos/sem origem comercial."
-- Toggle opcional: "Acionar Agente de Operações para detalhar este projeto" (default: on).
-- Vínculo opcional a Deal `won` sem projeto.
+**Atividades & Timeline unificada**
+- Tabela `crm_activities` (call, email, meeting, note, whatsapp_sent) ligada a lead/deal/contact
+- Componente `<ActivityTimeline />` renderizado em detalhe de Deal e Lead
+- Auto-log de eventos do sistema (stage change, AI insights gerados, mensagens WhatsApp enviadas)
 
-### 7. UI — Pipeline de Deals (quando existir/futuro)
-- Ao mover deal para `won`: toast "Projeto criado — IA de Operações está detalhando o backlog [link]".
+**Lead Scoring automático**
+- Edge function `lead-score-calculator` (cron diário + on-update)
+- Considera: origem, engajamento, completude de dados, tempo no estágio
+- Atualiza `leads.score` e dispara `lead_qualified` quando ≥ 80
 
-## Detalhes técnicos
-- **Idempotência:** `crm-event-handler` checa `agile_projects.deal_id` antes de inserir; `operations-detail-project` usa `auto_planning_status` para evitar dupla execução.
-- **Permissões:** novas edge functions usam service role internamente; chamadas externas (UI "Replanejar") via `supabase.functions.invoke` autenticada.
-- **Realtime:** habilitar Realtime em `agile_projects` para atualizar UI durante `auto_planning_status = running`.
-- **Custos LLM:** registrar tokens/custo em `pipeline_step_outputs` (já existente).
-- **Fallback:** se LLM falhar, marca `failed` e expõe botão para reprocessar; não bloqueia a criação do projeto.
+## 3. Integrações externas
 
-## Arquivos afetados
-- `supabase/migrations/<new>.sql` (novo)
-- `supabase/functions/crm-event-handler/index.ts` (editar)
-- `supabase/functions/operations-detail-project/index.ts` (novo)
-- `src/pages/projects/ProjectsList.tsx` (editar)
-- `src/pages/projects/ProjectOverview.tsx` (editar)
-- `src/pages/projects/NewProject.tsx` (editar)
-- `src/hooks/useProjectOrigin.ts` (novo — fetch deal/contrato/status planejamento)
+**E-mail (Resend)**
+- Edge function `send-email` (template + tracking)
+- Usado para: follow-ups gerados pela IA, notificações de impedimento crítico, contratos assinados, faturas
+- Conector: solicitar `RESEND_API_KEY` quando confirmado
+
+**Calendar (Google Calendar via connector)**
+- Sincroniza meetings de `crm_activities` (type=meeting) com o calendário do owner
+- Edge function `calendar-sync` usando gateway de connectors
+
+**Slack/Teams (notificações em tempo real)**
+- Connector standard (Slack ou Microsoft Teams)
+- Edge function `notification-dispatcher` (já existe) ganha provider Slack/Teams além de WhatsApp/in-app
+- Eventos: deal won, impedimento crítico, sprint completada, alerta da IA
+
+**Webhooks de saída (`outbound_webhooks`)**
+- Tabela com URL + eventos assinados + secret HMAC
+- UI em `/settings/integrations` para clientes plugarem ERPs/Zapier/n8n
+
+## 4. Banco de dados — novas tabelas
+
+- `deal_ai_insights` (id, deal_id, generated_at, win_probability, recommendations jsonb, draft_email text, model)
+- `sprint_ai_alerts` (id, sprint_id, project_id, severity, type, message, suggested_action, acknowledged_at)
+- `crm_automations` (id, name, trigger_type, conditions jsonb, actions jsonb, enabled, created_by)
+- `crm_activities` (id, type, subject, body, lead_id, deal_id, contact_id, owner_id, occurred_at, metadata jsonb)
+- `outbound_webhooks` (id, url, events text[], secret, enabled, created_by)
+- `email_log` (id, to, subject, template, status, provider_id, related_entity_type, related_entity_id)
+
+Todas com RLS baseada em `has_role` + ownership.
+
+## 5. UI / Rotas novas
+
+- `/crm/forecast` — Forecast & analytics
+- `/crm/automations` — Builder de automações
+- `/crm/activities` — Timeline global (filtrável)
+- `/settings/integrations` — Conectores (e-mail, calendar, Slack/Teams, webhooks)
+- Drawer `<AIAssistantPanel />` em Projects, Deals, Sprints
+- Sidebar atualizada (Lote D adiciona itens ao menu CRM e Settings)
+
+## 6. Detalhes técnicos
+
+- Streaming SSE conforme padrão Lovable AI (line-by-line, [DONE], CRLF, 429/402 toasts)
+- Tool calling para outputs estruturados (deal coach, sprint coach)
+- Realtime: novas tabelas com `replica identity full` + publication para insights/alerts em tempo real
+- Edge functions seguem padrão atual (CORS, validação Zod, JWT-in-code)
+- Connectors usam fluxo `standard_connectors--connect` antes do código que os consome
+- Secrets necessários (solicitados sob demanda): `RESEND_API_KEY` (e-mail). Slack/Teams/Calendar via connector gateway (sem secret manual)
+
+## Ordem de execução proposta
+
+1. Schema (migration única) + RLS
+2. Camada IA: `ai-assistant`, `ai-deal-coach`, `ai-sprint-coach` + painel UI
+3. CRM avançado: forecast, activities timeline, lead scoring
+4. Automações CRM (engine + UI)
+5. Integrações: Resend (e-mail), connectors (Calendar, Slack/Teams), webhooks de saída
+6. Polimento: realtime, sidebar, settings
+
+Posso seguir com a execução nessa ordem.
