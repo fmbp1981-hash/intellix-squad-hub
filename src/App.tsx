@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 import WorkspacesList from "./pages/workspaces/WorkspacesList";
@@ -58,7 +59,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Navigate to="/workspaces" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/workspaces" element={<WorkspacesList />} />
               <Route path="/workspaces/new" element={<NewWorkspace />} />
               <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
