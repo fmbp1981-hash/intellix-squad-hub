@@ -164,6 +164,31 @@ export class AgentSprite {
     }
   }
 
+  private buildLabel(x: number, y: number): Phaser.GameObjects.Container {
+    const c = this.scene.add.container(x, y + 16);
+    const badgeText = this.def.badge ?? "";
+    const badgeWidth = Math.max(28, badgeText.length * 5 + 10);
+    const badgeColor = this.def.palette?.badgeColor ?? this.def.palette?.shirtBase ?? 0x7c3aed;
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(badgeColor, 0.9);
+    bg.fillRoundedRect(-badgeWidth / 2, -8, badgeWidth, 11, 3);
+    const bt = this.scene.add.text(0, -3, badgeText, {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const nt = this.scene.add.text(0, 9, this.def.name, {
+      fontFamily: "Inter, sans-serif",
+      fontSize: "10px",
+      fontStyle: "bold",
+      color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 2,
+    }).setOrigin(0.5);
+    c.add([bg, bt, nt]);
+    return c;
+  }
+
   clearBubble(): void {
     if (this.bubble) {
       this.bubble.destroy();
