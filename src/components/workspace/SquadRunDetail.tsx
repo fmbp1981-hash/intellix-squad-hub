@@ -6,7 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSquadRun } from "@/hooks/useSquadRun";
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 
 export function SquadRunDetail({ runId }: { runId: string }) {
