@@ -3,7 +3,11 @@ import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { IntelliXOfficeViewer, type AgentExternalState } from "@/components/office/IntelliXOfficeViewer";
+import {
+  IntelliXOfficeViewer,
+  type AgentExternalState,
+  type SquadRunInfo,
+} from "@/components/office/IntelliXOfficeViewer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
