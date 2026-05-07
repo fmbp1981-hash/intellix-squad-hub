@@ -1,6 +1,13 @@
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useSquadRun } from "@/hooks/useSquadRun";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function SquadRunDetail({ runId }: { runId: string }) {
   const { run, steps, loading } = useSquadRun(runId);
