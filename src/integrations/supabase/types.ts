@@ -73,6 +73,75 @@ export type Database = {
           },
         ]
       }
+      agent_configs_audit: {
+        Row: {
+          action: string
+          agent_id: string | null
+          agent_name: string | null
+          id: string
+          performed_at: string | null
+          persona_length: number | null
+          source: string | null
+          squad_name: string | null
+        }
+        Insert: {
+          action: string
+          agent_id?: string | null
+          agent_name?: string | null
+          id?: string
+          performed_at?: string | null
+          persona_length?: number | null
+          source?: string | null
+          squad_name?: string | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string | null
+          agent_name?: string | null
+          id?: string
+          performed_at?: string | null
+          persona_length?: number | null
+          source?: string | null
+          squad_name?: string | null
+        }
+        Relationships: []
+      }
+      agent_configs_backup: {
+        Row: {
+          agent_key: string | null
+          backed_up_at: string | null
+          id: string
+          llm_config_key: string | null
+          name: string | null
+          persona: string | null
+          role: string | null
+          squad_id: string | null
+          squad_name: string | null
+        }
+        Insert: {
+          agent_key?: string | null
+          backed_up_at?: string | null
+          id: string
+          llm_config_key?: string | null
+          name?: string | null
+          persona?: string | null
+          role?: string | null
+          squad_id?: string | null
+          squad_name?: string | null
+        }
+        Update: {
+          agent_key?: string | null
+          backed_up_at?: string | null
+          id?: string
+          llm_config_key?: string | null
+          name?: string | null
+          persona?: string | null
+          role?: string | null
+          squad_id?: string | null
+          squad_name?: string | null
+        }
+        Relationships: []
+      }
       agent_prompts: {
         Row: {
           agent_key: string | null
@@ -2124,6 +2193,33 @@ export type Database = {
           },
         ]
       }
+      system_context: {
+        Row: {
+          content: string
+          context_key: string
+          id: string
+          title: string
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          content: string
+          context_key: string
+          id?: string
+          title: string
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          content?: string
+          context_key?: string
+          id?: string
+          title?: string
+          updated_at?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           actual_hours: number | null
@@ -2582,6 +2678,13 @@ export type Database = {
     Functions: {
       dashboard_summary: { Args: never; Returns: Json }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      restore_agent_configs: {
+        Args: never
+        Returns: {
+          message: string
+          restored_count: number
+        }[]
+      }
       trigger_crm_event: {
         Args: { p_event: string; p_id: string }
         Returns: undefined
