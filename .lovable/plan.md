@@ -1,124 +1,57 @@
-# Plano — Escritório Virtual IntelliX v2.0 (Reescrita Completa)
-
 ## Objetivo
 
-Substituir a cena Phaser atual (retângulos planos + círculos) por um escritório isométrico vivo (estilo Habbo / Tiny Office) com 10 personagens animados, 10 salas mobiliadas e comportamento autônomo + sincronizado com `internal_jobs` e `squad_runs` via Realtime.
+Substituir a geração atual de sprites (`OfficeAssets.ts`), que produz figuras genéricas de 8 frames, por personagens humanos reconhecíveis em pixel art 32×48, com 10 frames cada (4 direções × 2 passos + idle + working), seguindo a especificação do prompt.
 
-## Restrições respeitadas
+## Escopo
 
-- Sem DELETE/UPDATE em `agent_configs`. Nenhuma migration tocará system prompts.
-- Phaser via `dynamic import` dentro de `useEffect` (build Vite seguro).
-- Sem assets externos: tudo via `Graphics` + `RenderTexture`.
-- Comunicação React → Phaser via `scene.registry`, sem recriar a cena.
+Mudanças concentradas em **apenas 2 arquivos**, sem mexer no banco, sem mexer em layout/salas/cena/comportamento.
 
-## Arquitetura de Arquivos
+### 1. `src/components/office/OfficeAssets.ts` (REESCREVER)
 
-```text
-src/components/office/
-├── IsoUtils.ts                 (REESCREVER — TILE_W=64, TILE_H=32, TILE_Z=40, isoDepth)
-├── OfficeAssets.ts             (REESCREVER — createAgentTexture com 8 frames 32×48)
-├── RoomBuilder.ts              (REESCREVER — piso xadrez + paredes com 3 faces sombreadas + janelas)
-├── FurnitureFactory.ts         (REESCREVER — móveis isométricos por sala via Graphics)
-├── AgentSprite.ts              (REESCREVER — sprite animado + balão + sombra + moveToward)
-├── BehaviorController.ts       (REESCREVER — FSM completa: idle/working/walking/coffee/wc/meeting/talking/checkpoint/done)
-├── IntelliXOfficeScene.ts      (REESCREVER — pipeline create/update + câmera drag/zoom + sync)
-├── IntelliXOfficeViewer.tsx    (AJUSTAR — registry sync, dynamic import, ref game)
-└── officeLayout.ts             (ATUALIZAR — ROOMS, ROOM_WAYPOINTS, ROOM_LABELS, AGENTS[10])
-```
+- Substituir `AgentDef` por nova estrutura baseada em `CharacterPalette`:
+  - `skinBase/Shadow/Highlight`, `hairBase/Highlight`, `hairStyle`, `shirtBase/Shadow/Detail?`, `pantsBase/Shadow`, `shoeBase`, `eyeColor`, flags `hasGlasses/glassesColor`, `hasBadge/badgeColor`, `hasEarring`.
+- Manter `AgentDef` exportado com campos legados (`key`, `name`, `homeRoom`, `role`, `bodyColor`, `hairColor`, `shirtColor`, `female`) para compatibilidade com `AgentSprite.ts` / `BehaviorController.ts` / `IntelliXOfficeScene.ts`, mas adicionar `palette: CharacterPalette` e `badge: string` (rótulo curto: "COO", "Scrum Master", "Lead Analyst", etc.).
+- Definir as 10 paletas exatas do prompt: Ágata, Carlos, Márcio, Flora, Maya, Heitor, Ana, Bruno, Beatriz, Roberto (homeRoom mantém o mapeamento atual: gestao/comercial/operacoes/financeiro/marketing/ti + delivery×4).
+- `createAgentTexture(scene, agent)`:
+  - 10 frames de 32×48 desenhados via `Graphics` em um `RenderTexture` 320×48.
+  - Camadas por frame, na ordem do prompt: sombra → sapatos → pernas (com swing) → torso (com gola/detail) → braços (com swing) e mãos cor de pele → badge no peito → pescoço → cabeça oval com highlight → olhos (ocultos no norte, deslocados E/W) → boca sutil → cabelo via `drawHair` → óculos (não no norte) → brinco (S/E).
+  - Animações: `_walk_south/east/north/west` (frames 0-1, 2-3, 4-5, 6-7 a 4 fps), `_idle` (frame 8), `_working` (8-9 a 2 fps).
+- Função interna `drawHair(gfx, ox, base, highlight, style, dir)` implementando os 8 estilos: `bob`, `short_male`, `medium_male`, `buzz`, `long_female`, `ponytail`, `curly`, `medium_female` (geometria exata do prompt).
+- Sem assets externos. Tudo procedural.
 
-`OfficeViewer2D.tsx` e `useOfficeChoreography.ts` ficam como estão (não usados pela nova cena). `OfficePage.tsx` recebe pequenos ajustes para passar `onDepartmentClick` e mapear `squad_runs` ativos além de `internal_jobs`.
+### 2. `src/components/office/AgentSprite.ts` (AJUSTE MÍNIMO)
 
-## Layout (10 salas)
+- O label de nome existente vira um **container** com badge colorido (papel) acima e nome abaixo, conforme `createNameLabel` do prompt:
+  - retângulo arredondado com `palette.badgeColor ?? shirtBase`, texto monoespaçado 8px branco com a string `agent.badge`;
+  - nome 10px bold com stroke preto.
+- Manter posicionamento (`y + 38` relativo ao sprite), `setDepth` e atualização em `applyPosition`.
+- Atualizar `setState("working")` para usar `${key}_working` (já compatível com nova animação de 2 frames).
+- Nenhuma outra mudança de comportamento; `BehaviorController`, `IntelliXOfficeScene` e `OfficePage` permanecem como estão.
 
-Conforme especificado no prompt — `ROOMS` com `gestao, reuniao, comercial, marketing, financeiro, operacoes, delivery, ti, copa, wc` (origens, larguras e cores exatas do prompt). DELIVERY substitui RH.
+## Mapeamento de badges
 
-## 10 Agentes
+| Agente   | Badge label        |
+|----------|--------------------|
+| Ágata    | COO                |
+| Carlos   | Comercial          |
+| Márcio   | Scrum Master       |
+| Flora    | Financeiro         |
+| Maya     | Marketing          |
+| Heitor   | TI                 |
+| Ana      | Lead Analyst       |
+| Bruno    | Developer          |
+| Beatriz  | Strategist         |
+| Roberto  | Reviewer           |
 
-- 6 internos fixos: Ágata (gestao), Carlos (comercial), Márcio (operacoes), Flora (financeiro), Maya (marketing), Heitor (ti).
-- 4 polimórficos em DELIVERY: Ana, Bruno, Beatriz, Roberto.
-- Cada um com `bodyColor / hairColor / shirtColor / female / role / badge` conforme tabela do prompt.
+## Compatibilidade
 
-## Sistema visual
+- API pública (`AGENTS`, `createAgentTexture`, `AgentDef.key/name/homeRoom/role`) preservada — nenhum outro arquivo precisa mudar.
+- Animações `${key}_walk_*`, `${key}_idle`, `${key}_working` continuam existindo com os mesmos nomes consumidos por `AgentSprite`.
 
-- **Piso**: tiles isométricos alternados (`#1A2332` / `#1E2938`).
-- **Paredes**: face superior + face direita escurecida (×0.6) + linha de brilho da cor da sala.
-- **Móveis**: mesa, cadeira, monitor, quadro, planta, cafeteira, frigobar, rack TI, mesa redonda na reunião, banner DELIVERY, etc. — desenhados com 3 faces (topo claro, lateral escura) para sensação 3D.
-- **Sombra**: elipse sob cada agente, alpha 0.25.
-- **Balões**: talking, done, checkpoint (com tween pulse), working, coffee — `setDepth(isoDepth + 10)`.
-- **Background**: gradiente radial `#0D1B2A → #060D17` + grid isométrico 4% alpha.
-- **Z-order universal**: `(tileX+tileY)*100 + tileZ*10` + offsets (piso 0, parede 50, móvel +1, agente +5, balão +10, label 9999).
+## Não escopo
 
-## Animação dos agentes
+- Banco de dados / `agent_configs`: intocado.
+- Layout de salas, móveis, comportamento de FSM, banner de squad run, câmera: intocados.
+- Sem novos assets externos, sem mudanças em `OfficePage.tsx`.
 
-- `RenderTexture` 256×48, 8 frames (S/E/N/W × 2 passos), gerado em `createAgentTexture`.
-- Animações: `walk_{south|east|north|west}`, `idle`, `working` (oscila torso a 2fps).
-- Movimento via `moveToward(target, delta)` com velocidade 60 px/s; troca animação pela direção dominante.
-
-## Máquina de estados (BehaviorController)
-
-Estados: `idle | working | walking | meeting | coffee | bathroom | talking | checkpoint | done`.
-
-Loop autônomo (a partir do idle, a cada 15–45s):
-- 60% → working
-- 20% → coffee (vai à copa, máx 2 simultâneos)
-- 10% → bathroom (vai ao WC, máx 1 simultâneo)
-- 10% → meeting (vai à sala de reunião)
-
-`goTo(roomKey, afterState)` calcula caminho via waypoints intermediários (corredores entre salas) e segue tile a tile.
-
-## Cenas especiais (reagindo ao Realtime)
-
-- **Diretiva Ágata**: ao detectar `gestao_directives.status='dispatched'` (subscrição realtime), agente alvo + Ágata convergem na REUNIÃO, balões 💬, depois retornam.
-- **Job concluído** (`internal_jobs.status='completed'`): balão ✅ por 3s → caminhada até GESTÃO → 5s ao lado de Ágata → volta a HOME.
-- **Squad ativado** (`squad_runs.status='running'`): Ana→Bruno→Beatriz→Roberto migram para REUNIÃO em sequência; cada step do `squad_run_steps` ativa working no próximo e done no anterior; ao final todos ✅ e voltam para DELIVERY. Márcio facilita.
-- **Banner de projeto** flutuante em DELIVERY enquanto há `squad_run` rodando (pulse scale 1.00↔1.02).
-- **Sprint Planning** (`sprint-facilitate-planning`): todos convergem na REUNIÃO, balões 💬 alternados, finalizam com 📋.
-- **Márcio Scrum Master**: ciclo de 2 min entre OPERAÇÕES e DELIVERY quando job de monitoramento ativo.
-
-Restrições de capacidade (copa ≤2, wc ≤1) implementadas via contador no `IntelliXOfficeScene`.
-
-## Câmera & input
-
-- Bounds (-200,-100, 1600×1000), zoom inicial 1.0, range 0.5–2.0.
-- Drag (`pointerdown/move/up`) faz pan; `wheel` faz zoom com tween 150ms.
-- Click em agente → callback React `onAgentClick(key)` (abre tooltip / JobLauncher).
-- Double click em sala → câmera tween (`pan` + `zoomTo(1.5, 800)`) até waypoint.
-
-## Integração Realtime → Phaser
-
-`OfficePage.tsx`:
-- Carrega `internal_jobs` (status pending/running/completed recentes) e `squad_runs` ativos.
-- Subscreve `internal_jobs`, `squad_runs`, `squad_run_steps`, `gestao_directives`.
-- Compõe `agentStates: Record<agentKey, { status, currentJob, lastActivity }>` + `squadRun: {id, name, color, currentStep}`.
-- Passa por prop ao `IntelliXOfficeViewer`, que faz `scene.registry.set('agentStates', ...)` / `set('squadRun', ...)` sem recriar a cena.
-
-`IntelliXOfficeScene.update()` lê o registry, dispara `applyExternalState` no `BehaviorController` correspondente (override do loop autônomo enquanto houver estado externo) e atualiza/oculta o banner DELIVERY.
-
-## Painel React lateral
-
-Atualizar painel em `OfficePage.tsx`:
-- Lista os 10 agentes com badge de status (mantém STATUS_COLOR atual + novos: walking/coffee/meeting).
-- Botão "Reset câmera".
-- Card "Squad ativo" com progress dos 4 steps quando `squadRun` existir.
-- Click no agente → `scene.registry.set('focusAgent', key)` que faz `cameras.main.pan` até ele.
-
-## Performance
-
-- `setDepth` em vez de `bringToTop`.
-- Partículas de poeira limitadas a 5 por agente, somente em `walking`.
-- `RenderTexture` reaproveitada por agente (uma textura, várias instâncias).
-- `update` em delta-time, sem alocações no hot path.
-
-Meta: 60 fps com 10 agentes em movimento.
-
-## Checklist final (do prompt)
-
-Todos os itens da seção "Checklist de Qualidade" serão verificados visualmente em runtime após implementação (incluindo polimórficos migrando, banner DELIVERY, Márcio circulando, capacidades de copa/wc).
-
-## Banco de dados
-
-Sem alterações. Nenhuma migration. `agent_configs` permanece intocada.
-
----
-
-Aprovar para eu reescrever os 9 arquivos acima e ajustar `OfficePage.tsx`?
+Aprovar para reescrever `OfficeAssets.ts` e ajustar o label de `AgentSprite.ts`?
