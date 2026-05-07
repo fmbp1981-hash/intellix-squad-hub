@@ -717,6 +717,36 @@ export type Database = {
         }
         Relationships: []
       }
+      drive_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          folder_id: string
+          folder_url: string | null
+          id: string
+          scope: string
+          scope_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          folder_id: string
+          folder_url?: string | null
+          id?: string
+          scope?: string
+          scope_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          folder_id?: string
+          folder_url?: string | null
+          id?: string
+          scope?: string
+          scope_id?: string | null
+        }
+        Relationships: []
+      }
       drive_setup: {
         Row: {
           auto_create_folders: boolean
