@@ -27,13 +27,13 @@ export class FurnitureFactory {
     this.plant(8, 7);
     this.bookshelf(5, 7);
 
-    // REUNIÃO
-    this.roundTable(6, 4);
-    this.chair(5, 4, 0x37474F);
-    this.chair(7, 4, 0x37474F);
-    this.chair(6, 3, 0x37474F);
-    this.chair(6, 5, 0x37474F);
-    this.whiteboard(4, 3);
+    // REUNIÃO (sala 5,3 → 8,5)
+    this.roundTable(7, 4);
+    this.chair(6, 4, 0x37474F);
+    this.chair(8, 4, 0x37474F);
+    this.chair(7, 3, 0x37474F);
+    this.chair(7, 5, 0x37474F);
+    this.whiteboard(5, 3);
 
     // COMERCIAL
     this.desk(6, 1, 0xA88860);
@@ -76,15 +76,22 @@ export class FurnitureFactory {
     this.chair(3, 9, 0xF57F17);
     this.kanbanBoard(2, 7, 0xF57F17);
 
-    // RH
+    // DELIVERY (4 mesas — Ana, Bruno, Beatriz, Roberto)
     this.desk(1, 4, 0xA88860);
-    this.desk(2, 5, 0xA88860);
-    this.chair(1, 5, 0x9333EA);
-    this.chair(2, 6, 0x9333EA);
-    this.monitor(1, 4);
-    this.monitor(2, 5);
-    this.sofa(3, 4, 0x9333EA);
-    this.plant(0, 6);
+    this.desk(3, 4, 0xA88860);
+    this.desk(1, 6, 0xA88860);
+    this.desk(3, 6, 0xA88860);
+    this.monitor(1, 4, 0x5b21b6);
+    this.monitor(3, 4, 0x2563eb);
+    this.monitor(1, 6, 0x7c3aed);
+    this.monitor(3, 6, 0x059669);
+    this.chair(1, 5, 0x5b21b6);
+    this.chair(3, 5, 0x2563eb);
+    this.chair(1, 7, 0x7c3aed);
+    this.chair(3, 7, 0x059669);
+    this.kanbanBoard(2, 3, 0x5b21b6);
+    this.bookshelf(0, 6);
+    this.plant(4, 6);
 
     // TI
     this.desk(6, 12, 0x2a2a3a);

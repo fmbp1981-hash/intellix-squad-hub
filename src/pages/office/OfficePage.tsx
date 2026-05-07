@@ -3,7 +3,11 @@ import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { IntelliXOfficeViewer, type AgentExternalState } from "@/components/office/IntelliXOfficeViewer";
+import {
+  IntelliXOfficeViewer,
+  type AgentExternalState,
+  type SquadRunInfo,
+} from "@/components/office/IntelliXOfficeViewer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -20,18 +24,28 @@ const STATUS_COLOR: Record<string, string> = {
 export default function OfficePage() {
   const { isAdmin, loading } = useIsAdmin();
   const [agentStates, setAgentStates] = useState<AgentExternalState[]>([]);
+  const [squadRun, setSquadRun] = useState<SquadRunInfo | null>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("internal_jobs")
-        .select("id, agent_key, status, job_type")
-        .in("status", ["pending", "running"])
-        .limit(100);
+      const [{ data: jobs }, { data: runs }] = await Promise.all([
+        supabase
+          .from("internal_jobs")
+          .select("id, agent_key, status, job_type")
+          .in("status", ["pending", "running"])
+          .limit(100),
+        supabase
+          .from("squad_runs")
+          .select("id, squad_name, status, started_at")
+          .eq("status", "running")
+          .order("started_at", { ascending: false })
+          .limit(1),
+      ]);
       if (!active) return;
+
       const map = new Map<string, AgentExternalState>();
-      (data ?? []).forEach((j: { agent_key?: string | null; status: string; job_type?: string }) => {
+      (jobs ?? []).forEach((j: { agent_key?: string | null; status: string; job_type?: string }) => {
         if (!j.agent_key) return;
         const status = j.status === "running" ? "working" : "idle";
         map.set(j.agent_key, {
@@ -40,12 +54,27 @@ export default function OfficePage() {
           currentJob: j.job_type,
         });
       });
+
+      // When a squad run is active, force the 4 polymorphic agents into "meeting" state
+      const activeRun = runs?.[0];
+      if (activeRun) {
+        ["ana", "bruno", "beatriz", "roberto"].forEach((k) => {
+          if (!map.has(k)) {
+            map.set(k, { agentKey: k, status: "meeting", currentJob: activeRun.squad_name });
+          }
+        });
+        setSquadRun({ id: activeRun.id, name: activeRun.squad_name, color: 0x5b21b6 });
+      } else {
+        setSquadRun(null);
+      }
+
       setAgentStates(Array.from(map.values()));
     };
     load();
     const channel = supabase
-      .channel("office-internal-jobs")
+      .channel("office-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "internal_jobs" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "squad_runs" }, load)
       .subscribe();
     return () => {
       active = false;
@@ -79,34 +108,49 @@ export default function OfficePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
         <IntelliXOfficeViewer
           agentStates={agentStates}
+          squadRun={squadRun}
           onAgentClick={(key) => toast(`Agente: ${key}`)}
           height={680}
         />
 
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-semibold">Atividade</h3>
-            {agentStates.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhum agente em job ativo. O escritório segue em rotina autônoma.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {agentStates.map((s) => (
-                  <div
-                    key={s.agentKey}
-                    className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5"
-                  >
-                    <span className="text-xs font-medium capitalize">{s.agentKey}</span>
-                    <Badge variant="outline" className={STATUS_COLOR[s.status ?? "idle"]}>
-                      {s.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          {squadRun && (
+            <Card className="border-primary/40 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-base">🚀</span>
+                  <h3 className="text-sm font-semibold">Squad em execução</h3>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">{squadRun.name}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="mb-3 text-sm font-semibold">Atividade</h3>
+              {agentStates.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum agente em job ativo. O escritório segue em rotina autônoma.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {agentStates.map((s) => (
+                    <div
+                      key={s.agentKey}
+                      className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5"
+                    >
+                      <span className="text-xs font-medium capitalize">{s.agentKey}</span>
+                      <Badge variant="outline" className={STATUS_COLOR[s.status ?? "idle"]}>
+                        {s.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

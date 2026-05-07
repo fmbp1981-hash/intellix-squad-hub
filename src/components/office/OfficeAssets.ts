@@ -13,13 +13,18 @@ export interface AgentDef {
 }
 
 export const AGENTS: AgentDef[] = [
-  { key: "agata",    name: "Ágata",  bodyColor: 0xF5C6A0, hairColor: 0x1a1a2e, shirtColor: 0x7c3aed, female: true,  homeRoom: "gestao",     role: "manager"   },
-  { key: "marcio",   name: "Márcio", bodyColor: 0xD4935A, hairColor: 0x2d1b00, shirtColor: 0xf59e0b, female: false, homeRoom: "operacoes",  role: "ops"       },
-  { key: "flora",    name: "Flora",  bodyColor: 0xF0D0A0, hairColor: 0x8B4513, shirtColor: 0x06b6d4, female: true,  homeRoom: "financeiro", role: "finance"   },
-  { key: "maya",     name: "Maya",   bodyColor: 0xF5C6A0, hairColor: 0xff6b35, shirtColor: 0xf97316, female: true,  homeRoom: "marketing",  role: "marketing" },
-  { key: "carlos",   name: "Carlos", bodyColor: 0xC68642, hairColor: 0x1a1a2e, shirtColor: 0x10b981, female: false, homeRoom: "comercial",  role: "sales"     },
-  { key: "heitor",   name: "Heitor", bodyColor: 0xECC99A, hairColor: 0x3d2b1f, shirtColor: 0xec4899, female: false, homeRoom: "ti",         role: "tech"      },
-  { key: "rita",     name: "Rita",   bodyColor: 0xECB88A, hairColor: 0x2d1b00, shirtColor: 0x9333EA, female: true,  homeRoom: "rh",         role: "hr"        },
+  // 6 internos fixos
+  { key: "agata",    name: "Ágata",   bodyColor: 0xF5C6A0, hairColor: 0x1a1a2e, shirtColor: 0x7c3aed, female: true,  homeRoom: "gestao",     role: "manager"    },
+  { key: "carlos",   name: "Carlos",  bodyColor: 0xC68642, hairColor: 0x1a1a2e, shirtColor: 0x10b981, female: false, homeRoom: "comercial",  role: "sales"      },
+  { key: "marcio",   name: "Márcio",  bodyColor: 0xD4935A, hairColor: 0x2d1b00, shirtColor: 0xf59e0b, female: false, homeRoom: "operacoes",  role: "ops"        },
+  { key: "flora",    name: "Flora",   bodyColor: 0xF0D0A0, hairColor: 0x8B4513, shirtColor: 0x06b6d4, female: true,  homeRoom: "financeiro", role: "finance"    },
+  { key: "maya",     name: "Maya",    bodyColor: 0xF5C6A0, hairColor: 0xff6b35, shirtColor: 0xf97316, female: true,  homeRoom: "marketing",  role: "marketing"  },
+  { key: "heitor",   name: "Heitor",  bodyColor: 0xECC99A, hairColor: 0x3d2b1f, shirtColor: 0xec4899, female: false, homeRoom: "ti",         role: "tech"       },
+  // 4 polimórficos delivery
+  { key: "ana",      name: "Ana",     bodyColor: 0xECB88A, hairColor: 0x2d1b00, shirtColor: 0x5b21b6, female: true,  homeRoom: "delivery",   role: "analyst"    },
+  { key: "bruno",    name: "Bruno",   bodyColor: 0xD4935A, hairColor: 0x1a1a2e, shirtColor: 0x2563eb, female: false, homeRoom: "delivery",   role: "developer"  },
+  { key: "beatriz",  name: "Beatriz", bodyColor: 0xF5C6A0, hairColor: 0x8B4513, shirtColor: 0x7c3aed, female: true,  homeRoom: "delivery",   role: "strategist" },
+  { key: "roberto",  name: "Roberto", bodyColor: 0xC68642, hairColor: 0x3d2b1f, shirtColor: 0x059669, female: false, homeRoom: "delivery",   role: "reviewer"   },
 ];
 
 const FRAME_W = 32;
