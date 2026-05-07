@@ -108,6 +108,7 @@ export default function OfficePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
         <IntelliXOfficeViewer
           agentStates={agentStates}
+          squadRun={squadRun}
           onAgentClick={(key) => toast(`Agente: ${key}`)}
           height={680}
         />
