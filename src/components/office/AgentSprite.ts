@@ -15,7 +15,7 @@ export class AgentSprite {
   public tileY: number;
   public state: AgentBehaviorState = "idle";
   public sprite: Phaser.GameObjects.Sprite;
-  public label: Phaser.GameObjects.Text;
+  public label: Phaser.GameObjects.Container;
   public bubble?: Phaser.GameObjects.Container;
   public onClick?: (a: AgentSprite) => void;
 
@@ -38,13 +38,7 @@ export class AgentSprite {
       this.onClick?.(this);
     });
 
-    this.label = scene.add.text(x, y + 6, def.name, {
-      fontFamily: "Inter, sans-serif",
-      fontSize: "10px",
-      color: "#ffffff",
-      stroke: "#000000",
-      strokeThickness: 2,
-    }).setOrigin(0.5);
+    this.label = this.buildLabel(x, y);
 
     this.updateDepth();
     this.playIdle();
