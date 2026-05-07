@@ -15,7 +15,7 @@ export class AgentSprite {
   public tileY: number;
   public state: AgentBehaviorState = "idle";
   public sprite: Phaser.GameObjects.Sprite;
-  public label: Phaser.GameObjects.Text;
+  public label: Phaser.GameObjects.Container;
   public bubble?: Phaser.GameObjects.Container;
   public onClick?: (a: AgentSprite) => void;
 
@@ -38,13 +38,7 @@ export class AgentSprite {
       this.onClick?.(this);
     });
 
-    this.label = scene.add.text(x, y + 6, def.name, {
-      fontFamily: "Inter, sans-serif",
-      fontSize: "10px",
-      color: "#ffffff",
-      stroke: "#000000",
-      strokeThickness: 2,
-    }).setOrigin(0.5);
+    this.label = this.buildLabel(x, y);
 
     this.updateDepth();
     this.playIdle();
@@ -127,7 +121,7 @@ export class AgentSprite {
     this.sprite.x = x;
     this.sprite.y = y - 18;
     this.label.x = x;
-    this.label.y = y + 6;
+    this.label.y = y + 16;
     if (this.bubble) {
       this.bubble.x = x;
       this.bubble.y = y - 56;
@@ -168,6 +162,31 @@ export class AgentSprite {
         yoyo: true, repeat: -1, ease: "Sine.easeInOut",
       });
     }
+  }
+
+  private buildLabel(x: number, y: number): Phaser.GameObjects.Container {
+    const c = this.scene.add.container(x, y + 16);
+    const badgeText = this.def.badge ?? "";
+    const badgeWidth = Math.max(28, badgeText.length * 5 + 10);
+    const badgeColor = this.def.palette?.badgeColor ?? this.def.palette?.shirtBase ?? 0x7c3aed;
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(badgeColor, 0.9);
+    bg.fillRoundedRect(-badgeWidth / 2, -8, badgeWidth, 11, 3);
+    const bt = this.scene.add.text(0, -3, badgeText, {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const nt = this.scene.add.text(0, 9, this.def.name, {
+      fontFamily: "Inter, sans-serif",
+      fontSize: "10px",
+      fontStyle: "bold",
+      color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 2,
+    }).setOrigin(0.5);
+    c.add([bg, bt, nt]);
+    return c;
   }
 
   clearBubble(): void {
