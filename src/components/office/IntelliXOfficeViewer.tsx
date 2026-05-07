@@ -74,6 +74,12 @@ export function IntelliXOfficeViewer({ agentStates, squadRun, onAgentClick, heig
     sceneRef.current.registry?.set("agentStates", map);
   }, [agentStates]);
 
+  // Push squad run info
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    sceneRef.current.registry?.set("squadRun", squadRun ?? null);
+  }, [squadRun]);
+
   return (
     <div
       ref={containerRef}
