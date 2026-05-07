@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,49 +8,55 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SkeletonPage } from "@/components/ui/SkeletonPage";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
-import WorkspacesList from "./pages/workspaces/WorkspacesList";
-import NewWorkspace from "./pages/workspaces/NewWorkspace";
-import WorkspaceOverview from "./pages/workspaces/WorkspaceOverview";
-import RunDashboard from "./pages/workspaces/RunDashboard";
-import SettingsPage from "./pages/settings/SettingsPage";
-import SettingsLayout from "./pages/settings/SettingsLayout";
-import WhatsAppSettings from "./pages/settings/WhatsAppSettings";
-import ModelSettings from "./pages/settings/ModelSettings";
-import EmailTemplatesPage from "./pages/settings/EmailTemplatesPage";
-import AgentsSettings from "./pages/settings/AgentsSettings";
-import SquadsSettings from "./pages/settings/SquadsSettings";
-import BudgetsSettings from "./pages/settings/BudgetsSettings";
-import ProfileSettings from "./pages/settings/ProfileSettings";
-import DriveSetupSettings from "./pages/settings/DriveSetupSettings";
-import ExportsPage from "./pages/ExportsPage";
-import { NotificationPreferences } from "./components/notifications/NotificationPreferences";
-import OfficePage from "./pages/office/OfficePage";
-import OfficeGestao from "./pages/office/OfficeGestao";
-import JobsPage from "./pages/jobs/JobsPage";
-import CrmLayout from "./pages/crm/CrmLayout";
-import CrmDashboard from "./pages/crm/CrmDashboard";
-import LeadList from "./pages/crm/LeadList";
-import DealKanban from "./pages/crm/DealKanban";
-import ContractList from "./pages/crm/ContractList";
-import InvoiceList from "./pages/crm/InvoiceList";
-import EngagementList from "./pages/crm/EngagementList";
-import CrmForecast from "./pages/crm/CrmForecast";
-import CrmActivities from "./pages/crm/CrmActivities";
-import CrmAutomations from "./pages/crm/CrmAutomations";
-import IntegrationsPage from "./pages/settings/IntegrationsPage";
-import ProjectsList from "./pages/projects/ProjectsList";
-import NewProject from "./pages/projects/NewProject";
-import ProjectOverview from "./pages/projects/ProjectOverview";
-import ProductBacklogPage from "./pages/projects/ProductBacklogPage";
-import SprintBoardPage from "./pages/projects/SprintBoardPage";
-import SprintsPage from "./pages/projects/SprintsPage";
-import ProjectMetricsPage from "./pages/projects/ProjectMetricsPage";
-import ImpedimentsPage from "./pages/projects/ImpedimentsPage";
+
+// Lazy: heavier sections
+const WorkspacesList = lazy(() => import("./pages/workspaces/WorkspacesList"));
+const NewWorkspace = lazy(() => import("./pages/workspaces/NewWorkspace"));
+const WorkspaceOverview = lazy(() => import("./pages/workspaces/WorkspaceOverview"));
+const RunDashboard = lazy(() => import("./pages/workspaces/RunDashboard"));
+const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
+const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
+const WhatsAppSettings = lazy(() => import("./pages/settings/WhatsAppSettings"));
+const ModelSettings = lazy(() => import("./pages/settings/ModelSettings"));
+const EmailTemplatesPage = lazy(() => import("./pages/settings/EmailTemplatesPage"));
+const AgentsSettings = lazy(() => import("./pages/settings/AgentsSettings"));
+const SquadsSettings = lazy(() => import("./pages/settings/SquadsSettings"));
+const BudgetsSettings = lazy(() => import("./pages/settings/BudgetsSettings"));
+const ProfileSettings = lazy(() => import("./pages/settings/ProfileSettings"));
+const DriveSetupSettings = lazy(() => import("./pages/settings/DriveSetupSettings"));
+const ExportsPage = lazy(() => import("./pages/ExportsPage"));
+const NotificationPreferences = lazy(() =>
+  import("./components/notifications/NotificationPreferences").then((m) => ({ default: m.NotificationPreferences }))
+);
+const OfficePage = lazy(() => import("./pages/office/OfficePage"));
+const OfficeGestao = lazy(() => import("./pages/office/OfficeGestao"));
+const JobsPage = lazy(() => import("./pages/jobs/JobsPage"));
+const CrmLayout = lazy(() => import("./pages/crm/CrmLayout"));
+const CrmDashboard = lazy(() => import("./pages/crm/CrmDashboard"));
+const LeadList = lazy(() => import("./pages/crm/LeadList"));
+const DealKanban = lazy(() => import("./pages/crm/DealKanban"));
+const ContractList = lazy(() => import("./pages/crm/ContractList"));
+const InvoiceList = lazy(() => import("./pages/crm/InvoiceList"));
+const EngagementList = lazy(() => import("./pages/crm/EngagementList"));
+const CrmForecast = lazy(() => import("./pages/crm/CrmForecast"));
+const CrmActivities = lazy(() => import("./pages/crm/CrmActivities"));
+const CrmAutomations = lazy(() => import("./pages/crm/CrmAutomations"));
+const IntegrationsPage = lazy(() => import("./pages/settings/IntegrationsPage"));
+const ProjectsList = lazy(() => import("./pages/projects/ProjectsList"));
+const NewProject = lazy(() => import("./pages/projects/NewProject"));
+const ProjectOverview = lazy(() => import("./pages/projects/ProjectOverview"));
+const ProductBacklogPage = lazy(() => import("./pages/projects/ProductBacklogPage"));
+const SprintBoardPage = lazy(() => import("./pages/projects/SprintBoardPage"));
+const SprintsPage = lazy(() => import("./pages/projects/SprintsPage"));
+const ProjectMetricsPage = lazy(() => import("./pages/projects/ProjectMetricsPage"));
+const ImpedimentsPage = lazy(() => import("./pages/projects/ImpedimentsPage"));
 
 const queryClient = new QueryClient();
 
@@ -60,85 +67,76 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+          <ErrorBoundary>
+            <Suspense fallback={<SkeletonPage />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
 
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/workspaces" element={<WorkspacesList />} />
-              <Route path="/workspaces/new" element={<NewWorkspace />} />
-              <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
-              <Route path="/workspaces/:id/run/:squad" element={<RunDashboard />} />
-              <Route
-                path="/workspaces/:id/runs"
-                element={
-                  <Placeholder
-                    title="Histórico de Runs"
-                    step="Prompt 6"
-                    description="Lista de execuções com status e links de output."
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/workspaces" element={<WorkspacesList />} />
+                  <Route path="/workspaces/new" element={<NewWorkspace />} />
+                  <Route path="/workspaces/:id" element={<WorkspaceOverview />} />
+                  <Route path="/workspaces/:id/run/:squad" element={<RunDashboard />} />
+                  <Route
+                    path="/workspaces/:id/runs"
+                    element={<Placeholder title="Histórico de Runs" step="Prompt 6" description="Lista de execuções com status e links de output." />}
                   />
-                }
-              />
-              <Route
-                path="/workspaces/:id/runs/:runId"
-                element={
-                  <Placeholder
-                    title="Output Viewer"
-                    step="Prompt 6"
-                    description="Markdown do relatório renderizado + link Drive."
+                  <Route
+                    path="/workspaces/:id/runs/:runId"
+                    element={<Placeholder title="Output Viewer" step="Prompt 6" description="Markdown do relatório renderizado + link Drive." />}
                   />
-                }
-              />
-              <Route path="/settings" element={<SettingsLayout />}>
-                <Route index element={<SettingsPage />} />
-                <Route path="notifications" element={<NotificationPreferences />} />
-                <Route path="whatsapp" element={<WhatsAppSettings />} />
-                <Route path="models" element={<ModelSettings />} />
-                <Route path="email-templates" element={<EmailTemplatesPage />} />
-                <Route path="agents" element={<AgentsSettings />} />
-                <Route path="squads" element={<SquadsSettings />} />
-                <Route path="budgets" element={<BudgetsSettings />} />
-                <Route path="profile" element={<ProfileSettings />} />
-                <Route path="drive" element={<DriveSetupSettings />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
-              </Route>
-              <Route path="/exports" element={<ExportsPage />} />
-              <Route path="/office" element={<OfficePage />} />
-              <Route path="/office/gestao" element={<OfficeGestao />} />
-              <Route path="/jobs" element={<JobsPage />} />
-              <Route path="/crm" element={<CrmLayout />}>
-                <Route index element={<CrmDashboard />} />
-                <Route path="leads" element={<LeadList />} />
-                <Route path="deals" element={<DealKanban />} />
-                <Route path="forecast" element={<CrmForecast />} />
-                <Route path="activities" element={<CrmActivities />} />
-                <Route path="automations" element={<CrmAutomations />} />
-                <Route path="contracts" element={<ContractList />} />
-                <Route path="invoices" element={<InvoiceList />} />
-                <Route path="engagements" element={<EngagementList />} />
-              </Route>
-              
+                  <Route path="/settings" element={<SettingsLayout />}>
+                    <Route index element={<SettingsPage />} />
+                    <Route path="notifications" element={<NotificationPreferences />} />
+                    <Route path="whatsapp" element={<WhatsAppSettings />} />
+                    <Route path="models" element={<ModelSettings />} />
+                    <Route path="email-templates" element={<EmailTemplatesPage />} />
+                    <Route path="agents" element={<AgentsSettings />} />
+                    <Route path="squads" element={<SquadsSettings />} />
+                    <Route path="budgets" element={<BudgetsSettings />} />
+                    <Route path="profile" element={<ProfileSettings />} />
+                    <Route path="drive" element={<DriveSetupSettings />} />
+                    <Route path="integrations" element={<IntegrationsPage />} />
+                  </Route>
+                  <Route path="/exports" element={<ExportsPage />} />
+                  <Route path="/office" element={<OfficePage />} />
+                  <Route path="/office/gestao" element={<OfficeGestao />} />
+                  <Route path="/jobs" element={<JobsPage />} />
+                  <Route path="/crm" element={<CrmLayout />}>
+                    <Route index element={<CrmDashboard />} />
+                    <Route path="leads" element={<LeadList />} />
+                    <Route path="deals" element={<DealKanban />} />
+                    <Route path="forecast" element={<CrmForecast />} />
+                    <Route path="activities" element={<CrmActivities />} />
+                    <Route path="automations" element={<CrmAutomations />} />
+                    <Route path="contracts" element={<ContractList />} />
+                    <Route path="invoices" element={<InvoiceList />} />
+                    <Route path="engagements" element={<EngagementList />} />
+                  </Route>
 
-              <Route path="/projects" element={<ProjectsList />} />
-              <Route path="/projects/new" element={<NewProject />} />
-              <Route path="/projects/:id" element={<ProjectOverview />} />
-              <Route path="/projects/:id/backlog" element={<ProductBacklogPage />} />
-              <Route path="/projects/:id/board" element={<SprintBoardPage />} />
-              <Route path="/projects/:id/sprints" element={<SprintsPage />} />
-              <Route path="/projects/:id/metrics" element={<ProjectMetricsPage />} />
-              <Route path="/projects/:id/impediments" element={<ImpedimentsPage />} />
-              <Route path="/projects/:id/roadmap" element={<Placeholder title="Roadmap" step="Lote C" description="Release Plan visual." />} />
-            </Route>
+                  <Route path="/projects" element={<ProjectsList />} />
+                  <Route path="/projects/new" element={<NewProject />} />
+                  <Route path="/projects/:id" element={<ProjectOverview />} />
+                  <Route path="/projects/:id/backlog" element={<ProductBacklogPage />} />
+                  <Route path="/projects/:id/board" element={<SprintBoardPage />} />
+                  <Route path="/projects/:id/sprints" element={<SprintsPage />} />
+                  <Route path="/projects/:id/metrics" element={<ProjectMetricsPage />} />
+                  <Route path="/projects/:id/impediments" element={<ImpedimentsPage />} />
+                  <Route path="/projects/:id/roadmap" element={<Placeholder title="Roadmap" step="Lote C" description="Release Plan visual." />} />
+                </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

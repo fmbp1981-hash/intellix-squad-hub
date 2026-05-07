@@ -1,0 +1,14 @@
+{
+  "name": "OpenSquad Platform",
+  "short_name": "OpenSquad",
+  "description": "Cockpit IntelliX.AI para orquestrar squads de agentes IA.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c3aed",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

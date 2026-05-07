@@ -3,38 +3,30 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 
-const groups: { label: string; items: { to: string; label: string; icon: any }[] }[] = [
-  {
-    label: "Visão Geral",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: Home }],
-  },
+type BadgeKey = "jobs" | "engagements" | "leads";
+
+const groups: { label: string; items: { to: string; label: string; icon: any; badge?: BadgeKey }[] }[] = [
+  { label: "Visão Geral", items: [{ to: "/dashboard", label: "Dashboard", icon: Home }] },
   {
     label: "IntelliX",
     items: [
       { to: "/office", label: "Escritório", icon: LayoutGrid },
       { to: "/office/gestao", label: "Ágata", icon: Sparkles },
-      { to: "/crm", label: "CRM", icon: Target },
-      { to: "/jobs", label: "Jobs", icon: Briefcase },
+      { to: "/crm", label: "CRM", icon: Target, badge: "leads" },
+      { to: "/jobs", label: "Jobs", icon: Briefcase, badge: "jobs" },
     ],
   },
   {
     label: "Consultoria",
-    items: [{ to: "/workspaces", label: "Engagements", icon: Building2 }],
+    items: [{ to: "/workspaces", label: "Engagements", icon: Building2, badge: "engagements" }],
   },
-  {
-    label: "Projetos Ágeis",
-    items: [{ to: "/projects", label: "Projetos", icon: Rocket }],
-  },
-  {
-    label: "Dados",
-    items: [{ to: "/exports", label: "Exportações", icon: Download }],
-  },
-  {
-    label: "Configurações",
-    items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }],
-  },
+  { label: "Projetos Ágeis", items: [{ to: "/projects", label: "Projetos", icon: Rocket }] },
+  { label: "Dados", items: [{ to: "/exports", label: "Exportações", icon: Download }] },
+  { label: "Configurações", items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }] },
 ];
 
 function getInitials(email: string | undefined | null): string {
@@ -45,6 +37,7 @@ function getInitials(email: string | undefined | null): string {
 export function AppSidebar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: badges } = useSidebarBadges();
 
   const handleSignOut = async () => {
     await signOut();
@@ -63,23 +56,34 @@ export function AppSidebar() {
             <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {group.label}
             </p>
-            {group.items.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    isActive &&
-                      "bg-muted text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-brand"
-                  )
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </NavLink>
-            ))}
+            {group.items.map(({ to, label, icon: Icon, badge }) => {
+              const count = badge ? badges?.[badge] ?? 0 : 0;
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    cn(
+                      "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      isActive &&
+                        "bg-muted text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-brand"
+                    )
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="flex-1">{label}</span>
+                  {badge && count > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="h-5 min-w-5 justify-center rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary"
+                    >
+                      {count > 99 ? "99+" : count}
+                    </Badge>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
       </nav>

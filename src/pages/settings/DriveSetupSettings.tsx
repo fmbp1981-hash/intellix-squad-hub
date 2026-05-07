@@ -8,7 +8,17 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink, FolderPlus } from "lucide-react";
 import { toast } from "sonner";
+
+type DriveFolder = {
+  id: string;
+  scope: string;
+  scope_id: string | null;
+  folder_id: string;
+  folder_url: string | null;
+  created_at: string;
+};
 
 type DriveSetup = {
   id?: string;
@@ -39,6 +49,17 @@ export default function DriveSetupSettings() {
     status: "disconnected",
   });
   const [templateText, setTemplateText] = useState(JSON.stringify(DEFAULT_TEMPLATE, null, 2));
+  const [folders, setFolders] = useState<DriveFolder[]>([]);
+  const [folderName, setFolderName] = useState("OpenSquad");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+
+  const loadFolders = async () => {
+    const { data } = await supabase
+      .from("drive_settings")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setFolders((data ?? []) as DriveFolder[]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -52,9 +73,21 @@ export default function DriveSetupSettings() {
         setConfig(data as DriveSetup);
         setTemplateText(JSON.stringify(data.folder_template ?? DEFAULT_TEMPLATE, null, 2));
       }
+      await loadFolders();
       setLoading(false);
     })();
   }, []);
+
+  const createDriveFolder = async () => {
+    setCreatingFolder(true);
+    const { data, error } = await supabase.functions.invoke("drive-setup", {
+      body: { name: folderName, scope: "root" },
+    });
+    setCreatingFolder(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Pasta "${data?.name}" criada no Drive`);
+    loadFolders();
+  };
 
   const save = async () => {
     let parsedTemplate: any = DEFAULT_TEMPLATE;
@@ -177,6 +210,51 @@ export default function DriveSetupSettings() {
               Testar conexão
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FolderPlus className="h-4 w-4" /> Pastas no Google Drive
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Cria uma pasta na conta Google Drive conectada via Lovable Connector.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              placeholder="Nome da pasta"
+            />
+            <Button onClick={createDriveFolder} disabled={creatingFolder || !folderName.trim()}>
+              {creatingFolder ? "Criando…" : "Criar pasta"}
+            </Button>
+          </div>
+
+          {folders.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhuma pasta criada ainda.</p>
+          ) : (
+            <div className="divide-y divide-border rounded-md border border-border">
+              {folders.map((f) => (
+                <div key={f.id} className="flex items-center justify-between px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{f.scope}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{f.folder_id}</p>
+                  </div>
+                  {f.folder_url && (
+                    <Button asChild variant="ghost" size="sm">
+                      <a href={f.folder_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
