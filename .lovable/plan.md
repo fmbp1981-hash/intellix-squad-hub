@@ -1,74 +1,39 @@
-## Plano: Fechar D3, D4 e D5 do Prompt D
+## Plano: Reescrever o Escritório Virtual (Phaser)
 
-⚠️ **Nenhuma operação será feita em `agent_configs`.** Sem DELETE, sem reset, sem INSERT em massa. Tabela é intocada.
-
----
-
-### D3 — Drive & Export (fechar)
-
-**1. Edge Function `drive-setup`**  (nova: `supabase/functions/drive-setup/index.ts`)
-- POST autenticado (admin via `has_role`).
-- Cria pasta raiz no Google Drive da conta conectada usando o gateway `https://connector-gateway.lovable.dev/google_drive/drive/v3/files` (mimeType `application/vnd.google-apps.folder`).
-- Cria subpastas por engagement opcional via body `{ engagementId? }`.
-- Persiste `folder_id` em tabela `drive_settings` (criar se não existe via migração: `id`, `scope` text, `scope_id` uuid null, `folder_id` text, `folder_url` text, `created_at`). RLS admin-only.
-- Retorna `{ folderId, webViewLink }`.
-
-**2. UI em `/settings/drive`** (`DriveSetupSettings.tsx`)
-- Botão "Criar pasta raiz no Drive" → invoca `drive-setup`.
-- Lista pastas configuradas (read de `drive_settings`).
-- Estado vazio com instrução.
-
-**3. Botão "Exportar" em `SquadRunDetail`**
-- Dropdown: Markdown / JSON / PDF (placeholder PDF → markdown por ora).
-- Invoca `export-run` com `{ runId, format }`.
-- Toast com link de download (signed URL do bucket `exports`).
+⚠️ Tabela `agent_configs` **não será tocada** — o escritório lê só `id/name/role` para tooltip; nenhum INSERT/UPDATE/DELETE.
 
 ---
 
-### D4 — Polish / Errors / Performance
+### 1. Novos arquivos em `src/components/office/`
 
-**1. ErrorBoundary** (`src/components/ErrorBoundary.tsx`)
-- Class component, captura erros em árvore.
-- Fallback bonito: ícone, mensagem, botão "Voltar ao Dashboard" + "Recarregar".
-- Envolver `<Routes>` em `App.tsx`.
+| Arquivo | Função |
+|---|---|
+| `IsoUtils.ts` | `isoToScreen / screenToIso / isoDepth`, constantes `TILE_W=64 / TILE_H=32`, definição de `ROOMS` e `ROOM_WAYPOINTS` |
+| `OfficeAssets.ts` | Lista dos 7 agentes + `createAgentTexture()` que pinta um spritesheet 32×48 × 8 frames com `RenderTexture` (corpo, cabeça, cabelo, pernas alternadas, sombra) e registra animações `walk_south/east/north/west`, `idle`, `working` |
+| `RoomBuilder.ts` | Para cada uma das 10 salas: piso isométrico (tiles diamantes alternados em 2 tons da cor da sala), paredes norte+oeste com face frontal e topo (sensação de volume), label flutuante com emoji+nome em fundo arredondado da cor da sala |
+| `FurnitureFactory.ts` | Helper `isoBox(top/right/left)` + funções `desk / chair / monitor / plant / bookshelf / filingCabinet / roundTable / whiteboard / kanbanBoard / sofa / serverRack / counter / coffeeMachine / fridge / barTable / sink / toilet`. Compõe os móveis por sala conforme tabela do prompt |
+| `AgentSprite.ts` | Classe que envolve `Phaser.GameObjects.Sprite` + label + bubble; movimento tile→tile com `stepTowardTarget(delta)`, troca de animação por direção, `setState()` com bubbles (talking/done/checkpoint/working/coffee), `setInteractive` com `onClick` |
+| `BehaviorController.ts` | Máquina de estados autônoma: idle → (working / goto copa·coffee / goto wc·bathroom / goto reuniao·meeting) com timers aleatórios. Suporta `setExternalState()` para sobrescrever via Realtime |
+| `IntelliXOfficeScene.ts` | Cena Phaser principal: `create()` chama `buildBackground` (gradiente + grid sutil) → `RoomBuilder.buildAll` → `FurnitureFactory.buildAll` → cria texturas dos agentes → spawna 7 `AgentSprite` no waypoint da `homeRoom` → câmera centralizada em GESTÃO com bounds + zoom+pan (drag e wheel) → `update()` propaga delta para cada `BehaviorController` e ressincroniza depth |
+| `IntelliXOfficeViewer.tsx` | Wrapper React: dynamic `import('phaser')` dentro de `useEffect`, monta `Phaser.Game` em container ref, passa `agentStates` via `scene.registry.set('agentStates', …)` (sem recriar a cena), expõe `onAgentClick` como callback registrada na scene |
 
-**2. SkeletonPage** (`src/components/ui/SkeletonPage.tsx`)
-- Reutiliza `Skeleton`; layout padrão (header + cards grid).
+### 2. Substituir páginas que usam o viewer antigo
 
-**3. Lazy routes em `App.tsx`**
-- Converter rotas pesadas (CRM, Projects, Office, Settings/*) para `React.lazy` + `<Suspense fallback={<SkeletonPage/>}>`.
-- Manter Login/Dashboard eager.
+- `src/pages/office/OfficePage.tsx`: trocar import `OfficeScene` (do `@/game/office/...`) pelo novo `IntelliXOfficeViewer`. Remover toggle 2D/3D (apenas o novo isométrico). Manter checagem de admin e a query de `agent_configs` apenas para listar agentes na sidebar de tooltip.
 
-**4. Utilitários CSS em `src/index.css`**
-- `.hover-lift` → `transition-transform hover:-translate-y-0.5 hover:shadow-brand`.
-- `.fade-in-up` → keyframes (opacity 0→1, translateY 8px→0, 300ms).
-- Aplicar `.hover-lift` em cards principais (WorkspaceCard, MetricsBar items).
+### 3. Detalhes técnicos importantes
 
----
+- **Z-order:** `isoDepth = (tileX+tileY)*100 + tileZ*10` aplicado a todos os objetos; agentes recebem `+5` em cima do depth do tile.
+- **Performance:** texturas geradas uma única vez no `create()` da cena (cacheadas via `rt.saveTexture`); 7 sprites + ~50 graphics estáticos = bem dentro de 60fps.
+- **Realtime opcional:** se `agentStates` não for fornecido, todos rodam em comportamento autônomo (timers aleatórios). Quando `internal_jobs` muda, `OfficePage` faz subscribe via Supabase Realtime e atualiza `scene.registry.set('agentStates', …)`; `update()` da cena lê o registry e chama `behaviorController.setExternalState(...)` no agente correspondente (mapeamento `agent_key` → `homeRoom`).
+- **Sem assets externos:** zero PNG, zero font extra (usa Inter via CSS já carregado e emojis nativos).
+- **Dynamic import obrigatório:** Phaser nunca importado no topo do `.tsx`. Os arquivos `.ts` da cena podem importar Phaser no topo (eles só são carregados via `await import(...)` no wrapper).
 
-### D5 — Auth / Sidebar / PWA
+### 4. Limpeza opcional
 
-**1. PWA**
-- Criar `public/manifest.json` com nome "OpenSquad Platform", short_name, theme_color `#7c3aed`, background `#0a0a0f`, display `standalone`, start_url `/dashboard`.
-- Ícones: gerar `public/icon-192.png` e `public/icon-512.png` (placeholder do brand — fundo gradiente + monograma "O").
-- Adicionar `<link rel="manifest" href="/manifest.json">` e `<meta name="theme-color" content="#7c3aed">` em `index.html`.
+Manter os arquivos antigos (`src/game/office/OfficeScene.ts`, `OfficeViewer2D.tsx`) intactos por enquanto — não são usados após a substituição em `OfficePage.tsx`. Removê-los pode ser feito num lote separado.
 
-**2. Login redesign** (`src/pages/Login.tsx`)
-- Layout split: lado esquerdo branding (gradient hero, logo grande, tagline, 3 features bullets); lado direito form em card.
-- Em mobile: stack vertical.
-- Manter lógica de auth atual.
-- Redirect pós-login: `/dashboard` (não `/workspaces`).
+### 5. Riscos
 
-**3. Sidebar status badges** (`AppSidebar.tsx`)
-- Hook `useSidebarBadges` → conta `internal_jobs` running, runs ativos, leads novos.
-- Renderizar pill numérico ao lado dos itens "Jobs", "Engagements", "CRM".
-- Polling a cada 30s via React Query.
-
----
-
-### Resumo técnico
-- **Migrações:** 1 (criar `drive_settings`).
-- **Edge functions:** 1 nova (`drive-setup`).
-- **Tocadas:** `App.tsx`, `index.html`, `index.css`, `Login.tsx`, `AppSidebar.tsx`, `DriveSetupSettings.tsx`, `SquadRunDetail.tsx`.
-- **Novos arquivos:** `ErrorBoundary.tsx`, `SkeletonPage.tsx`, `useSidebarBadges.ts`, `manifest.json`, `icon-192.png`, `icon-512.png`.
-- **Sem alterações em `agent_configs`.**
+- **Phaser 4** (já no `package.json`): API de `RenderTexture.saveTexture` muda levemente; o código adiciona explicitamente os frames com `texture.add(i, ...)` para garantir spritesheet.
+- Posições de waypoint podem causar agentes empilhados se múltiplos forem para a mesma sala — resolvido com jitter de ±0.3 tiles no `goTo`.
