@@ -121,7 +121,7 @@ export class AgentSprite {
     this.sprite.x = x;
     this.sprite.y = y - 18;
     this.label.x = x;
-    this.label.y = y + 6;
+    this.label.y = y + 16;
     if (this.bubble) {
       this.bubble.x = x;
       this.bubble.y = y - 56;
