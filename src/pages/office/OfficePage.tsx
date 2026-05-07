@@ -24,18 +24,28 @@ const STATUS_COLOR: Record<string, string> = {
 export default function OfficePage() {
   const { isAdmin, loading } = useIsAdmin();
   const [agentStates, setAgentStates] = useState<AgentExternalState[]>([]);
+  const [squadRun, setSquadRun] = useState<SquadRunInfo | null>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("internal_jobs")
-        .select("id, agent_key, status, job_type")
-        .in("status", ["pending", "running"])
-        .limit(100);
+      const [{ data: jobs }, { data: runs }] = await Promise.all([
+        supabase
+          .from("internal_jobs")
+          .select("id, agent_key, status, job_type")
+          .in("status", ["pending", "running"])
+          .limit(100),
+        supabase
+          .from("squad_runs")
+          .select("id, squad_name, status, started_at")
+          .eq("status", "running")
+          .order("started_at", { ascending: false })
+          .limit(1),
+      ]);
       if (!active) return;
+
       const map = new Map<string, AgentExternalState>();
-      (data ?? []).forEach((j: { agent_key?: string | null; status: string; job_type?: string }) => {
+      (jobs ?? []).forEach((j: { agent_key?: string | null; status: string; job_type?: string }) => {
         if (!j.agent_key) return;
         const status = j.status === "running" ? "working" : "idle";
         map.set(j.agent_key, {
@@ -44,12 +54,27 @@ export default function OfficePage() {
           currentJob: j.job_type,
         });
       });
+
+      // When a squad run is active, force the 4 polymorphic agents into "meeting" state
+      const activeRun = runs?.[0];
+      if (activeRun) {
+        ["ana", "bruno", "beatriz", "roberto"].forEach((k) => {
+          if (!map.has(k)) {
+            map.set(k, { agentKey: k, status: "meeting", currentJob: activeRun.squad_name });
+          }
+        });
+        setSquadRun({ id: activeRun.id, name: activeRun.squad_name, color: 0x5b21b6 });
+      } else {
+        setSquadRun(null);
+      }
+
       setAgentStates(Array.from(map.values()));
     };
     load();
     const channel = supabase
-      .channel("office-internal-jobs")
+      .channel("office-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "internal_jobs" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "squad_runs" }, load)
       .subscribe();
     return () => {
       active = false;
