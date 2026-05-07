@@ -7,6 +7,12 @@ import { FurnitureFactory } from "./FurnitureFactory";
 import { AgentSprite, AgentBehaviorState } from "./AgentSprite";
 import { BehaviorController } from "./BehaviorController";
 
+export interface SquadRunInfo {
+  id: string;
+  name: string;
+  color?: number;
+}
+
 export interface ExternalAgentState {
   status?: AgentBehaviorState;
   currentJob?: string;
