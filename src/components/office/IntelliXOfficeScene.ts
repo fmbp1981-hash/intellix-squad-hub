@@ -29,6 +29,8 @@ export class IntelliXOfficeScene extends Phaser.Scene {
   private dragStart = { x: 0, y: 0 };
   private dragMoved = false;
   private clickHandler?: (key: string) => void;
+  private deliveryBanner?: Phaser.GameObjects.Container;
+  private currentSquadRunId: string | null = null;
 
   constructor() {
     super({ key: "IntelliXOfficeScene" });
