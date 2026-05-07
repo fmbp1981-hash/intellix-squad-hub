@@ -212,6 +212,51 @@ export default function DriveSetupSettings() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FolderPlus className="h-4 w-4" /> Pastas no Google Drive
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Cria uma pasta na conta Google Drive conectada via Lovable Connector.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              placeholder="Nome da pasta"
+            />
+            <Button onClick={createDriveFolder} disabled={creatingFolder || !folderName.trim()}>
+              {creatingFolder ? "Criando…" : "Criar pasta"}
+            </Button>
+          </div>
+
+          {folders.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhuma pasta criada ainda.</p>
+          ) : (
+            <div className="divide-y divide-border rounded-md border border-border">
+              {folders.map((f) => (
+                <div key={f.id} className="flex items-center justify-between px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{f.scope}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{f.folder_id}</p>
+                  </div>
+                  {f.folder_url && (
+                    <Button asChild variant="ghost" size="sm">
+                      <a href={f.folder_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
