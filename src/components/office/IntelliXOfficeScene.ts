@@ -66,7 +66,7 @@ export class IntelliXOfficeScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    // External states (Realtime)
+    // External agent states (Realtime jobs)
     const ext = this.registry.get("agentStates") as Record<string, ExternalAgentState> | undefined;
     if (ext) {
       this.agents.forEach((entry, key) => {
@@ -76,6 +76,47 @@ export class IntelliXOfficeScene extends Phaser.Scene {
       });
     }
     this.agents.forEach((entry) => entry.controller.update(delta));
+
+    // Squad run banner sync
+    const run = this.registry.get("squadRun") as SquadRunInfo | null | undefined;
+    const runId = run?.id ?? null;
+    if (runId !== this.currentSquadRunId) {
+      this.currentSquadRunId = runId;
+      this.updateDeliveryBanner(run ?? null);
+    }
+  }
+
+  private updateDeliveryBanner(run: SquadRunInfo | null): void {
+    if (this.deliveryBanner) {
+      this.deliveryBanner.destroy();
+      this.deliveryBanner = undefined;
+    }
+    if (!run) return;
+    const wp = ROOM_WAYPOINTS.delivery;
+    const { x, y } = isoToScreen(wp.tileX, wp.tileY);
+    const c = this.add.container(x, y - 110);
+    const label = this.add.text(0, 0, `🚀  ${run.name}`, {
+      fontFamily: "Inter, sans-serif",
+      fontSize: "12px",
+      fontStyle: "bold",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const padX = 14, padY = 6;
+    const w = label.width + padX * 2;
+    const h = label.height + padY * 2;
+    const bg = this.add.graphics();
+    const color = run.color ?? 0x5b21b6;
+    bg.fillStyle(color, 0.95);
+    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+    bg.lineStyle(1, 0xffffff, 0.3);
+    bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
+    c.add([bg, label]);
+    c.setDepth(9998);
+    this.tweens.add({
+      targets: c, scaleX: 1.04, scaleY: 1.04, duration: 1100,
+      yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+    });
+    this.deliveryBanner = c;
   }
 
   private buildBackground(): void {
