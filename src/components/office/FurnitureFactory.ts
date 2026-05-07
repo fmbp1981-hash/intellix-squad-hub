@@ -27,13 +27,13 @@ export class FurnitureFactory {
     this.plant(8, 7);
     this.bookshelf(5, 7);
 
-    // REUNIÃO
-    this.roundTable(6, 4);
-    this.chair(5, 4, 0x37474F);
-    this.chair(7, 4, 0x37474F);
-    this.chair(6, 3, 0x37474F);
-    this.chair(6, 5, 0x37474F);
-    this.whiteboard(4, 3);
+    // REUNIÃO (sala 5,3 → 8,5)
+    this.roundTable(7, 4);
+    this.chair(6, 4, 0x37474F);
+    this.chair(8, 4, 0x37474F);
+    this.chair(7, 3, 0x37474F);
+    this.chair(7, 5, 0x37474F);
+    this.whiteboard(5, 3);
 
     // COMERCIAL
     this.desk(6, 1, 0xA88860);
