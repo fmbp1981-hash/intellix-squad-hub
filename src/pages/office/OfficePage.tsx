@@ -113,30 +113,44 @@ export default function OfficePage() {
           height={680}
         />
 
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-semibold">Atividade</h3>
-            {agentStates.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhum agente em job ativo. O escritório segue em rotina autônoma.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {agentStates.map((s) => (
-                  <div
-                    key={s.agentKey}
-                    className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5"
-                  >
-                    <span className="text-xs font-medium capitalize">{s.agentKey}</span>
-                    <Badge variant="outline" className={STATUS_COLOR[s.status ?? "idle"]}>
-                      {s.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          {squadRun && (
+            <Card className="border-primary/40 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-base">🚀</span>
+                  <h3 className="text-sm font-semibold">Squad em execução</h3>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">{squadRun.name}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="mb-3 text-sm font-semibold">Atividade</h3>
+              {agentStates.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum agente em job ativo. O escritório segue em rotina autônoma.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {agentStates.map((s) => (
+                    <div
+                      key={s.agentKey}
+                      className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5"
+                    >
+                      <span className="text-xs font-medium capitalize">{s.agentKey}</span>
+                      <Badge variant="outline" className={STATUS_COLOR[s.status ?? "idle"]}>
+                        {s.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
