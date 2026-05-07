@@ -118,29 +118,30 @@ export class FurnitureFactory {
     const { x, y } = isoToScreen(tx, ty);
     const halfW = 32 * w;
     const halfH = 16 * h;
+    const V = (px: number, py: number) => new Phaser.Math.Vector2(px, py);
     // top
     gfx.fillStyle(top, 1);
     gfx.fillPoints([
-      { x: x,         y: y - halfH - z },
-      { x: x + halfW, y: y - z },
-      { x: x,         y: y + halfH - z },
-      { x: x - halfW, y: y - z },
+      V(x,         y - halfH - z),
+      V(x + halfW, y - z),
+      V(x,         y + halfH - z),
+      V(x - halfW, y - z),
     ], true);
     // right face
     gfx.fillStyle(right, 1);
     gfx.fillPoints([
-      { x: x + halfW, y: y - z },
-      { x: x + halfW, y: y },
-      { x: x,         y: y + halfH },
-      { x: x,         y: y + halfH - z },
+      V(x + halfW, y - z),
+      V(x + halfW, y),
+      V(x,         y + halfH),
+      V(x,         y + halfH - z),
     ], true);
     // left face
     gfx.fillStyle(left, 1);
     gfx.fillPoints([
-      { x: x,         y: y + halfH - z },
-      { x: x,         y: y + halfH },
-      { x: x - halfW, y: y },
-      { x: x - halfW, y: y - z },
+      V(x,         y + halfH - z),
+      V(x,         y + halfH),
+      V(x - halfW, y),
+      V(x - halfW, y - z),
     ], true);
     gfx.setDepth(isoDepth(tx, ty) + 1);
   }
