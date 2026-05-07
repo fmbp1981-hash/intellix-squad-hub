@@ -57,6 +57,7 @@ export class RoomBuilder {
     const wallH = 38;
 
     const gfx = this.scene.add.graphics();
+    const V = (px: number, py: number) => new Phaser.Math.Vector2(px, py);
     // North wall (along y = room.y)
     for (let dx = 0; dx < room.w; dx++) {
       const tx = room.x + dx;
@@ -64,15 +65,15 @@ export class RoomBuilder {
       const { x, y } = isoToScreen(tx, ty);
       gfx.fillStyle(wallFill, 1);
       gfx.fillPoints([
-        { x,                y: y - TILE_H / 2 },
-        { x: x + TILE_W / 2, y: y },
-        { x: x + TILE_W / 2, y: y - wallH },
-        { x,                y: y - TILE_H / 2 - wallH },
+        V(x,                y - TILE_H / 2),
+        V(x + TILE_W / 2,   y),
+        V(x + TILE_W / 2,   y - wallH),
+        V(x,                y - TILE_H / 2 - wallH),
       ], true);
       gfx.lineStyle(1, room.color, 0.45);
       gfx.strokePoints([
-        { x,                y: y - TILE_H / 2 - wallH },
-        { x: x + TILE_W / 2, y: y - wallH },
+        V(x,                y - TILE_H / 2 - wallH),
+        V(x + TILE_W / 2,   y - wallH),
       ]);
     }
 
@@ -83,15 +84,15 @@ export class RoomBuilder {
       const { x, y } = isoToScreen(tx, ty);
       gfx.fillStyle(wallSide, 1);
       gfx.fillPoints([
-        { x,                y: y - TILE_H / 2 },
-        { x: x - TILE_W / 2, y: y },
-        { x: x - TILE_W / 2, y: y - wallH },
-        { x,                y: y - TILE_H / 2 - wallH },
+        V(x,                y - TILE_H / 2),
+        V(x - TILE_W / 2,   y),
+        V(x - TILE_W / 2,   y - wallH),
+        V(x,                y - TILE_H / 2 - wallH),
       ], true);
       gfx.lineStyle(1, room.color, 0.45);
       gfx.strokePoints([
-        { x,                y: y - TILE_H / 2 - wallH },
-        { x: x - TILE_W / 2, y: y - wallH },
+        V(x,                y - TILE_H / 2 - wallH),
+        V(x - TILE_W / 2,   y - wallH),
       ]);
     }
     gfx.setDepth(isoDepth(room.x, room.y) - 1);
