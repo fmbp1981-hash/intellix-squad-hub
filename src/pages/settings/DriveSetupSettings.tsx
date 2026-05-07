@@ -8,7 +8,17 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink, FolderPlus } from "lucide-react";
 import { toast } from "sonner";
+
+type DriveFolder = {
+  id: string;
+  scope: string;
+  scope_id: string | null;
+  folder_id: string;
+  folder_url: string | null;
+  created_at: string;
+};
 
 type DriveSetup = {
   id?: string;
