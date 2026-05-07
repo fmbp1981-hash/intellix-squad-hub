@@ -6,13 +6,20 @@ export interface AgentExternalState {
   currentJob?: string;
 }
 
+export interface SquadRunInfo {
+  id: string;
+  name: string;
+  color?: number;
+}
+
 interface Props {
   agentStates?: AgentExternalState[];
+  squadRun?: SquadRunInfo | null;
   onAgentClick?: (agentKey: string) => void;
   height?: number;
 }
 
-export function IntelliXOfficeViewer({ agentStates, onAgentClick, height = 700 }: Props) {
+export function IntelliXOfficeViewer({ agentStates, squadRun, onAgentClick, height = 700 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gameRef = useRef<any>(null);
