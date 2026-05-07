@@ -2074,6 +2074,39 @@ export type Database = {
           },
         ]
       }
+      sprite_assets: {
+        Row: {
+          base64: string
+          created_at: string | null
+          height: number | null
+          id: string
+          key: string
+          mime_type: string
+          name: string
+          width: number | null
+        }
+        Insert: {
+          base64: string
+          created_at?: string | null
+          height?: number | null
+          id?: string
+          key: string
+          mime_type?: string
+          name: string
+          width?: number | null
+        }
+        Update: {
+          base64?: string
+          created_at?: string | null
+          height?: number | null
+          id?: string
+          key?: string
+          mime_type?: string
+          name?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       squad_checkpoints: {
         Row: {
           context_md: string | null

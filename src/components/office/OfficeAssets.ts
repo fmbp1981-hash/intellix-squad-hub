@@ -184,6 +184,83 @@ function drawHair(
   }
 }
 
+// === DB-backed pixel-art sprite loader ===
+const DB_FRAME_W = 96;
+const DB_FRAME_H = 144;
+const DB_FRAMES = 10;
+
+function registerAgentAnimations(scene: Phaser.Scene, key: string): void {
+  const anim = (name: string, frames: number[], fr: number, repeat = -1) => {
+    if (scene.anims.exists(name)) return;
+    scene.anims.create({
+      key: name,
+      frames: frames.map((f) => ({ key, frame: f })),
+      frameRate: fr,
+      repeat,
+    });
+  };
+  anim(`${key}_walk_south`, [0, 1], 4);
+  anim(`${key}_walk_east`, [2, 3], 4);
+  anim(`${key}_walk_north`, [4, 5], 4);
+  anim(`${key}_walk_west`, [6, 7], 4);
+  anim(`${key}_idle`, [8], 1, 0);
+  anim(`${key}_working`, [8, 9], 2);
+}
+
+/**
+ * Load all 10 pixel-art spritesheets from the `sprite_assets` table (base64 PNGs)
+ * and register them as Phaser spritesheets + animations.
+ * Falls back to procedural textures for any agent missing in the DB.
+ */
+export async function loadAgentSpritesFromDB(scene: Phaser.Scene): Promise<void> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const loadedKeys = new Set<string>();
+  try {
+    const { data, error } = await supabase
+      .from("sprite_assets")
+      .select("key, base64, mime_type, width, height");
+    if (error) throw error;
+    if (data?.length) {
+      await Promise.all(
+        data.map(
+          (row) =>
+            new Promise<void>((resolve) => {
+              if (scene.textures.exists(row.key)) {
+                loadedKeys.add(row.key);
+                return resolve();
+              }
+              const img = new Image();
+              img.onload = () => {
+                try {
+                  scene.textures.addSpriteSheet(row.key, img as unknown as HTMLImageElement, {
+                    frameWidth: row.width ? Math.floor(row.width / DB_FRAMES) : DB_FRAME_W,
+                    frameHeight: row.height ?? DB_FRAME_H,
+                  });
+                  registerAgentAnimations(scene, row.key);
+                  loadedKeys.add(row.key);
+                } catch (e) {
+                  console.warn("[sprites] failed to register", row.key, e);
+                }
+                resolve();
+              };
+              img.onerror = () => {
+                console.warn("[sprites] failed to decode", row.key);
+                resolve();
+              };
+              img.src = `data:${row.mime_type ?? "image/png"};base64,${row.base64}`;
+            }),
+        ),
+      );
+    }
+  } catch (e) {
+    console.warn("[sprites] DB load failed, using procedural fallback", e);
+  }
+  // Fallback for any missing
+  AGENTS.forEach((a) => {
+    if (!loadedKeys.has(a.key)) createAgentTexture(scene, a);
+  });
+}
+
 export function createAgentTexture(scene: Phaser.Scene, agent: AgentDef): void {
   if (scene.textures.exists(agent.key)) return;
   const p = agent.palette;

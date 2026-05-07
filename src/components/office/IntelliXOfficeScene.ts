@@ -1,7 +1,7 @@
 // IntelliXOfficeScene.ts — main Phaser scene
 import Phaser from "phaser";
 import { isoToScreen, ROOM_WAYPOINTS, ROOMS, RoomKey } from "./IsoUtils";
-import { AGENTS, createAgentTexture } from "./OfficeAssets";
+import { AGENTS, createAgentTexture, loadAgentSpritesFromDB } from "./OfficeAssets";
 import { RoomBuilder } from "./RoomBuilder";
 import { FurnitureFactory } from "./FurnitureFactory";
 import { AgentSprite, AgentBehaviorState } from "./AgentSprite";
@@ -40,12 +40,12 @@ export class IntelliXOfficeScene extends Phaser.Scene {
     this.clickHandler = fn;
   }
 
-  create(): void {
+  async create(): Promise<void> {
     this.buildBackground();
     new RoomBuilder(this).buildAll();
     new FurnitureFactory(this).buildAll();
 
-    AGENTS.forEach((a) => createAgentTexture(this, a));
+    await loadAgentSpritesFromDB(this);
 
     AGENTS.forEach((a) => {
       const wp = ROOM_WAYPOINTS[a.homeRoom as RoomKey] ?? { tileX: 6, tileY: 6 };

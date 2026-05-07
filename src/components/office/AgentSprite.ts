@@ -31,7 +31,14 @@ export class AgentSprite {
 
     const { x, y } = isoToScreen(this.tileX, this.tileY);
     this.sprite = scene.add.sprite(x, y - 18, def.key, 0);
-    this.sprite.setOrigin(0.5, 0.85);
+    // Pixel-art DB spritesheets are 96x144 per frame; procedural ones are 32x48.
+    const frameH = this.sprite.frame?.height ?? 48;
+    if (frameH > 80) {
+      this.sprite.setOrigin(0.5, 1);
+      this.sprite.setScale(0.5);
+    } else {
+      this.sprite.setOrigin(0.5, 0.85);
+    }
     this.sprite.setInteractive({ useHandCursor: true });
     this.sprite.on("pointerdown", (_p: unknown, _lx: unknown, _ly: unknown, ev: Phaser.Types.Input.EventData) => {
       ev?.stopPropagation?.();
