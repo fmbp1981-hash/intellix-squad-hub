@@ -49,6 +49,17 @@ export default function DriveSetupSettings() {
     status: "disconnected",
   });
   const [templateText, setTemplateText] = useState(JSON.stringify(DEFAULT_TEMPLATE, null, 2));
+  const [folders, setFolders] = useState<DriveFolder[]>([]);
+  const [folderName, setFolderName] = useState("OpenSquad");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+
+  const loadFolders = async () => {
+    const { data } = await supabase
+      .from("drive_settings")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setFolders((data ?? []) as DriveFolder[]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -62,9 +73,21 @@ export default function DriveSetupSettings() {
         setConfig(data as DriveSetup);
         setTemplateText(JSON.stringify(data.folder_template ?? DEFAULT_TEMPLATE, null, 2));
       }
+      await loadFolders();
       setLoading(false);
     })();
   }, []);
+
+  const createDriveFolder = async () => {
+    setCreatingFolder(true);
+    const { data, error } = await supabase.functions.invoke("drive-setup", {
+      body: { name: folderName, scope: "root" },
+    });
+    setCreatingFolder(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Pasta "${data?.name}" criada no Drive`);
+    loadFolders();
+  };
 
   const save = async () => {
     let parsedTemplate: any = DEFAULT_TEMPLATE;
