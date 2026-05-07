@@ -298,7 +298,7 @@ export function createAgentTexture(scene: Phaser.Scene, agent: AgentDef): void {
   for (let i = 0; i < TOTAL_FRAMES; i++) {
     tex.add(i, 0, i * FRAME_W, 0, FRAME_W, FRAME_H);
   }
-  rt.destroy();
+  // Don't destroy rt — it owns the GL texture used by sprites.
 
   const k = agent.key;
   const anim = (name: string, frames: number[], fr: number, repeat = -1) => {
