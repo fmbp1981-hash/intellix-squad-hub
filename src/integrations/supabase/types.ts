@@ -26,6 +26,7 @@ export type Database = {
           position_x: number
           position_y: number
           role: Database["public"]["Enums"]["agent_role"]
+          show_in_office: boolean
           squad_id: string
           squad_name: string | null
           system_prompt: string | null
@@ -42,6 +43,7 @@ export type Database = {
           position_x?: number
           position_y?: number
           role: Database["public"]["Enums"]["agent_role"]
+          show_in_office?: boolean
           squad_id: string
           squad_name?: string | null
           system_prompt?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           position_x?: number
           position_y?: number
           role?: Database["public"]["Enums"]["agent_role"]
+          show_in_office?: boolean
           squad_id?: string
           squad_name?: string | null
           system_prompt?: string | null
