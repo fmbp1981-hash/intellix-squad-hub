@@ -1,15 +1,20 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Target, Rocket, Home } from "lucide-react";
+import {
+  Building2, Settings as SettingsIcon, LogOut, LayoutGrid,
+  Briefcase, Target, Rocket, Home, ChevronRight
+} from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 
 type BadgeKey = "jobs" | "engagements" | "leads";
 
-const groups: { label: string; items: { to: string; label: string; icon: any; badge?: BadgeKey }[] }[] = [
+const groups: {
+  label: string;
+  items: { to: string; label: string; icon: any; badge?: BadgeKey }[];
+}[] = [
   { label: "Visão Geral", items: [{ to: "/painel", label: "Painel", icon: Home }] },
   {
     label: "IntelliX",
@@ -24,12 +29,13 @@ const groups: { label: string; items: { to: string; label: string; icon: any; ba
     items: [{ to: "/squads", label: "Squads", icon: Building2, badge: "engagements" }],
   },
   { label: "Projetos Ágeis", items: [{ to: "/projetos", label: "Projetos", icon: Rocket }] },
-  { label: "Configurações", items: [{ to: "/config", label: "Config", icon: SettingsIcon }] },
+  { label: "Sistema", items: [{ to: "/config", label: "Config", icon: SettingsIcon }] },
 ];
 
 function getInitials(email: string | undefined | null): string {
   if (!email) return "?";
-  return email.slice(0, 2).toUpperCase();
+  const [user] = email.split("@");
+  return user.slice(0, 2).toUpperCase();
 }
 
 export function AppSidebar() {
@@ -43,41 +49,96 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-border bg-card">
-      <div className="border-b border-border px-4 py-5">
+    <aside
+      className="relative flex h-screen w-[230px] shrink-0 flex-col"
+      style={{
+        background: "hsl(240 20% 7%)",
+        borderRight: "1px solid hsl(240 16% 14%)",
+      }}
+    >
+      {/* Ambient glow top */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-48 opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse 120% 60% at 50% -10%, hsl(262 83% 58% / 0.25), transparent)",
+        }}
+      />
+
+      {/* Logo */}
+      <div
+        className="relative flex items-center px-5 py-5"
+        style={{ borderBottom: "1px solid hsl(240 16% 14%)" }}
+      >
         <BrandLogo variant="full" />
       </div>
 
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+      {/* Nav */}
+      <nav className="relative flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {groups.map((group) => (
-          <div key={group.label} className="space-y-1">
-            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div key={group.label} className="space-y-0.5">
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               {group.label}
             </p>
+
             {group.items.map(({ to, label, icon: Icon, badge }) => {
-              const count = badge ? badges?.[badge] ?? 0 : 0;
+              const count = badge ? (badges?.[badge] ?? 0) : 0;
               return (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      isActive &&
-                        "bg-muted text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-brand"
+                      "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-gradient-brand-soft text-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )
                   }
                 >
-                  <Icon className="h-4 w-4" />
-                  <span className="flex-1">{label}</span>
-                  {badge && count > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="h-5 min-w-5 justify-center rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary"
-                    >
-                      {count > 99 ? "99+" : count}
-                    </Badge>
+                  {({ isActive }) => (
+                    <>
+                      {/* Active left bar */}
+                      {isActive && (
+                        <span
+                          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full"
+                          style={{ background: "var(--gradient-brand)" }}
+                        />
+                      )}
+
+                      {/* Icon container */}
+                      <span
+                        className={cn(
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-all duration-200",
+                          isActive
+                            ? "bg-primary/20 text-primary"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+
+                      <span className="flex-1 truncate">{label}</span>
+
+                      {/* Badge */}
+                      {badge && count > 0 && (
+                        <Badge
+                          className="h-5 min-w-5 justify-center rounded-full px-1.5 text-[10px] font-semibold"
+                          style={{
+                            background: "hsl(262 83% 58% / 0.15)",
+                            color: "hsl(262 83% 75%)",
+                            border: "1px solid hsl(262 83% 58% / 0.25)",
+                          }}
+                        >
+                          {count > 99 ? "99+" : count}
+                        </Badge>
+                      )}
+
+                      {/* Arrow on hover (inactive) */}
+                      {!isActive && (
+                        <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-40" />
+                      )}
+                    </>
                   )}
                 </NavLink>
               );
@@ -86,27 +147,46 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-border p-3">
-        <div className="flex items-center gap-3 rounded-md px-2 py-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-xs font-semibold text-primary-foreground">
+      {/* User footer */}
+      <div
+        className="relative px-3 pb-3 pt-3"
+        style={{ borderTop: "1px solid hsl(240 16% 14%)" }}
+      >
+        <div className="mb-2 flex items-center gap-3 rounded-lg px-2 py-2">
+          {/* Avatar */}
+          <div
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+            style={{ background: "var(--gradient-brand)", boxShadow: "var(--shadow-brand)" }}
+          >
             {getInitials(user?.email)}
+            {/* Online dot */}
+            <span
+              className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
+              style={{
+                background: "hsl(160 84% 39%)",
+                borderColor: "hsl(240 20% 7%)",
+              }}
+            />
           </div>
+
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs text-foreground" title={user?.email ?? ""}>
-              {user?.email ?? "—"}
+            <p
+              className="truncate text-xs font-medium text-foreground"
+              title={user?.email ?? ""}
+            >
+              {user?.email?.split("@")[0] ?? "—"}
             </p>
-            <p className="text-[10px] text-muted-foreground">Admin</p>
+            <p className="text-[10px] text-muted-foreground">IntelliX.AI · Admin</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
+
+        <button
           onClick={handleSignOut}
-          className="mt-2 w-full justify-start text-muted-foreground hover:text-destructive"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair
-        </Button>
+          <LogOut className="h-3.5 w-3.5" />
+          Sair da conta
+        </button>
       </div>
     </aside>
   );
