@@ -1,4 +1,4 @@
-// OfficeAssets.ts — programmatic high-fidelity character sprites (32x48, 10 frames)
+// OfficeAssets.ts — programmatic character sprites via Canvas 2D (Phaser 4 compatible)
 import Phaser from "phaser";
 
 export type HairStyle =
@@ -23,7 +23,6 @@ export interface AgentDef {
   homeRoom: string;
   role: string;
   badge: string;
-  // Legacy fields kept for compatibility with other modules
   bodyColor: number;
   hairColor: number;
   shirtColor: number;
@@ -120,71 +119,205 @@ const FRAME_W = 32;
 const FRAME_H = 48;
 const TOTAL_FRAMES = 10;
 
+// ── Canvas 2D helpers ──────────────────────────────────────────────────────
+
+function hexToRgba(color: number, alpha = 1): string {
+  const r = (color >> 16) & 0xff;
+  const g = (color >> 8) & 0xff;
+  const b = color & 0xff;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function fillEllipse(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number): void {
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fillCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fillRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.fill();
+}
+
+function strokeRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.stroke();
+}
+
 function drawHair(
-  gfx: Phaser.GameObjects.Graphics,
+  ctx: CanvasRenderingContext2D,
   ox: number,
   base: number,
   highlight: number,
   style: HairStyle,
-  _dir: number
 ): void {
-  gfx.fillStyle(base, 1);
+  ctx.fillStyle = hexToRgba(base);
   switch (style) {
     case "bob":
-      gfx.fillEllipse(ox + 16, 9, 16, 10);
-      gfx.fillRect(ox + 8, 8, 16, 8);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillEllipse(ox + 14, 7, 6, 4);
+      fillEllipse(ctx, ox + 16, 9, 16, 10);
+      ctx.fillRect(ox + 8, 8, 16, 8);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillEllipse(ctx, ox + 14, 7, 6, 4);
       break;
     case "short_male":
-      gfx.fillEllipse(ox + 16, 8, 15, 8);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillRect(ox + 12, 5, 6, 3);
+      fillEllipse(ctx, ox + 16, 8, 15, 8);
+      ctx.fillStyle = hexToRgba(highlight);
+      ctx.fillRect(ox + 12, 5, 6, 3);
       break;
     case "medium_male":
-      gfx.fillEllipse(ox + 16, 8, 16, 9);
-      gfx.fillRect(ox + 8, 6, 16, 5);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillEllipse(ox + 18, 6, 5, 4);
+      fillEllipse(ctx, ox + 16, 8, 16, 9);
+      ctx.fillRect(ox + 8, 6, 16, 5);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillEllipse(ctx, ox + 18, 6, 5, 4);
       break;
     case "buzz":
-      gfx.fillEllipse(ox + 16, 8, 14, 7);
+      fillEllipse(ctx, ox + 16, 8, 14, 7);
       break;
     case "long_female":
-      gfx.fillEllipse(ox + 16, 9, 16, 10);
-      gfx.fillRect(ox + 7, 8, 4, 18);
-      gfx.fillRect(ox + 21, 8, 4, 18);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillEllipse(ox + 14, 7, 5, 3);
+      fillEllipse(ctx, ox + 16, 9, 16, 10);
+      ctx.fillRect(ox + 7, 8, 4, 18);
+      ctx.fillRect(ox + 21, 8, 4, 18);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillEllipse(ctx, ox + 14, 7, 5, 3);
       break;
     case "ponytail":
-      gfx.fillEllipse(ox + 16, 9, 15, 9);
-      gfx.fillRect(ox + 19, 8, 5, 14);
-      gfx.fillEllipse(ox + 21, 22, 4, 3);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillEllipse(ox + 14, 7, 5, 3);
+      fillEllipse(ctx, ox + 16, 9, 15, 9);
+      ctx.fillRect(ox + 19, 8, 5, 14);
+      fillEllipse(ctx, ox + 21, 22, 4, 3);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillEllipse(ctx, ox + 14, 7, 5, 3);
       break;
     case "curly":
-      gfx.fillEllipse(ox + 16, 9, 18, 12);
-      gfx.fillCircle(ox + 8, 10, 4);
-      gfx.fillCircle(ox + 24, 10, 4);
-      gfx.fillCircle(ox + 10, 15, 3);
-      gfx.fillCircle(ox + 22, 15, 3);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillCircle(ox + 14, 6, 3);
-      gfx.fillCircle(ox + 20, 7, 2);
+      fillEllipse(ctx, ox + 16, 9, 18, 12);
+      fillCircle(ctx, ox + 8, 10, 4);
+      fillCircle(ctx, ox + 24, 10, 4);
+      fillCircle(ctx, ox + 10, 15, 3);
+      fillCircle(ctx, ox + 22, 15, 3);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillCircle(ctx, ox + 14, 6, 3);
+      fillCircle(ctx, ox + 20, 7, 2);
       break;
     case "medium_female":
-      gfx.fillEllipse(ox + 16, 9, 16, 10);
-      gfx.fillRect(ox + 7, 8, 4, 12);
-      gfx.fillRect(ox + 21, 8, 4, 12);
-      gfx.fillStyle(highlight, 1);
-      gfx.fillEllipse(ox + 15, 7, 6, 3);
+      fillEllipse(ctx, ox + 16, 9, 16, 10);
+      ctx.fillRect(ox + 7, 8, 4, 12);
+      ctx.fillRect(ox + 21, 8, 4, 12);
+      ctx.fillStyle = hexToRgba(highlight);
+      fillEllipse(ctx, ox + 15, 7, 6, 3);
       break;
   }
 }
 
-// === DB-backed pixel-art sprite loader ===
+function drawFrameToCanvas(
+  ctx: CanvasRenderingContext2D,
+  ox: number,
+  p: CharacterPalette,
+  dir: number,
+  step: number,
+  isWalk: boolean,
+): void {
+  const legOffsetL = isWalk && step === 0 ? -1 : 1;
+  const legOffsetR = isWalk && step === 0 ? 1 : -1;
+  const armSwingL = isWalk && step === 0 ? -1 : 1;
+  const armSwingR = isWalk && step === 0 ? 1 : -1;
+
+  // Shadow
+  ctx.fillStyle = hexToRgba(0x000000, 0.22);
+  fillEllipse(ctx, ox + 16, 46, 22, 6);
+
+  // Shoes
+  ctx.fillStyle = hexToRgba(p.shoeBase);
+  fillRoundedRect(ctx, ox + 9 + legOffsetL, 42, 6, 4, 2);
+  fillRoundedRect(ctx, ox + 17 + legOffsetR, 42, 6, 4, 2);
+
+  // Legs
+  ctx.fillStyle = hexToRgba(p.pantsBase);
+  ctx.fillRect(ox + 10 + legOffsetL, 32, 5, 10);
+  ctx.fillRect(ox + 17 + legOffsetR, 32, 5, 10);
+  ctx.fillStyle = hexToRgba(p.pantsShadow);
+  ctx.fillRect(ox + 10 + legOffsetL, 32, 2, 10);
+  ctx.fillRect(ox + 17 + legOffsetR, 32, 2, 10);
+
+  // Torso
+  ctx.fillStyle = hexToRgba(p.shirtBase);
+  fillRoundedRect(ctx, ox + 8, 19, 16, 13, 2);
+  ctx.fillStyle = hexToRgba(p.shirtShadow);
+  ctx.fillRect(ox + 8, 19, 3, 13);
+  if (p.shirtDetail !== undefined) {
+    ctx.fillStyle = hexToRgba(p.shirtDetail);
+    ctx.fillRect(ox + 13, 19, 6, 2);
+  }
+
+  // Arms
+  ctx.fillStyle = hexToRgba(p.shirtBase);
+  ctx.fillRect(ox + 5, 20 + armSwingL, 4, 10);
+  ctx.fillRect(ox + 23, 20 + armSwingR, 4, 10);
+  // Hands
+  ctx.fillStyle = hexToRgba(p.skinBase);
+  ctx.fillRect(ox + 5, 28 + armSwingL, 4, 3);
+  ctx.fillRect(ox + 23, 28 + armSwingR, 4, 3);
+
+  // Badge
+  if (p.hasBadge && p.badgeColor !== undefined) {
+    ctx.fillStyle = hexToRgba(p.badgeColor);
+    fillCircle(ctx, ox + 20, 22, 2);
+  }
+
+  // Neck
+  ctx.fillStyle = hexToRgba(p.skinBase);
+  ctx.fillRect(ox + 14, 17, 4, 3);
+
+  // Head
+  ctx.fillStyle = hexToRgba(p.skinBase);
+  fillEllipse(ctx, ox + 16, 12, 14, 12);
+  ctx.fillStyle = hexToRgba(p.skinHighlight);
+  fillEllipse(ctx, ox + 14, 10, 4, 3);
+
+  // Eyes (not when facing north)
+  if (dir !== 2) {
+    ctx.fillStyle = hexToRgba(0xffffff);
+    ctx.fillRect(ox + 11, 11, 3, 3);
+    ctx.fillRect(ox + 18, 11, 3, 3);
+    ctx.fillStyle = hexToRgba(p.eyeColor);
+    const eyeOffX = dir === 1 ? 1 : dir === 3 ? -1 : 0;
+    ctx.fillRect(ox + 12 + eyeOffX, 12, 2, 2);
+    ctx.fillRect(ox + 19 + eyeOffX, 12, 2, 2);
+    // Mouth
+    ctx.fillStyle = hexToRgba(p.skinShadow);
+    ctx.fillRect(ox + 14, 15, 4, 1);
+  }
+
+  // Hair
+  drawHair(ctx, ox, p.hairBase, p.hairHighlight, p.hairStyle);
+
+  // Glasses
+  if (p.hasGlasses && dir !== 2) {
+    ctx.strokeStyle = hexToRgba(p.glassesColor ?? 0x1a1a2e);
+    ctx.lineWidth = 1;
+    strokeRoundedRect(ctx, ox + 10, 10, 4, 4, 1);
+    strokeRoundedRect(ctx, ox + 17, 10, 4, 4, 1);
+    ctx.beginPath();
+    ctx.moveTo(ox + 14, 12);
+    ctx.lineTo(ox + 17, 12);
+    ctx.stroke();
+  }
+
+  // Earring
+  if (p.hasEarring && (dir === 0 || dir === 1)) {
+    ctx.fillStyle = hexToRgba(0xfbbf24);
+    fillCircle(ctx, ox + 22, 14, 1.5);
+  }
+}
+
+// ── DB-backed sprite loader ─────────────────────────────────────────────────
+
 const DB_FRAME_W = 96;
 const DB_FRAME_H = 144;
 const DB_FRAMES = 10;
@@ -208,9 +341,8 @@ function registerAgentAnimations(scene: Phaser.Scene, key: string): void {
 }
 
 /**
- * Load all 10 pixel-art spritesheets from the `sprite_assets` table (base64 PNGs)
- * and register them as Phaser spritesheets + animations.
- * Falls back to procedural textures for any agent missing in the DB.
+ * Load pixel-art spritesheets from `sprite_assets` table.
+ * Falls back to Canvas 2D procedural sprites for any missing agent (Phaser 4 safe).
  */
 export async function loadAgentSpritesFromDB(scene: Phaser.Scene): Promise<void> {
   const { supabase } = await import("@/integrations/supabase/client");
@@ -253,144 +385,40 @@ export async function loadAgentSpritesFromDB(scene: Phaser.Scene): Promise<void>
       );
     }
   } catch (e) {
-    console.warn("[sprites] DB load failed, using procedural fallback", e);
+    console.warn("[sprites] DB load failed, using Canvas fallback", e);
   }
-  // Fallback for any missing
+  // Fallback via Canvas 2D (Phaser 4 compatible)
   AGENTS.forEach((a) => {
     if (!loadedKeys.has(a.key)) createAgentTexture(scene, a);
   });
 }
 
+/**
+ * Generate procedural character texture using Canvas 2D API.
+ * Compatible with Phaser 4 (replaces renderTexture.saveTexture approach).
+ */
 export function createAgentTexture(scene: Phaser.Scene, agent: AgentDef): void {
   if (scene.textures.exists(agent.key)) return;
   const p = agent.palette;
 
-  const rt = scene.add
-    .renderTexture(0, 0, FRAME_W * TOTAL_FRAMES, FRAME_H)
-    .setVisible(false);
+  const canvas = document.createElement("canvas");
+  canvas.width = FRAME_W * TOTAL_FRAMES;
+  canvas.height = FRAME_H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
 
   for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
     const isWalk = frame < 8;
-    const dir = isWalk ? Math.floor(frame / 2) : 0; // 0=S 1=E 2=N 3=W
+    const dir = isWalk ? Math.floor(frame / 2) : 0;
     const step = frame % 2;
     const ox = frame * FRAME_W;
-
-    const gfx = scene.add.graphics();
-
-    // Shadow
-    gfx.fillStyle(0x000000, 0.22);
-    gfx.fillEllipse(ox + 16, 46, 22, 6);
-
-    // Leg/arm swing offsets
-    const legOffsetL = isWalk && step === 0 ? -1 : 1;
-    const legOffsetR = isWalk && step === 0 ? 1 : -1;
-    const armSwingL = isWalk && step === 0 ? -1 : 1;
-    const armSwingR = isWalk && step === 0 ? 1 : -1;
-
-    // Shoes
-    gfx.fillStyle(p.shoeBase, 1);
-    gfx.fillRoundedRect(ox + 9 + legOffsetL, 42, 6, 4, 2);
-    gfx.fillRoundedRect(ox + 17 + legOffsetR, 42, 6, 4, 2);
-
-    // Legs
-    gfx.fillStyle(p.pantsBase, 1);
-    gfx.fillRect(ox + 10 + legOffsetL, 32, 5, 10);
-    gfx.fillRect(ox + 17 + legOffsetR, 32, 5, 10);
-    gfx.fillStyle(p.pantsShadow, 1);
-    gfx.fillRect(ox + 10 + legOffsetL, 32, 2, 10);
-    gfx.fillRect(ox + 17 + legOffsetR, 32, 2, 10);
-
-    // Torso
-    gfx.fillStyle(p.shirtBase, 1);
-    gfx.fillRoundedRect(ox + 8, 19, 16, 13, 2);
-    gfx.fillStyle(p.shirtShadow, 1);
-    gfx.fillRect(ox + 8, 19, 3, 13);
-    if (p.shirtDetail !== undefined) {
-      gfx.fillStyle(p.shirtDetail, 1);
-      gfx.fillRect(ox + 13, 19, 6, 2);
-    }
-
-    // Arms
-    gfx.fillStyle(p.shirtBase, 1);
-    gfx.fillRect(ox + 5, 20 + armSwingL, 4, 10);
-    gfx.fillRect(ox + 23, 20 + armSwingR, 4, 10);
-    // Hands
-    gfx.fillStyle(p.skinBase, 1);
-    gfx.fillRect(ox + 5, 28 + armSwingL, 4, 3);
-    gfx.fillRect(ox + 23, 28 + armSwingR, 4, 3);
-
-    // Badge on chest
-    if (p.hasBadge && p.badgeColor !== undefined) {
-      gfx.fillStyle(p.badgeColor, 1);
-      gfx.fillCircle(ox + 20, 22, 2);
-    }
-
-    // Neck
-    gfx.fillStyle(p.skinBase, 1);
-    gfx.fillRect(ox + 14, 17, 4, 3);
-
-    // Head
-    gfx.fillStyle(p.skinBase, 1);
-    gfx.fillEllipse(ox + 16, 12, 14, 12);
-    gfx.fillStyle(p.skinHighlight, 1);
-    gfx.fillEllipse(ox + 14, 10, 4, 3);
-
-    // Eyes (not when facing north)
-    if (dir !== 2) {
-      gfx.fillStyle(0xffffff, 1);
-      gfx.fillRect(ox + 11, 11, 3, 3);
-      gfx.fillRect(ox + 18, 11, 3, 3);
-      gfx.fillStyle(p.eyeColor, 1);
-      const eyeOffX = dir === 1 ? 1 : dir === 3 ? -1 : 0;
-      gfx.fillRect(ox + 12 + eyeOffX, 12, 2, 2);
-      gfx.fillRect(ox + 19 + eyeOffX, 12, 2, 2);
-      // Mouth
-      gfx.fillStyle(p.skinShadow, 1);
-      gfx.fillRect(ox + 14, 15, 4, 1);
-    }
-
-    // Hair
-    drawHair(gfx, ox, p.hairBase, p.hairHighlight, p.hairStyle, dir);
-
-    // Glasses
-    if (p.hasGlasses && dir !== 2) {
-      gfx.lineStyle(1, p.glassesColor ?? 0x1a1a2e, 1);
-      gfx.strokeRect(ox + 10, 10, 4, 4);
-      gfx.strokeRect(ox + 17, 10, 4, 4);
-      gfx.lineBetween(ox + 14, 12, ox + 17, 12);
-    }
-
-    // Earring
-    if (p.hasEarring && (dir === 0 || dir === 1)) {
-      gfx.fillStyle(0xfbbf24, 1);
-      gfx.fillCircle(ox + 22, 14, 1.5);
-    }
-
-    rt.draw(gfx, 0, 0);
-    gfx.destroy();
+    drawFrameToCanvas(ctx, ox, p, dir, step, isWalk);
   }
 
-  rt.saveTexture(agent.key);
-  const tex = scene.textures.get(agent.key);
-  for (let i = 0; i < TOTAL_FRAMES; i++) {
-    tex.add(i, 0, i * FRAME_W, 0, FRAME_W, FRAME_H);
-  }
-  // Don't destroy rt — it owns the GL texture used by sprites.
+  scene.textures.addSpriteSheet(agent.key, canvas as unknown as HTMLImageElement, {
+    frameWidth: FRAME_W,
+    frameHeight: FRAME_H,
+  });
 
-  const k = agent.key;
-  const anim = (name: string, frames: number[], fr: number, repeat = -1) => {
-    if (scene.anims.exists(name)) return;
-    scene.anims.create({
-      key: name,
-      frames: frames.map((f) => ({ key: k, frame: f })),
-      frameRate: fr,
-      repeat,
-    });
-  };
-  anim(`${k}_walk_south`, [0, 1], 4);
-  anim(`${k}_walk_east`, [2, 3], 4);
-  anim(`${k}_walk_north`, [4, 5], 4);
-  anim(`${k}_walk_west`, [6, 7], 4);
-  anim(`${k}_idle`, [8], 1, 0);
-  anim(`${k}_working`, [8, 9], 2);
+  registerAgentAnimations(scene, agent.key);
 }
