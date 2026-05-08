@@ -152,7 +152,7 @@ function strokeRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.stroke();
 }
 
-function drawHair(
+export function drawHair(
   ctx: CanvasRenderingContext2D,
   ox: number,
   base: number,
@@ -215,7 +215,7 @@ function drawHair(
   }
 }
 
-function drawFrameToCanvas(
+export function drawFrameToCanvas(
   ctx: CanvasRenderingContext2D,
   ox: number,
   p: CharacterPalette,
@@ -394,31 +394,116 @@ export async function loadAgentSpritesFromDB(scene: Phaser.Scene): Promise<void>
 }
 
 /**
- * Generate procedural character texture using Canvas 2D API.
- * Compatible with Phaser 4 (replaces renderTexture.saveTexture approach).
+ * Generate procedural character texture using Phaser 4's createCanvas API.
+ * Uses scene.textures.createCanvas() which returns a CanvasTexture — fully
+ * compatible with Phaser 4 (replaces the broken addSpriteSheet(canvas) approach).
+ *
+ * Renders a simple but visually rich circular avatar per frame:
+ *   Frames 0-7: walk cycles (8 frames, 4 directions × 2 steps)
+ *   Frame 8:    idle (pulse ring)
+ *   Frame 9:    working (gear icon above circle)
+ *
+ * Canvas total: FRAME_W * TOTAL_FRAMES × FRAME_H = 320 × 48 px
  */
 export function createAgentTexture(scene: Phaser.Scene, agent: AgentDef): void {
   if (scene.textures.exists(agent.key)) return;
-  const p = agent.palette;
 
-  const canvas = document.createElement("canvas");
-  canvas.width = FRAME_W * TOTAL_FRAMES;
-  canvas.height = FRAME_H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  // Phaser 4: createCanvas returns a CanvasTexture (not addSpriteSheet from HTMLCanvasElement)
+  const tex = scene.textures.createCanvas(
+    agent.key,
+    FRAME_W * TOTAL_FRAMES,
+    FRAME_H,
+  ) as Phaser.Textures.CanvasTexture | null;
 
-  for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
-    const isWalk = frame < 8;
-    const dir = isWalk ? Math.floor(frame / 2) : 0;
-    const step = frame % 2;
-    const ox = frame * FRAME_W;
-    drawFrameToCanvas(ctx, ox, p, dir, step, isWalk);
+  if (!tex) {
+    console.warn("[sprites] createCanvas returned null for", agent.key);
+    return;
   }
 
-  scene.textures.addSpriteSheet(agent.key, canvas as unknown as HTMLImageElement, {
-    frameWidth: FRAME_W,
-    frameHeight: FRAME_H,
-  });
+  const ctx = tex.getContext() as CanvasRenderingContext2D;
+
+  // Derive avatar color from shirt color (most distinctive per agent)
+  const shirtR = (agent.palette.shirtBase >> 16) & 0xff;
+  const shirtG = (agent.palette.shirtBase >> 8) & 0xff;
+  const shirtB = agent.palette.shirtBase & 0xff;
+  const shirtCss = `rgb(${shirtR},${shirtG},${shirtB})`;
+
+  const initial = agent.name.charAt(0).toUpperCase();
+
+  // Circle geometry (within 32×48 frame)
+  const cx = FRAME_W / 2;       // 16
+  const cy = 22;                 // vertical center leaving room for shadow
+  const radius = 13;
+
+  for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
+    const ox = frame * FRAME_W;
+    const isWalk = frame < 8;
+    const isIdle = frame === 8;
+    const isWorking = frame === 9;
+
+    // Walk bob: alternate ±2px vertical offset based on step parity
+    const bobY = isWalk ? (frame % 2 === 0 ? -2 : 2) : 0;
+    const fcx = ox + cx;
+    const fcy = cy + bobY;
+
+    // Shadow ellipse at bottom
+    ctx.fillStyle = "rgba(0,0,0,0.30)";
+    ctx.beginPath();
+    ctx.ellipse(ox + cx, 43, 11, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Working frame: gear icon above circle
+    if (isWorking) {
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.90)";
+      ctx.fillText("⚙", fcx, fcy - radius - 7);
+    }
+
+    // Main circle fill
+    ctx.fillStyle = shirtCss;
+    ctx.beginPath();
+    ctx.arc(fcx, fcy, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Idle frame: pulse ring
+    if (isIdle) {
+      ctx.strokeStyle = "rgba(255,255,255,0.40)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(fcx, fcy, radius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Highlight arc on top of circle (subtle rim light)
+    const grad = ctx.createRadialGradient(fcx - 4, fcy - 5, 2, fcx, fcy, radius);
+    grad.addColorStop(0, "rgba(255,255,255,0.55)");
+    grad.addColorStop(0.5, "rgba(255,255,255,0.15)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(fcx, fcy, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Initial letter
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 3;
+    ctx.fillText(initial, fcx, fcy + 1);
+    ctx.shadowBlur = 0;
+  }
+
+  // Flush canvas pixels to GPU texture
+  tex.refresh();
+
+  // Register frame regions (Phaser 4 CanvasTexture approach)
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    tex.add(i, 0, i * FRAME_W, 0, FRAME_W, FRAME_H);
+  }
 
   registerAgentAnimations(scene, agent.key);
 }

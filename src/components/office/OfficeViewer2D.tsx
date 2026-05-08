@@ -1,183 +1,286 @@
-import { useEffect, useRef } from 'react';
+// OfficeViewer2D.tsx — React-pure 2D office grid (no Phaser dependency)
 import type { SquadState } from '@/types';
-import { useOfficeChoreography } from './useOfficeChoreography';
-import { CELL_2D, GRID_COLS, GRID_ROWS, ROOMS, STATUS_COLOR } from './officeLayout';
+import { ROOMS } from './officeLayout';
+
+export interface AgentExternalState {
+  agentKey: string;
+  status?: string;
+  currentJob?: string;
+}
 
 interface Props {
   squadState: SquadState | null;
-  width?: number;
-  height?: number;
+  agentExternalStates?: AgentExternalState[];
 }
 
-const W = GRID_COLS * CELL_2D;
-const H = GRID_ROWS * CELL_2D;
+// ── Agent → room mapping ───────────────────────────────────────────────────
+const AGENT_HOME: Record<string, string> = {
+  agata:   'gestao',
+  carlos:  'comercial',
+  marcio:  'operacoes',
+  flora:   'financeiro',
+  maya:    'marketing',
+  heitor:  'ti',
+  ana:     'delivery',
+  bruno:   'delivery',
+  beatriz: 'delivery',
+  roberto: 'delivery',
+};
 
-export default function OfficeViewer2D({ squadState }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const gameRef = useRef<unknown>(null);
-  const sceneRef = useRef<{
-    upsertAgents: (poses: ReturnType<typeof useOfficeChoreography>['poses']) => void;
-  } | null>(null);
+// All known agents with display info derived from OfficeAssets AGENTS list
+interface AgentMeta {
+  key: string;
+  name: string;
+  initial: string;
+  shirtColor: string;
+}
 
-  const choreo = useOfficeChoreography(squadState);
+const AGENT_META: AgentMeta[] = [
+  { key: 'agata',   name: 'Ágata',   initial: 'Á', shirtColor: '#7c3aed' },
+  { key: 'carlos',  name: 'Carlos',  initial: 'C', shirtColor: '#10b981' },
+  { key: 'marcio',  name: 'Márcio',  initial: 'M', shirtColor: '#f59e0b' },
+  { key: 'flora',   name: 'Flora',   initial: 'F', shirtColor: '#06b6d4' },
+  { key: 'maya',    name: 'Maya',    initial: 'M', shirtColor: '#f97316' },
+  { key: 'heitor',  name: 'Heitor',  initial: 'H', shirtColor: '#ec4899' },
+  { key: 'ana',     name: 'Ana',     initial: 'A', shirtColor: '#5b21b6' },
+  { key: 'bruno',   name: 'Bruno',   initial: 'B', shirtColor: '#2563eb' },
+  { key: 'beatriz', name: 'Beatriz', initial: 'B', shirtColor: '#7c3aed' },
+  { key: 'roberto', name: 'Roberto', initial: 'R', shirtColor: '#059669' },
+];
 
-  useEffect(() => {
-    let destroyed = false;
-    let game: { destroy: (b: boolean) => void } | null = null;
+// Delivery room definition (not in officeLayout ROOMS — rendered separately)
+interface RoomDef {
+  id: string;
+  label: string;
+  color: string;
+  colStart: number;
+  rowStart: number;
+  colEnd: number;
+  rowEnd: number;
+}
 
-    (async () => {
-      const Phaser = (await import('phaser')).default;
-      if (destroyed || !containerRef.current) return;
+// Combine rooms from officeLayout plus delivery (shown as a corridor at bottom)
+const ALL_ROOMS: RoomDef[] = [
+  ...ROOMS.map((r) => ({
+    id: r.id,
+    label: r.label,
+    color: r.color,
+    colStart: r.rect[0] + 1,   // CSS grid is 1-indexed
+    rowStart: r.rect[1] + 1,
+    colEnd:   r.rect[2] + 2,   // exclusive end
+    rowEnd:   r.rect[3] + 2,
+  })),
+  // Delivery corridor at bottom (tiles row 11-14 in iso, mapped to row 12-15)
+  {
+    id: 'delivery',
+    label: 'DELIVERY',
+    color: '#5b21b6',
+    colStart: 1,
+    rowStart: 12,
+    colEnd: 6,
+    rowEnd: 16,
+  },
+];
 
-      class OfficeScene extends Phaser.Scene {
-        agents = new Map<string, Phaser.GameObjects.Container>();
+// ── Status dot color ───────────────────────────────────────────────────────
+function statusDotColor(status: string | undefined): string {
+  switch (status) {
+    case 'working':   return '#22c55e';
+    case 'meeting':   return '#06b6d4';
+    case 'walking':   return '#f59e0b';
+    case 'done':      return '#10b981';
+    case 'idle':
+    default:          return '#64748b';
+  }
+}
 
-        create() {
-          // floor
-          this.add.rectangle(W / 2, H / 2, W, H, 0x0b1220);
-          // grid
-          const g = this.add.graphics({ lineStyle: { width: 1, color: 0x111827, alpha: 0.6 } });
-          for (let c = 0; c <= GRID_COLS; c += 1) {
-            g.lineBetween(c * CELL_2D, 0, c * CELL_2D, H);
-          }
-          for (let r = 0; r <= GRID_ROWS; r += 1) {
-            g.lineBetween(0, r * CELL_2D, W, r * CELL_2D);
-          }
+// ── Agent avatar ──────────────────────────────────────────────────────────
+interface AvatarProps {
+  meta: AgentMeta;
+  status?: string;
+  currentJob?: string;
+}
 
-          // rooms
-          ROOMS.forEach((room) => {
-            const [cs, rs, ce, re] = room.rect;
-            const x = cs * CELL_2D;
-            const y = rs * CELL_2D;
-            const w = (ce - cs + 1) * CELL_2D;
-            const h = (re - rs + 1) * CELL_2D;
-            const color = Phaser.Display.Color.HexStringToColor(room.color).color;
-            this.add.rectangle(x + w / 2, y + h / 2, w - 4, h - 4, color, 0.18).setStrokeStyle(2, color, 0.85);
-            // pill label
-            const label = this.add.text(x + 8, y + 8, room.label, {
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '11px',
-              color: '#f8fafc',
-              backgroundColor: room.color,
-              padding: { left: 6, right: 6, top: 2, bottom: 2 },
-            });
-            label.setAlpha(0.95);
+function AgentAvatar({ meta, status, currentJob }: AvatarProps) {
+  const dot = statusDotColor(status);
+  return (
+    <div
+      className="flex flex-col items-center gap-[2px]"
+      title={currentJob ? `${meta.name}: ${currentJob}` : meta.name}
+    >
+      {/* Circle with initial */}
+      <div
+        className="relative flex items-center justify-center rounded-full text-white font-bold select-none"
+        style={{
+          width: 28,
+          height: 28,
+          background: meta.shirtColor,
+          fontSize: 12,
+          boxShadow: `0 0 0 2px rgba(255,255,255,0.15), 0 2px 6px rgba(0,0,0,0.5)`,
+        }}
+      >
+        {meta.initial}
+        {/* Status dot */}
+        <span
+          className="absolute bottom-0 right-0 rounded-full border border-[#0f172a]"
+          style={{
+            width: 8,
+            height: 8,
+            background: dot,
+            transform: 'translate(2px, 2px)',
+          }}
+        />
+      </div>
+      {/* Name label */}
+      <span
+        className="text-center leading-tight"
+        style={{ fontSize: 9, color: 'rgba(248,250,252,0.75)', maxWidth: 32, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        {meta.name.split(' ')[0]}
+      </span>
+    </div>
+  );
+}
 
-            // desks for departmental rooms
-            if (room.isDept && room.desks > 0) {
-              for (let i = 0; i < room.desks; i += 1) {
-                const cols = Math.min(2, ce - cs - 1);
-                const c = i % cols;
-                const r = Math.floor(i / cols);
-                const dx = (cs + 1 + c * Math.max(1, ce - cs - 2)) * CELL_2D + CELL_2D / 2;
-                const dy = (rs + 1 + r * Math.max(1, re - rs - 2)) * CELL_2D + CELL_2D / 2;
-                this.add.rectangle(dx, dy + 14, 28, 14, 0x1f2937).setStrokeStyle(1, 0x334155);
-              }
-            }
-          });
+// ── Main component ────────────────────────────────────────────────────────
+export default function OfficeViewer2D({ agentExternalStates }: Props) {
+  // Build a map of agentKey → external state for O(1) lookup
+  const stateMap = new Map<string, AgentExternalState>();
+  agentExternalStates?.forEach((s) => stateMap.set(s.agentKey, s));
 
-          // Drive door
-          this.add.rectangle(W - 8, (6 + 0.5) * CELL_2D, 12, CELL_2D - 6, 0xfbbf24);
-          this.add.text(W - 30, 6 * CELL_2D - 14, 'DRIVE', {
-            fontSize: '9px',
-            color: '#fbbf24',
-            fontFamily: 'monospace',
-          });
-
-          sceneRef.current = {
-            upsertAgents: (poses) => {
-              const seen = new Set<string>();
-              poses.forEach((p) => {
-                seen.add(p.id);
-                let c = this.agents.get(p.id);
-                const x = p.col * CELL_2D + CELL_2D / 2;
-                const y = p.row * CELL_2D + CELL_2D / 2;
-                const color = Phaser.Display.Color.HexStringToColor(STATUS_COLOR[p.status] ?? '#64748b').color;
-                if (!c) {
-                  c = this.add.container(x, y);
-                  const body = this.add.circle(0, 0, 12, color).setStrokeStyle(2, 0xffffff, 0.9);
-                  body.name = 'body';
-                  const icon = this.add.text(0, 0, p.icon, { fontSize: '14px' }).setOrigin(0.5);
-                  icon.name = 'icon';
-                  const bubble = this.add
-                    .text(0, -26, '', {
-                      fontSize: '9px',
-                      color: '#0f172a',
-                      backgroundColor: '#fef3c7',
-                      padding: { left: 4, right: 4, top: 2, bottom: 2 },
-                    })
-                    .setOrigin(0.5)
-                    .setVisible(false);
-                  bubble.name = 'bubble';
-                  const carry = this.add.text(10, -10, '', { fontSize: '12px' });
-                  carry.name = 'carry';
-                  c.add([body, icon, bubble, carry]);
-                  this.agents.set(p.id, c);
-                  // pulse if working
-                  this.tweens.add({
-                    targets: body,
-                    scale: { from: 1, to: 1.15 },
-                    duration: 600,
-                    yoyo: true,
-                    repeat: -1,
-                  });
-                }
-                c.x = x;
-                c.y = y - (p.motion > 0.05 ? Math.abs(Math.sin(performance.now() / 120)) * 2 : 0);
-                const body = c.getByName('body') as Phaser.GameObjects.Arc;
-                body.setFillStyle(color);
-                const carry = c.getByName('carry') as Phaser.GameObjects.Text;
-                carry.setText(p.carrying === 'folder' ? '📁' : p.carrying === 'document' ? '📄' : '');
-                const bubble = c.getByName('bubble') as Phaser.GameObjects.Text;
-                if (p.bubble) {
-                  bubble.setText(p.bubble.length > 26 ? `${p.bubble.slice(0, 26)}…` : p.bubble);
-                  bubble.setVisible(true);
-                } else {
-                  bubble.setVisible(false);
-                }
-              });
-              // remove vanished
-              for (const [id, c] of this.agents) {
-                if (!seen.has(id)) {
-                  c.destroy();
-                  this.agents.delete(id);
-                }
-              }
-            },
-          };
-        }
-      }
-
-      game = new Phaser.Game({
-        type: Phaser.AUTO,
-        parent: containerRef.current,
-        width: W,
-        height: H,
-        backgroundColor: '#020617',
-        scene: OfficeScene,
-        scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-      });
-      gameRef.current = game;
-    })();
-
-    return () => {
-      destroyed = true;
-      if (game) game.destroy(true);
-      gameRef.current = null;
-      sceneRef.current = null;
-    };
-  }, []);
-
-  // push poses on every render
-  useEffect(() => {
-    sceneRef.current?.upsertAgents(choreo.poses);
-  }, [choreo.poses]);
+  // Group agents by their home room
+  const agentsByRoom = new Map<string, AgentMeta[]>();
+  AGENT_META.forEach((meta) => {
+    const roomId = AGENT_HOME[meta.key] ?? 'delivery';
+    const list = agentsByRoom.get(roomId) ?? [];
+    list.push(meta);
+    agentsByRoom.set(roomId, list);
+  });
 
   return (
     <div
-      ref={containerRef}
-      className="w-full overflow-hidden rounded-xl border border-border"
-      style={{ aspectRatio: `${W} / ${H}`, background: '#020617' }}
-    />
+      className="w-full overflow-hidden rounded-xl border border-white/10"
+      style={{ background: '#020617', aspectRatio: '15 / 16' }}
+    >
+      {/* 15-col × 16-row grid (extra row for delivery at bottom) */}
+      <div
+        className="relative w-full h-full"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(15, 1fr)',
+          gridTemplateRows: 'repeat(16, 1fr)',
+          gap: 0,
+        }}
+      >
+        {/* Background grid lines */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: `${100 / 15}% ${100 / 16}%`,
+          }}
+        />
+
+        {/* Render all rooms */}
+        {ALL_ROOMS.map((room) => {
+          const agents = agentsByRoom.get(room.id) ?? [];
+          return (
+            <div
+              key={room.id}
+              className="relative flex flex-col overflow-hidden"
+              style={{
+                gridColumn: `${room.colStart} / ${room.colEnd}`,
+                gridRow: `${room.rowStart} / ${room.rowEnd}`,
+                border: `1px solid ${room.color}1a`,
+                background: `${room.color}12`,
+                borderRadius: 4,
+                margin: 2,
+              }}
+            >
+              {/* Room label */}
+              <span
+                className="absolute top-[4px] left-[4px] uppercase tracking-wider font-semibold leading-none z-10"
+                style={{
+                  fontSize: 8,
+                  color: room.color,
+                  opacity: 0.9,
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {room.label}
+              </span>
+
+              {/* Desk rectangles (decorative) */}
+              <div className="absolute inset-0 flex flex-wrap gap-[3px] p-[16px_4px_4px] pointer-events-none">
+                {Array.from({ length: Math.min(agents.length || 1, 4) }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-sm"
+                    style={{
+                      width: 18,
+                      height: 10,
+                      background: 'rgba(30,41,59,0.7)',
+                      border: '1px solid rgba(51,65,85,0.5)',
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Agent avatars */}
+              {agents.length > 0 && (
+                <div className="absolute bottom-[4px] left-0 right-0 flex flex-wrap justify-center gap-[3px] px-1">
+                  {agents.map((meta) => {
+                    const ext = stateMap.get(meta.key);
+                    return (
+                      <AgentAvatar
+                        key={meta.key}
+                        meta={meta}
+                        status={ext?.status}
+                        currentJob={ext?.currentJob}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Drive door indicator (right edge, row 6-7) */}
+        <div
+          className="absolute right-0 flex items-center justify-center"
+          style={{
+            top: `${(5 / 16) * 100}%`,
+            height: `${(2 / 16) * 100}%`,
+            width: 10,
+            background: '#fbbf24',
+            borderRadius: '2px 0 0 2px',
+          }}
+        >
+          <span
+            style={{
+              writingMode: 'vertical-rl',
+              fontSize: 7,
+              color: '#78350f',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+            }}
+          >
+            DRIVE
+          </span>
+        </div>
+
+        {/* Floor label */}
+        <div
+          className="absolute top-1 left-1/2 -translate-x-1/2 pointer-events-none"
+          style={{ fontSize: 9, color: 'rgba(148,163,184,0.5)', letterSpacing: '0.1em' }}
+        >
+          INTELLIX HQ
+        </div>
+      </div>
+    </div>
   );
 }

@@ -142,8 +142,8 @@ export class IntelliXOfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     this.cameras.main.setBackgroundColor(0x0D1B2A);
-    this.cameras.main.setBounds(-800, -400, 2200, 1600);
-    this.cameras.main.setZoom(0.95);
+    this.cameras.main.setBounds(-600, -300, 2000, 1400);
+    this.cameras.main.setZoom(0.7);
     const { x, y } = isoToScreen(7, 7);
     this.cameras.main.centerOn(x, y);
   }

@@ -157,7 +157,7 @@ export default function OfficePage() {
               height={680}
             />
           ) : (
-            <OfficeViewer2D squadState={null} />
+            <OfficeViewer2D squadState={null} agentExternalStates={agentStates} />
           )}
         </div>
 
