@@ -12,29 +12,26 @@ verify_jwt = false
 [functions.send-whatsapp]
 verify_jwt = false
 
-[functions.notification-dispatcher]
+[functions.send-email]
 verify_jwt = false
 
-[functions.internal-job-trigger]
+[functions.gestao-trigger]
+verify_jwt = false
+
+[functions.internal-job-dispatch]
+verify_jwt = false
+
+[functions.agile-story-move]
+verify_jwt = false
+
+[functions.agile-sprint-start]
+verify_jwt = false
+
+[functions.agile-sprint-close]
 verify_jwt = false
 
 [functions.ai-assistant]
 verify_jwt = false
 
-[functions.ai-deal-coach]
-verify_jwt = false
-
-[functions.ai-sprint-coach]
-verify_jwt = false
-
-[functions.crm-automation-runner]
-verify_jwt = false
-
-[functions.lead-score-calculator]
-verify_jwt = false
-
-[functions.send-email]
-verify_jwt = false
-
-[functions.outbound-webhook-dispatcher]
+[functions.notification-dispatcher]
 verify_jwt = false

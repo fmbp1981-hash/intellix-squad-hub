@@ -2,7 +2,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 import { buildAgataContext, AgataType } from "../_shared/agata-context-builder.ts";
 
-const VALID: AgataType[] = ["daily_standup", "on_demand", "incident_response", "weekly_review"];
+const VALID: AgataType[] = ["on_demand", "incident_response", "weekly_review"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });

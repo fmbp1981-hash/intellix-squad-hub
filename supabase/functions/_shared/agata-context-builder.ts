@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-export type AgataType = "daily_standup" | "on_demand" | "incident_response" | "weekly_review";
+export type AgataType = "on_demand" | "incident_response" | "weekly_review";
 
 export async function buildAgataContext(
   supabase: SupabaseClient,

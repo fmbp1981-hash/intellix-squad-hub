@@ -1,4 +1,4 @@
-import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Sparkles, Target, Rocket, Home, Download } from "lucide-react";
+import { Building2, Settings as SettingsIcon, LogOut, LayoutGrid, Briefcase, Target, Rocket, Home } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,23 +10,21 @@ import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 type BadgeKey = "jobs" | "engagements" | "leads";
 
 const groups: { label: string; items: { to: string; label: string; icon: any; badge?: BadgeKey }[] }[] = [
-  { label: "Visão Geral", items: [{ to: "/dashboard", label: "Dashboard", icon: Home }] },
+  { label: "Visão Geral", items: [{ to: "/painel", label: "Painel", icon: Home }] },
   {
     label: "IntelliX",
     items: [
-      { to: "/office", label: "Escritório", icon: LayoutGrid },
-      { to: "/office/gestao", label: "Ágata", icon: Sparkles },
-      { to: "/crm", label: "CRM", icon: Target, badge: "leads" },
+      { to: "/escritorio", label: "Escritório", icon: LayoutGrid },
+      { to: "/pipeline", label: "Pipeline", icon: Target, badge: "leads" },
       { to: "/jobs", label: "Jobs", icon: Briefcase, badge: "jobs" },
     ],
   },
   {
-    label: "Consultoria",
-    items: [{ to: "/workspaces", label: "Engagements", icon: Building2, badge: "engagements" }],
+    label: "Squad Hub",
+    items: [{ to: "/squads", label: "Squads", icon: Building2, badge: "engagements" }],
   },
-  { label: "Projetos Ágeis", items: [{ to: "/projects", label: "Projetos", icon: Rocket }] },
-  { label: "Dados", items: [{ to: "/exports", label: "Exportações", icon: Download }] },
-  { label: "Configurações", items: [{ to: "/settings", label: "Configurações", icon: SettingsIcon }] },
+  { label: "Projetos Ágeis", items: [{ to: "/projetos", label: "Projetos", icon: Rocket }] },
+  { label: "Configurações", items: [{ to: "/config", label: "Config", icon: SettingsIcon }] },
 ];
 
 function getInitials(email: string | undefined | null): string {

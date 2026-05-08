@@ -9,22 +9,26 @@ export interface JobDef {
 
 export const JOB_CATALOG: Record<string, JobDef[]> = {
   gestao: [
-    { id: "daily_standup", displayName: "Daily Standup", slaMin: 5, estimatedTokens: 4000 },
     { id: "on_demand", displayName: "Briefing On-Demand", slaMin: 3, estimatedTokens: 3000 },
     { id: "incident_response", displayName: "Resposta a Incidente", slaMin: 5, estimatedTokens: 3000 },
     { id: "weekly_review", displayName: "Revisão Semanal", slaMin: 10, estimatedTokens: 8000 },
   ],
-  comercial: [
+  sdr: [
     { id: "prospect-icp", displayName: "Prospectar ICP", slaMin: 20, estimatedTokens: 6000, cooldownMin: 60 },
-    { id: "qualify-lead", displayName: "Qualificar Lead", slaMin: 10, estimatedTokens: 3000 },
+    { id: "qualify-lead", displayName: "Qualificar Lead BANT", slaMin: 10, estimatedTokens: 3000 },
+    { id: "followup-sequence", displayName: "Sequência Follow-up", slaMin: 10, estimatedTokens: 3000, cooldownMin: 1440 },
+  ],
+  comercial: [
+    { id: "run-diagnosis", displayName: "Diagnóstico do Deal", slaMin: 15, estimatedTokens: 4000 },
     { id: "generate-proposal", displayName: "Gerar Proposta", slaMin: 15, estimatedTokens: 5000, requiresApproval: true },
-    { id: "followup-stale", displayName: "Follow-up Leads Parados", slaMin: 10, estimatedTokens: 3000, cooldownMin: 1440 },
+    { id: "followup-stale-deal", displayName: "Follow-up Deal Parado", slaMin: 10, estimatedTokens: 3000, cooldownMin: 1440 },
   ],
   marketing: [
     { id: "content-calendar", displayName: "Calendário Editorial", slaMin: 20, estimatedTokens: 5000, requiresApproval: true, cooldownMin: 10080 },
-    { id: "draft-linkedin-post", displayName: "Rascunho LinkedIn", slaMin: 5, estimatedTokens: 2000, requiresApproval: true },
-    { id: "analyze-campaign", displayName: "Analisar Campanha", slaMin: 10, estimatedTokens: 3000 },
-    { id: "competitor-watch", displayName: "Monitor Concorrente", slaMin: 15, estimatedTokens: 4000, cooldownMin: 1440 },
+    { id: "create-carousel", displayName: "Criar Carrossel", slaMin: 10, estimatedTokens: 4000, requiresApproval: true },
+    { id: "create-post", displayName: "Criar Post Feed", slaMin: 8, estimatedTokens: 2500, requiresApproval: true },
+    { id: "create-story", displayName: "Criar Story", slaMin: 5, estimatedTokens: 1500, requiresApproval: true },
+    { id: "create-linkedin", displayName: "Criar Post LinkedIn", slaMin: 8, estimatedTokens: 2500, requiresApproval: true },
   ],
   financeiro: [
     { id: "generate-invoice", displayName: "Emitir Fatura", slaMin: 5, estimatedTokens: 2000, requiresApproval: true },

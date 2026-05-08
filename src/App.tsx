@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
+import PainelPage from "./pages/painel/PainelPage";
 
 // Lazy: heavier sections
 const WorkspacesList = lazy(() => import("./pages/workspaces/WorkspacesList"));
@@ -57,6 +58,12 @@ const SprintBoardPage = lazy(() => import("./pages/projects/SprintBoardPage"));
 const SprintsPage = lazy(() => import("./pages/projects/SprintsPage"));
 const ProjectMetricsPage = lazy(() => import("./pages/projects/ProjectMetricsPage"));
 const ImpedimentsPage = lazy(() => import("./pages/projects/ImpedimentsPage"));
+const EscritorioPage = lazy(() => import("./pages/escritorio/EscritorioPage"));
+const PipelinePage = lazy(() => import("./pages/pipeline/PipelinePage"));
+const SquadsListPage = lazy(() => import("./pages/squads/SquadsListPage"));
+const SquadDetailPage = lazy(() => import("./pages/squads/SquadDetailPage"));
+const ProjetoDetailPage = lazy(() => import("./pages/projetos/ProjetoDetailPage"));
+const ConfigPage = lazy(() => import("./pages/config/ConfigPage"));
 
 const queryClient = new QueryClient();
 
@@ -79,7 +86,8 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 >
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/" element={<Navigate to="/painel" replace />} />
+                  <Route path="/painel" element={<PainelPage />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/workspaces" element={<WorkspacesList />} />
                   <Route path="/workspaces/new" element={<NewWorkspace />} />
@@ -131,6 +139,17 @@ const App = () => (
                   <Route path="/projects/:id/metrics" element={<ProjectMetricsPage />} />
                   <Route path="/projects/:id/impediments" element={<ImpedimentsPage />} />
                   <Route path="/projects/:id/roadmap" element={<Placeholder title="Roadmap" step="Lote C" description="Release Plan visual." />} />
+
+                  <Route path="/escritorio" element={<EscritorioPage />} />
+                  <Route path="/pipeline" element={<PipelinePage />} />
+                  <Route path="/squads" element={<SquadsListPage />} />
+                  <Route path="/squads/new" element={<NewWorkspace />} />
+                  <Route path="/squads/:id" element={<SquadDetailPage />} />
+                  <Route path="/squads/:id/run/:squad" element={<RunDashboard />} />
+                  <Route path="/projetos" element={<ProjectsList />} />
+                  <Route path="/projetos/new" element={<NewProject />} />
+                  <Route path="/projetos/:id" element={<ProjetoDetailPage />} />
+                  <Route path="/config" element={<ConfigPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
