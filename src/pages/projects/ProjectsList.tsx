@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import {
   Plus, CheckCircle2, Briefcase,
   Sparkles, Loader2, AlertCircle, Award, Kanban as KanbanIcon,
-  Layers,
+  Layers, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -184,6 +184,20 @@ export default function ProjectsList() {
   const [columns, setColumns] = useState<Record<ProjectStatus, AgileProject[]>>(() =>
     groupByStatus([])
   );
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  const scrollKanban = (dir: "left" | "right") => {
+    scrollRef.current?.scrollBy({ left: dir === "right" ? 320 : -320, behavior: "smooth" });
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["agile-projects"],
@@ -209,7 +223,11 @@ export default function ProjectsList() {
   }
 
   useEffect(() => {
-    if (data) setColumns(groupByStatus(rootProjects));
+    if (data) {
+      setColumns(groupByStatus(rootProjects));
+      // re-check scroll state after data loads
+      setTimeout(checkScroll, 50);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
@@ -271,6 +289,27 @@ export default function ProjectsList() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Scroll nav — só aparece na view kanban */}
+          {view === "kanban" && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost" size="icon"
+                className="h-7 w-7"
+                disabled={!canScrollLeft}
+                onClick={() => scrollKanban("left")}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost" size="icon"
+                className="h-7 w-7"
+                disabled={!canScrollRight}
+                onClick={() => scrollKanban("right")}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <Tabs value={view} onValueChange={(v) => setView(v as View)}>
             <TabsList>
               <TabsTrigger value="kanban" className="gap-1.5">
@@ -291,7 +330,12 @@ export default function ProjectsList() {
 
       {/* Kanban View */}
       {view === "kanban" && (
-        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
           {isLoading ? (
             <div className="flex gap-4 p-6">
               {STATUS_COLUMNS.map((col) => (
@@ -300,7 +344,7 @@ export default function ProjectsList() {
             </div>
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex gap-4 px-6 pt-6 pb-4" style={{ minWidth: "max-content" }}>
+              <div className="flex gap-4 px-6 pt-6 pb-6" style={{ minWidth: "max-content" }}>
                 {STATUS_COLUMNS.map((col) => (
                   <KanbanColumn
                     key={col.id}
