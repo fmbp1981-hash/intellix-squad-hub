@@ -300,7 +300,7 @@ export default function ProjectsList() {
             </div>
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex gap-4 p-6" style={{ minWidth: "max-content" }}>
+              <div className="flex gap-4 px-6 pt-6 pb-4" style={{ minWidth: "max-content" }}>
                 {STATUS_COLUMNS.map((col) => (
                   <KanbanColumn
                     key={col.id}
