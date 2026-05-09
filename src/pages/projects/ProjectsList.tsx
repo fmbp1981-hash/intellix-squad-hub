@@ -1,36 +1,172 @@
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState, useCallback } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import {
   Plus, Rocket, Activity, Pause, CheckCircle2, Briefcase,
-  Sparkles, Loader2, AlertCircle, Award
+  Sparkles, Loader2, AlertCircle, Award, LayoutGrid, Kanban as KanbanIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "@/components/ui/use-toast";
 
-const statusMeta: Record<string, { label: string; icon: typeof Activity; tone: string }> = {
-  planning:  { label: "Planejamento", icon: Rocket,        tone: "text-muted-foreground" },
-  active:    { label: "Ativo",        icon: Activity,      tone: "text-emerald-400" },
-  on_hold:   { label: "Em pausa",     icon: Pause,         tone: "text-orange-400" },
-  completed: { label: "Concluído",    icon: CheckCircle2,  tone: "text-primary" },
-  cancelled: { label: "Cancelado",    icon: Pause,         tone: "text-destructive" },
+type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+type View = "kanban" | "portfolio";
+
+interface AgileProject {
+  id: string;
+  name: string;
+  client_name: string | null;
+  description: string | null;
+  project_type: string;
+  status: ProjectStatus;
+  is_portfolio: boolean;
+  deal_id: string | null;
+  auto_planning_status: string | null;
+  current_velocity: number | null;
+  sprint_duration_days: number | null;
+}
+
+const STATUS_COLUMNS: {
+  id: ProjectStatus;
+  label: string;
+  dot: string;
+  bg: string;
+  border: string;
+  count: string;
+}[] = [
+  { id: "planning",  label: "Planejamento", dot: "bg-slate-400",      bg: "bg-slate-400/8",      border: "border-slate-400/20",   count: "bg-slate-400/15 text-slate-400" },
+  { id: "active",    label: "Ativo",        dot: "bg-emerald-400",    bg: "bg-emerald-400/8",    border: "border-emerald-400/20", count: "bg-emerald-400/15 text-emerald-400" },
+  { id: "on_hold",   label: "Em Pausa",     dot: "bg-orange-400",     bg: "bg-orange-400/8",     border: "border-orange-400/20",  count: "bg-orange-400/15 text-orange-400" },
+  { id: "completed", label: "Concluído",    dot: "bg-primary",        bg: "bg-primary/8",        border: "border-primary/20",     count: "bg-primary/15 text-primary" },
+  { id: "cancelled", label: "Cancelado",    dot: "bg-destructive",    bg: "bg-destructive/8",    border: "border-destructive/20", count: "bg-destructive/15 text-destructive" },
+];
+
+const PLANNING_META: Record<string, { label: string; icon: typeof Sparkles; spin?: boolean }> = {
+  pending:   { label: "Aguardando IA", icon: Sparkles },
+  running:   { label: "Planejando…",   icon: Loader2,  spin: true },
+  completed: { label: "Plano pronto",  icon: CheckCircle2 },
+  failed:    { label: "Falhou",        icon: AlertCircle },
 };
 
-const planningMeta: Record<string, { label: string; icon: typeof Sparkles; tone: string }> = {
-  pending:   { label: "Aguardando IA", icon: Sparkles,     tone: "text-muted-foreground" },
-  running:   { label: "Planejando…",   icon: Loader2,      tone: "text-primary animate-spin" },
-  completed: { label: "Plano pronto",  icon: CheckCircle2, tone: "text-emerald-400" },
-  failed:    { label: "Falhou",        icon: AlertCircle,  tone: "text-destructive" },
-};
+function groupByStatus(projects: AgileProject[]): Record<ProjectStatus, AgileProject[]> {
+  const groups = {} as Record<ProjectStatus, AgileProject[]>;
+  for (const col of STATUS_COLUMNS) groups[col.id] = [];
+  for (const p of projects) {
+    if (groups[p.status]) groups[p.status].push(p);
+    else groups["planning"].push(p);
+  }
+  return groups;
+}
 
-type Tab = "todos" | "portfolio";
+function ProjectCard({ project, index }: { project: AgileProject; index: number }) {
+  const planMeta = PLANNING_META[project.auto_planning_status ?? "pending"] ?? PLANNING_META.pending;
+  const PlanIcon = planMeta.icon;
+
+  return (
+    <Draggable draggableId={project.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={`mb-2 rounded-lg border bg-card p-3 shadow-sm transition-shadow select-none ${
+            snapshot.isDragging ? "shadow-lg ring-1 ring-primary/40 rotate-1" : "hover:shadow-md"
+          }`}
+        >
+          <Link to={`/projects/${project.id}`} onClick={(e) => snapshot.isDragging && e.preventDefault()}>
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <p className="text-sm font-semibold leading-tight line-clamp-2">{project.name}</p>
+              {project.is_portfolio && (
+                <Badge className="shrink-0 gap-0.5 bg-primary/10 text-[9px] text-primary border-primary/25 px-1.5">
+                  <Award className="h-2 w-2" /> Portfólio
+                </Badge>
+              )}
+            </div>
+
+            {project.client_name && (
+              <p className="text-xs text-muted-foreground mb-2">{project.client_name}</p>
+            )}
+
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="outline" className="capitalize text-[10px] px-1.5 py-0">
+                {project.project_type}
+              </Badge>
+              {project.deal_id && (
+                <Badge variant="secondary" className="gap-0.5 text-[10px] px-1.5 py-0">
+                  <Briefcase className="h-2.5 w-2.5" /> CRM
+                </Badge>
+              )}
+              <Badge variant="outline" className="gap-0.5 text-[10px] px-1.5 py-0 text-muted-foreground">
+                <PlanIcon className={`h-2.5 w-2.5 ${planMeta.spin ? "animate-spin" : ""}`} />
+                {planMeta.label}
+              </Badge>
+            </div>
+
+            {project.current_velocity != null && (
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                Velocity: <span className="font-semibold text-foreground">{Number(project.current_velocity).toFixed(0)} pts</span>
+              </p>
+            )}
+          </Link>
+        </div>
+      )}
+    </Draggable>
+  );
+}
+
+function KanbanColumn({
+  column,
+  projects,
+}: {
+  column: typeof STATUS_COLUMNS[number];
+  projects: AgileProject[];
+}) {
+  return (
+    <div className={`flex w-72 shrink-0 flex-col rounded-xl border ${column.border} ${column.bg}`}>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-inherit">
+        <span className={`h-2 w-2 rounded-full ${column.dot}`} />
+        <span className="text-sm font-semibold">{column.label}</span>
+        <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${column.count}`}>
+          {projects.length}
+        </span>
+      </div>
+
+      <Droppable droppableId={column.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 min-h-[120px] p-3 transition-colors rounded-b-xl ${
+              snapshot.isDraggingOver ? "bg-primary/5" : ""
+            }`}
+          >
+            {projects.map((p, i) => (
+              <ProjectCard key={p.id} project={p} index={i} />
+            ))}
+            {provided.placeholder}
+            {projects.length === 0 && !snapshot.isDraggingOver && (
+              <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-border/50">
+                <p className="text-xs text-muted-foreground">Solte aqui</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Droppable>
+    </div>
+  );
+}
 
 export default function ProjectsList() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>("todos");
+  const [view, setView] = useState<View>("kanban");
+  const [columns, setColumns] = useState<Record<ProjectStatus, AgileProject[]>>(() =>
+    groupByStatus([])
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["agile-projects"],
@@ -40,9 +176,13 @@ export default function ProjectsList() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as AgileProject[];
     },
   });
+
+  useEffect(() => {
+    if (data) setColumns(groupByStatus(data));
+  }, [data]);
 
   useEffect(() => {
     const ch = supabase
@@ -54,128 +194,144 @@ export default function ProjectsList() {
     return () => { supabase.removeChannel(ch); };
   }, [queryClient]);
 
-  const filtered = data?.filter((p: any) =>
-    tab === "portfolio" ? p.is_portfolio === true : true
-  ) ?? [];
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ProjectStatus }) => {
+      const { error } = await supabase
+        .from("agile_projects")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onError: () => {
+      if (data) setColumns(groupByStatus(data));
+      toast({ title: "Erro ao mover projeto", variant: "destructive" });
+    },
+  });
+
+  const onDragEnd = useCallback((result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) return;
+
+    const srcId = source.droppableId as ProjectStatus;
+    const dstId = destination.droppableId as ProjectStatus;
+
+    setColumns((prev) => {
+      const next = { ...prev };
+      const srcList = [...prev[srcId]];
+      const dstList = srcId === dstId ? srcList : [...prev[dstId]];
+      const [moved] = srcList.splice(source.index, 1);
+      dstList.splice(destination.index, 0, { ...moved, status: dstId });
+      next[srcId] = srcList;
+      next[dstId] = dstList;
+      return next;
+    });
+
+    updateStatus.mutate({ id: draggableId, status: dstId });
+  }, [updateStatus]);
+
+  const portfolioProjects = data?.filter((p) => p.is_portfolio) ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <header className="flex items-center justify-between">
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projetos Ágeis</h1>
           <p className="text-sm text-muted-foreground">
             Sprints, backlog e métricas no padrão PMI Agile + Scrum.
           </p>
         </div>
-        <Button asChild>
-          <Link to="/projects/new">
-            <Plus className="mr-2 h-4 w-4" /> Novo Projeto
-          </Link>
-        </Button>
-      </header>
+        <div className="flex items-center gap-3">
+          <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+            <TabsList>
+              <TabsTrigger value="kanban" className="gap-1.5">
+                <KanbanIcon className="h-3.5 w-3.5" /> Kanban
+              </TabsTrigger>
+              <TabsTrigger value="portfolio" className="gap-1.5">
+                <Award className="h-3.5 w-3.5" /> Portfólio
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button asChild size="sm">
+            <Link to="/projects/new">
+              <Plus className="mr-1.5 h-4 w-4" /> Novo Projeto
+            </Link>
+          </Button>
+        </div>
+      </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList>
-          <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value="portfolio" className="gap-1.5">
-            <Award className="h-3.5 w-3.5" /> Portfólio
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Kanban View */}
+      {view === "kanban" && (
+        <ScrollArea className="flex-1">
+          {isLoading ? (
+            <div className="flex gap-4 p-6">
+              {STATUS_COLUMNS.map((col) => (
+                <div key={col.id} className="w-72 shrink-0 h-48 animate-pulse rounded-xl bg-accent" />
+              ))}
+            </div>
+          ) : (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div className="flex gap-4 p-6">
+                {STATUS_COLUMNS.map((col) => (
+                  <KanbanColumn key={col.id} column={col} projects={columns[col.id] ?? []} />
+                ))}
+                {/* Add column placeholder */}
+                <div className="flex w-64 shrink-0 flex-col items-center justify-center rounded-xl border border-dashed border-border/40 gap-2 py-8">
+                  <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+                    <Link to="/projects/new">
+                      <Plus className="mr-1.5 h-4 w-4" /> Novo Projeto
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </DragDropContext>
+          )}
+        </ScrollArea>
+      )}
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
-      ) : filtered.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            {tab === "portfolio" ? (
-              <>
+      {/* Portfolio View */}
+      {view === "portfolio" && (
+        <ScrollArea className="flex-1 p-6">
+          {portfolioProjects.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <Award className="mb-4 h-10 w-10 text-muted-foreground" />
                 <h3 className="text-lg font-semibold">Nenhum projeto em portfólio</h3>
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  Projetos concluídos e em produção aparecem aqui como vitrine do trabalho entregue.
+                  Projetos concluídos e entregues com <code>is_portfolio = true</code> aparecem aqui.
                 </p>
-              </>
-            ) : (
-              <>
-                <Rocket className="mb-4 h-10 w-10 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">Nenhum projeto ainda</h3>
-                <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  Projetos são criados automaticamente quando um Deal é fechado no CRM. Você também pode criar manualmente.
-                </p>
-                <Button asChild className="mt-6">
-                  <Link to="/projects/new">
-                    <Plus className="mr-2 h-4 w-4" /> Criar projeto manual
-                  </Link>
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p: any) => {
-            const meta = statusMeta[p.status] ?? statusMeta.planning;
-            const Icon = meta.icon;
-            const planMeta = planningMeta[p.auto_planning_status] ?? planningMeta.pending;
-            const PlanIcon = planMeta.icon;
-            return (
-              <Link key={p.id} to={`/projects/${p.id}`}>
-                <Card className="h-full transition-colors hover:border-primary/40">
-                  <CardHeader className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold leading-tight">{p.name}</h3>
-                      <div className="flex shrink-0 items-center gap-1">
-                        {p.is_portfolio && (
-                          <Badge className="gap-1 bg-primary/15 text-[10px] text-primary border-primary/30">
-                            <Award className="h-2.5 w-2.5" /> Portfólio
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="capitalize text-[10px]">
-                          {p.project_type}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {portfolioProjects.map((p) => (
+                <Link key={p.id} to={`/projects/${p.id}`}>
+                  <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm leading-tight">{p.name}</h3>
+                        <Badge className="shrink-0 gap-0.5 bg-primary/10 text-[9px] text-primary border-primary/25">
+                          <Award className="h-2 w-2" /> Live
                         </Badge>
                       </div>
-                    </div>
-                    {p.client_name && (
-                      <p className="text-xs text-muted-foreground">{p.client_name}</p>
-                    )}
-                    {p.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {p.description}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {p.deal_id && (
-                        <Badge variant="secondary" className="gap-1 text-[10px]">
-                          <Briefcase className="h-3 w-3" /> Origem: Comercial
-                        </Badge>
+                      {p.client_name && (
+                        <p className="text-xs text-muted-foreground">{p.client_name}</p>
                       )}
-                      <Badge variant="outline" className={`gap-1 text-[10px] ${planMeta.tone}`}>
-                        <PlanIcon className={`h-3 w-3 ${p.auto_planning_status === "running" ? "animate-spin" : ""}`} />
-                        {planMeta.label}
+                      {p.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                          {p.description}
+                        </p>
+                      )}
+                      <Badge variant="outline" className="capitalize text-[10px]">
+                        {p.project_type}
                       </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className={`flex items-center gap-1.5 text-xs ${meta.tone}`}>
-                      <Icon className="h-3.5 w-3.5" /> {meta.label}
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Velocity</span>
-                      <span className="font-semibold text-foreground">
-                        {p.current_velocity ? `${Number(p.current_velocity).toFixed(0)} pts` : "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Sprint</span>
-                      <span>{p.sprint_duration_days}d</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
       )}
     </div>
   );
