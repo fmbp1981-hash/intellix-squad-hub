@@ -1,6 +1,6 @@
 import {
   Building2, Settings as SettingsIcon, LogOut, LayoutGrid,
-  Briefcase, Target, Rocket, Home, ChevronRight
+  Briefcase, Target, Rocket, Home, ChevronRight, Sun, Moon
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSidebarBadges } from "@/hooks/useSidebarBadges";
+import { useTheme } from "@/hooks/useTheme";
 
 type BadgeKey = "jobs" | "engagements" | "leads";
 
@@ -42,6 +43,7 @@ export function AppSidebar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: badges } = useSidebarBadges();
+  const { theme, toggleTheme } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
@@ -52,8 +54,8 @@ export function AppSidebar() {
     <aside
       className="relative flex h-screen w-[230px] shrink-0 flex-col"
       style={{
-        background: "hsl(240 20% 7%)",
-        borderRight: "1px solid hsl(240 16% 14%)",
+        background: "hsl(var(--sidebar-background))",
+        borderRight: "1px solid hsl(var(--sidebar-border))",
       }}
     >
       {/* Ambient glow top */}
@@ -150,7 +152,7 @@ export function AppSidebar() {
       {/* User footer */}
       <div
         className="relative px-3 pb-3 pt-3"
-        style={{ borderTop: "1px solid hsl(240 16% 14%)" }}
+        style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}
       >
         <div className="mb-2 flex items-center gap-3 rounded-lg px-2 py-2">
           {/* Avatar */}
@@ -164,7 +166,7 @@ export function AppSidebar() {
               className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
               style={{
                 background: "hsl(160 84% 39%)",
-                borderColor: "hsl(240 20% 7%)",
+                borderColor: "hsl(var(--sidebar-background))",
               }}
             />
           </div>
@@ -179,6 +181,18 @@ export function AppSidebar() {
             <p className="text-[10px] text-muted-foreground">IntelliX.AI · Admin</p>
           </div>
         </div>
+
+        <button
+          onClick={toggleTheme}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-3.5 w-3.5" />
+          ) : (
+            <Moon className="h-3.5 w-3.5" />
+          )}
+          {theme === "dark" ? "Modo claro" : "Modo escuro"}
+        </button>
 
         <button
           onClick={handleSignOut}

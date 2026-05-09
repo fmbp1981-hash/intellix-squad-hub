@@ -10,6 +10,7 @@
 @layer base {
   :root,
   .dark {
+    color-scheme: dark;
     /* Surfaces */
     --background: 240 27% 5%;        /* #0a0a0f */
     --foreground: 210 40% 96%;       /* #f1f5f9 */
@@ -67,6 +68,38 @@
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 240 16% 14%;
     --sidebar-ring: 262 83% 58%;
+  }
+
+  /* ── Light theme overrides ──────────────────────────────────────────────── */
+  .light {
+    color-scheme: light;
+
+    --background: 220 20% 97%;
+    --foreground: 240 15% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 15% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 15% 12%;
+
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 14% 90%;
+    --accent-foreground: 240 15% 12%;
+
+    --border: 220 13% 84%;
+    --input: 220 13% 88%;
+
+    --shadow-card: 0 1px 3px 0 hsl(220 20% 70% / 0.4);
+
+    /* Sidebar — slightly off-white */
+    --sidebar-background: 220 18% 94%;
+    --sidebar-foreground: 240 15% 12%;
+    --sidebar-accent: 220 14% 88%;
+    --sidebar-accent-foreground: 240 15% 12%;
+    --sidebar-border: 220 13% 82%;
   }
 }
 
