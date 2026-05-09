@@ -1,6 +1,6 @@
 import {
   Building2, Settings as SettingsIcon, LogOut, LayoutGrid,
-  Briefcase, Target, Rocket, Home, ChevronRight, Sun, Moon, FolderKanban
+  Briefcase, Target, Rocket, Home, ChevronRight, Sun, Moon
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -23,7 +23,6 @@ const groups: {
       { to: "/escritorio", label: "Escritório", icon: LayoutGrid },
       { to: "/pipeline", label: "Pipeline", icon: Target, badge: "leads" },
       { to: "/jobs", label: "Jobs", icon: Briefcase, badge: "jobs" },
-      { to: "/portfolio", label: "Portfólio", icon: FolderKanban },
     ],
   },
   {

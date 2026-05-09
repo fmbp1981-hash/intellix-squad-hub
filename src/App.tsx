@@ -65,7 +65,6 @@ const SquadsListPage = lazy(() => import("./pages/squads/SquadsListPage"));
 const SquadDetailPage = lazy(() => import("./pages/squads/SquadDetailPage"));
 const ProjetoDetailPage = lazy(() => import("./pages/projetos/ProjetoDetailPage"));
 const ConfigPage = lazy(() => import("./pages/config/ConfigPage"));
-const PortfolioPage = lazy(() => import("./pages/portfolio/PortfolioPage"));
 
 const queryClient = new QueryClient();
 
@@ -153,7 +152,6 @@ const App = () => (
                   <Route path="/projetos/new" element={<NewProject />} />
                   <Route path="/projetos/:id" element={<ProjetoDetailPage />} />
                   <Route path="/config" element={<ConfigPage />} />
-                  <Route path="/portfolio" element={<PortfolioPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

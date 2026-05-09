@@ -213,6 +213,7 @@ export type Database = {
           engagement_id: string | null
           execution_plan_md: string | null
           id: string
+          is_portfolio: boolean
           name: string
           product_owner_id: string | null
           project_type: string
@@ -242,6 +243,7 @@ export type Database = {
           engagement_id?: string | null
           execution_plan_md?: string | null
           id?: string
+          is_portfolio?: boolean
           name: string
           product_owner_id?: string | null
           project_type?: string
@@ -271,6 +273,7 @@ export type Database = {
           engagement_id?: string | null
           execution_plan_md?: string | null
           id?: string
+          is_portfolio?: boolean
           name?: string
           product_owner_id?: string | null
           project_type?: string
@@ -1586,54 +1589,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["notification_status"]
           title?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      portfolio_projects: {
-        Row: {
-          id: string
-          vercel_project_id: string | null
-          name: string
-          client_name: string
-          description: string | null
-          category: "saas" | "site" | "crm" | "internal" | "automation"
-          tech_stack: string[]
-          url: string | null
-          status: "live" | "dev" | "archived"
-          workspace_id: string | null
-          thumbnail_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          vercel_project_id?: string | null
-          name: string
-          client_name: string
-          description?: string | null
-          category?: "saas" | "site" | "crm" | "internal" | "automation"
-          tech_stack?: string[]
-          url?: string | null
-          status?: "live" | "dev" | "archived"
-          workspace_id?: string | null
-          thumbnail_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          vercel_project_id?: string | null
-          name?: string
-          client_name?: string
-          description?: string | null
-          category?: "saas" | "site" | "crm" | "internal" | "automation"
-          tech_stack?: string[]
-          url?: string | null
-          status?: "live" | "dev" | "archived"
-          workspace_id?: string | null
-          thumbnail_url?: string | null
-          created_at?: string
-          updated_at?: string
         }
         Relationships: []
       }
