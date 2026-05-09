@@ -3,15 +3,15 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import {
-  Plus, Rocket, Activity, Pause, CheckCircle2, Briefcase,
-  Sparkles, Loader2, AlertCircle, Award, LayoutGrid, Kanban as KanbanIcon
+  Plus, CheckCircle2, Briefcase,
+  Sparkles, Loader2, AlertCircle, Award, Kanban as KanbanIcon,
+  Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/components/ui/use-toast";
 
 type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
@@ -29,6 +29,7 @@ interface AgileProject {
   auto_planning_status: string | null;
   current_velocity: number | null;
   sprint_duration_days: number | null;
+  parent_project_id: string | null;
 }
 
 const STATUS_COLUMNS: {
@@ -63,7 +64,15 @@ function groupByStatus(projects: AgileProject[]): Record<ProjectStatus, AgilePro
   return groups;
 }
 
-function ProjectCard({ project, index }: { project: AgileProject; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  moduleCount,
+}: {
+  project: AgileProject;
+  index: number;
+  moduleCount: number;
+}) {
   const planMeta = PLANNING_META[project.auto_planning_status ?? "pending"] ?? PLANNING_META.pending;
   const PlanIcon = planMeta.icon;
 
@@ -101,6 +110,11 @@ function ProjectCard({ project, index }: { project: AgileProject; index: number 
                   <Briefcase className="h-2.5 w-2.5" /> CRM
                 </Badge>
               )}
+              {moduleCount > 0 && (
+                <Badge variant="secondary" className="gap-0.5 text-[10px] px-1.5 py-0 text-primary border-primary/30 bg-primary/10">
+                  <Layers className="h-2.5 w-2.5" /> {moduleCount} módulo{moduleCount > 1 ? "s" : ""}
+                </Badge>
+              )}
               <Badge variant="outline" className="gap-0.5 text-[10px] px-1.5 py-0 text-muted-foreground">
                 <PlanIcon className={`h-2.5 w-2.5 ${planMeta.spin ? "animate-spin" : ""}`} />
                 {planMeta.label}
@@ -122,13 +136,15 @@ function ProjectCard({ project, index }: { project: AgileProject; index: number 
 function KanbanColumn({
   column,
   projects,
+  moduleCounts,
 }: {
   column: typeof STATUS_COLUMNS[number];
   projects: AgileProject[];
+  moduleCounts: Record<string, number>;
 }) {
   return (
     <div className={`flex w-72 shrink-0 flex-col rounded-xl border ${column.border} ${column.bg}`}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-inherit">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-inherit shrink-0">
         <span className={`h-2 w-2 rounded-full ${column.dot}`} />
         <span className="text-sm font-semibold">{column.label}</span>
         <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${column.count}`}>
@@ -141,12 +157,13 @@ function KanbanColumn({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 min-h-[120px] p-3 transition-colors rounded-b-xl ${
+            className={`flex-1 min-h-[120px] overflow-y-auto p-3 transition-colors rounded-b-xl ${
               snapshot.isDraggingOver ? "bg-primary/5" : ""
             }`}
+            style={{ maxHeight: "calc(100vh - 220px)" }}
           >
             {projects.map((p, i) => (
-              <ProjectCard key={p.id} project={p} index={i} />
+              <ProjectCard key={p.id} project={p} index={i} moduleCount={moduleCounts[p.id] ?? 0} />
             ))}
             {provided.placeholder}
             {projects.length === 0 && !snapshot.isDraggingOver && (
@@ -180,8 +197,20 @@ export default function ProjectsList() {
     },
   });
 
+  // Root projects only (no parent) for the kanban
+  const rootProjects = (data ?? []).filter((p) => !p.parent_project_id);
+
+  // Count modules per root project
+  const moduleCounts: Record<string, number> = {};
+  for (const p of data ?? []) {
+    if (p.parent_project_id) {
+      moduleCounts[p.parent_project_id] = (moduleCounts[p.parent_project_id] ?? 0) + 1;
+    }
+  }
+
   useEffect(() => {
-    if (data) setColumns(groupByStatus(data));
+    if (data) setColumns(groupByStatus(rootProjects));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
@@ -203,7 +232,7 @@ export default function ProjectsList() {
       if (error) throw error;
     },
     onError: () => {
-      if (data) setColumns(groupByStatus(data));
+      if (data) setColumns(groupByStatus(rootProjects));
       toast({ title: "Erro ao mover projeto", variant: "destructive" });
     },
   });
@@ -229,12 +258,12 @@ export default function ProjectsList() {
     updateStatus.mutate({ id: draggableId, status: dstId });
   }, [updateStatus]);
 
-  const portfolioProjects = data?.filter((p) => p.is_portfolio) ?? [];
+  const portfolioProjects = (data ?? []).filter((p) => p.is_portfolio);
 
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projetos Ágeis</h1>
           <p className="text-sm text-muted-foreground">
@@ -262,7 +291,7 @@ export default function ProjectsList() {
 
       {/* Kanban View */}
       {view === "kanban" && (
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden">
           {isLoading ? (
             <div className="flex gap-4 p-6">
               {STATUS_COLUMNS.map((col) => (
@@ -271,11 +300,16 @@ export default function ProjectsList() {
             </div>
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex gap-4 p-6">
+              <div className="flex gap-4 p-6 h-full" style={{ minWidth: "max-content" }}>
                 {STATUS_COLUMNS.map((col) => (
-                  <KanbanColumn key={col.id} column={col} projects={columns[col.id] ?? []} />
+                  <KanbanColumn
+                    key={col.id}
+                    column={col}
+                    projects={columns[col.id] ?? []}
+                    moduleCounts={moduleCounts}
+                  />
                 ))}
-                {/* Add column placeholder */}
+                {/* Add project placeholder */}
                 <div className="flex w-64 shrink-0 flex-col items-center justify-center rounded-xl border border-dashed border-border/40 gap-2 py-8">
                   <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                     <Link to="/projects/new">
@@ -286,12 +320,12 @@ export default function ProjectsList() {
               </div>
             </DragDropContext>
           )}
-        </ScrollArea>
+        </div>
       )}
 
       {/* Portfolio View */}
       {view === "portfolio" && (
-        <ScrollArea className="flex-1 p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {portfolioProjects.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -331,7 +365,7 @@ export default function ProjectsList() {
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       )}
     </div>
   );
