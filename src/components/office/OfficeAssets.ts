@@ -49,6 +49,13 @@ export const AGENTS: AgentDef[] = [
     pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0x1a1a1a,
     hasBadge: true, badgeColor: 0xfbbf24, eyeColor: 0x2d1b00,
   }),
+  mk("bia", "Bia", "comercial", "sdr", "SDR", true, {
+    skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
+    hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "bob",
+    shirtBase: 0x00897B, shirtShadow: 0x00695C, shirtDetail: 0x4DB6AC,
+    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1a1a1a,
+    hasBadge: true, badgeColor: 0x00897B, eyeColor: 0x2d1b00,
+  }),
   mk("carlos", "Carlos", "comercial", "sales", "Comercial", false, {
     skinBase: 0xC68642, skinShadow: 0xA06B30, skinHighlight: 0xD89B56,
     hairBase: 0x1a1a2e, hairHighlight: 0x2a2a3e, hairStyle: "short_male",
@@ -141,14 +148,34 @@ function fillCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
 }
 
 function fillRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.arcTo(x + w, y, x + w, y + rr, rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  ctx.lineTo(x + rr, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr, rr);
+  ctx.lineTo(x, y + rr);
+  ctx.arcTo(x, y, x + rr, y, rr);
+  ctx.closePath();
   ctx.fill();
 }
 
 function strokeRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.arcTo(x + w, y, x + w, y + rr, rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  ctx.lineTo(x + rr, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr, rr);
+  ctx.lineTo(x, y + rr);
+  ctx.arcTo(x, y, x + rr, y, rr);
+  ctx.closePath();
   ctx.stroke();
 }
 
@@ -341,56 +368,12 @@ function registerAgentAnimations(scene: Phaser.Scene, key: string): void {
 }
 
 /**
- * Load pixel-art spritesheets from `sprite_assets` table.
- * Falls back to Canvas 2D procedural sprites for any missing agent (Phaser 4 safe).
+ * Generate all agent sprites procedurally via Canvas 2D.
+ * DB sprite loading is skipped — the sprite_assets table may contain stale data
+ * that causes agents to render as solid black rectangles.
  */
 export async function loadAgentSpritesFromDB(scene: Phaser.Scene): Promise<void> {
-  const { supabase } = await import("@/integrations/supabase/client");
-  const loadedKeys = new Set<string>();
-  try {
-    const { data, error } = await supabase
-      .from("sprite_assets")
-      .select("key, base64, mime_type, width, height");
-    if (error) throw error;
-    if (data?.length) {
-      await Promise.all(
-        data.map(
-          (row) =>
-            new Promise<void>((resolve) => {
-              if (scene.textures.exists(row.key)) {
-                loadedKeys.add(row.key);
-                return resolve();
-              }
-              const img = new Image();
-              img.onload = () => {
-                try {
-                  scene.textures.addSpriteSheet(row.key, img as unknown as HTMLImageElement, {
-                    frameWidth: row.width ? Math.floor(row.width / DB_FRAMES) : DB_FRAME_W,
-                    frameHeight: row.height ?? DB_FRAME_H,
-                  });
-                  registerAgentAnimations(scene, row.key);
-                  loadedKeys.add(row.key);
-                } catch (e) {
-                  console.warn("[sprites] failed to register", row.key, e);
-                }
-                resolve();
-              };
-              img.onerror = () => {
-                console.warn("[sprites] failed to decode", row.key);
-                resolve();
-              };
-              img.src = `data:${row.mime_type ?? "image/png"};base64,${row.base64}`;
-            }),
-        ),
-      );
-    }
-  } catch (e) {
-    console.warn("[sprites] DB load failed, using Canvas fallback", e);
-  }
-  // Fallback via Canvas 2D (Phaser 4 compatible)
-  AGENTS.forEach((a) => {
-    if (!loadedKeys.has(a.key)) createAgentTexture(scene, a);
-  });
+  AGENTS.forEach((a) => createAgentTexture(scene, a));
 }
 
 /**
@@ -422,79 +405,18 @@ export function createAgentTexture(scene: Phaser.Scene, agent: AgentDef): void {
 
   const ctx = tex.getContext() as CanvasRenderingContext2D;
 
-  // Derive avatar color from shirt color (most distinctive per agent)
-  const shirtR = (agent.palette.shirtBase >> 16) & 0xff;
-  const shirtG = (agent.palette.shirtBase >> 8) & 0xff;
-  const shirtB = agent.palette.shirtBase & 0xff;
-  const shirtCss = `rgb(${shirtR},${shirtG},${shirtB})`;
-
-  const initial = agent.name.charAt(0).toUpperCase();
-
-  // Circle geometry (within 32×48 frame)
-  const cx = FRAME_W / 2;       // 16
-  const cy = 22;                 // vertical center leaving room for shadow
-  const radius = 13;
-
+  // Draw full-body pixel-art character for each animation frame
   for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
     const ox = frame * FRAME_W;
-    const isWalk = frame < 8;
-    const isIdle = frame === 8;
-    const isWorking = frame === 9;
-
-    // Walk bob: alternate ±2px vertical offset based on step parity
-    const bobY = isWalk ? (frame % 2 === 0 ? -2 : 2) : 0;
-    const fcx = ox + cx;
-    const fcy = cy + bobY;
-
-    // Shadow ellipse at bottom
-    ctx.fillStyle = "rgba(0,0,0,0.30)";
-    ctx.beginPath();
-    ctx.ellipse(ox + cx, 43, 11, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Working frame: gear icon above circle
-    if (isWorking) {
-      ctx.font = "bold 10px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "rgba(255,255,255,0.90)";
-      ctx.fillText("⚙", fcx, fcy - radius - 7);
+    if (frame < 8) {
+      // Walk frames: 4 directions × 2 steps
+      const dir = Math.floor(frame / 2); // 0=south 1=east 2=north 3=west
+      const step = frame % 2;
+      drawFrameToCanvas(ctx, ox, agent.palette, dir, step, true);
+    } else {
+      // Frame 8 = idle, Frame 9 = working — both use static south-facing pose
+      drawFrameToCanvas(ctx, ox, agent.palette, 0, 0, false);
     }
-
-    // Main circle fill
-    ctx.fillStyle = shirtCss;
-    ctx.beginPath();
-    ctx.arc(fcx, fcy, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Idle frame: pulse ring
-    if (isIdle) {
-      ctx.strokeStyle = "rgba(255,255,255,0.40)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(fcx, fcy, radius + 3, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    // Highlight arc on top of circle (subtle rim light)
-    const grad = ctx.createRadialGradient(fcx - 4, fcy - 5, 2, fcx, fcy, radius);
-    grad.addColorStop(0, "rgba(255,255,255,0.55)");
-    grad.addColorStop(0.5, "rgba(255,255,255,0.15)");
-    grad.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(fcx, fcy, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Initial letter
-    ctx.font = "bold 14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#ffffff";
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 3;
-    ctx.fillText(initial, fcx, fcy + 1);
-    ctx.shadowBlur = 0;
   }
 
   // Flush canvas pixels to GPU texture

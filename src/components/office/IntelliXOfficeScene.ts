@@ -122,19 +122,19 @@ export class IntelliXOfficeScene extends Phaser.Scene {
   private buildBackground(): void {
     const bg = this.add.graphics();
     bg.fillGradientStyle(0x0D1B2A, 0x0D1B2A, 0x060D17, 0x060D17, 1);
-    bg.fillRect(-400, -200, 2400, 1600);
+    bg.fillRect(-800, -500, 3200, 2400);
     bg.setDepth(-100);
     bg.setScrollFactor(1);
 
-    // Subtle iso grid
+    // Subtle iso grid (extended to cover new larger layout)
     const grid = this.add.graphics();
     grid.lineStyle(0.5, 0xffffff, 0.04);
-    for (let i = -2; i <= 16; i++) {
+    for (let i = -2; i <= 24; i++) {
       const a = isoToScreen(i, -2);
-      const b = isoToScreen(i, 16);
+      const b = isoToScreen(i, 24);
       grid.strokeLineShape(new Phaser.Geom.Line(a.x, a.y, b.x, b.y));
       const c = isoToScreen(-2, i);
-      const d = isoToScreen(16, i);
+      const d = isoToScreen(24, i);
       grid.strokeLineShape(new Phaser.Geom.Line(c.x, c.y, d.x, d.y));
     }
     grid.setDepth(-50);
@@ -142,9 +142,13 @@ export class IntelliXOfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     this.cameras.main.setBackgroundColor(0x0D1B2A);
-    this.cameras.main.setBounds(-600, -300, 2000, 1400);
-    this.cameras.main.setZoom(0.7);
-    const { x, y } = isoToScreen(7, 7);
+    // Bounds must be larger than viewport (2400×1360 at zoom 0.5) to allow centering.
+    // Layout spans world x: -384 to 640, y: -40 to 640. Add generous padding.
+    this.cameras.main.setBounds(-1200, -500, 3200, 2000);
+    // Zoom out to see all 3 rows of islands at once
+    this.cameras.main.setZoom(0.5);
+    // Center on the midpoint of the full layout content (world ≈128,288 = tile ~11,7)
+    const { x, y } = isoToScreen(11, 7);
     this.cameras.main.centerOn(x, y);
   }
 

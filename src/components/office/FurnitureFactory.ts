@@ -17,102 +17,105 @@ export class FurnitureFactory {
   constructor(private scene: Phaser.Scene) {}
 
   buildAll(): void {
-    // GESTÃO
-    this.desk(6, 8, 0xC8A96E);
-    this.desk(7, 8, 0xC8A96E);
-    this.chair(6, 9, 0x4a3a2a);
-    this.chair(7, 9, 0x4a3a2a);
-    this.monitor(6, 8);
-    this.monitor(7, 8);
-    this.plant(8, 7);
-    this.bookshelf(5, 7);
+    // COMERCIAL (room: 0,0,5,4) — Carlos + Bia
+    this.desk(1, 1, 0xA88860);
+    this.desk(2, 1, 0xA88860);
+    this.desk(3, 1, 0xA88860);
+    this.desk(1, 2, 0xA88860);
+    this.monitor(1, 1);
+    this.monitor(2, 1);
+    this.monitor(3, 1);
+    this.monitor(1, 2);
+    this.chair(1, 3, 0x00897B);
+    this.chair(2, 2, 0x00897B);
+    this.chair(3, 2, 0x00897B);
+    this.chair(2, 3, 0x00897B);
+    this.kanbanBoard(2, 0, 0x10b981);
 
-    // REUNIÃO (sala 5,3 → 8,5)
-    this.roundTable(7, 4);
-    this.chair(6, 4, 0x37474F);
-    this.chair(8, 4, 0x37474F);
-    this.chair(7, 3, 0x37474F);
-    this.chair(7, 5, 0x37474F);
-    this.whiteboard(5, 3);
+    // MARKETING (room: 8,0,5,4)
+    this.desk(9, 1, 0xA88860);
+    this.desk(11, 1, 0xA88860);
+    this.monitor(9, 1);
+    this.monitor(11, 1);
+    this.chair(9, 2, 0xE64A19);
+    this.chair(11, 2, 0xE64A19);
+    this.kanbanBoard(10, 0, 0xE64A19);
+    this.plant(12, 3);
 
-    // COMERCIAL
-    this.desk(6, 1, 0xA88860);
-    this.desk(8, 1, 0xA88860);
-    this.desk(10, 1, 0xA88860);
-    this.monitor(6, 1);
-    this.monitor(8, 1);
-    this.monitor(10, 1);
-    this.chair(6, 2, 0x00897B);
-    this.chair(8, 2, 0x00897B);
-    this.chair(10, 2, 0x00897B);
-    this.kanbanBoard(7, 0, 0x10b981);
+    // FINANCEIRO (room: 16,0,5,4)
+    this.desk(17, 1, 0xA88860);
+    this.desk(18, 2, 0xA88860);
+    this.monitor(17, 1);
+    this.monitor(18, 2);
+    this.chair(17, 2, 0x0891B2);
+    this.chair(18, 3, 0x0891B2);
+    this.bookshelf(16, 0);
+    this.filingCabinet(20, 0);
 
-    // MARKETING
-    this.desk(9, 4, 0xA88860);
-    this.desk(11, 4, 0xA88860);
-    this.monitor(9, 4);
-    this.monitor(11, 4);
-    this.chair(9, 5, 0xE64A19);
-    this.chair(11, 5, 0xE64A19);
-    this.kanbanBoard(10, 3, 0xE64A19);
-    this.plant(12, 6);
+    // COPA (room: 6,5,3,3)
+    this.counter(6, 6);
+    this.counter(7, 6);
+    this.coffeeMachine(6, 6);
+    this.fridge(8, 5);
+    this.barTable(7, 7);
 
-    // FINANCEIRO
-    this.desk(10, 8, 0xA88860);
-    this.desk(11, 9, 0xA88860);
-    this.monitor(10, 8);
-    this.monitor(11, 9);
-    this.chair(10, 9, 0x0891B2);
-    this.chair(11, 10, 0x0891B2);
-    this.bookshelf(9, 7);
-    this.filingCabinet(12, 7);
+    // WC (room: 5,9,2,2)
+    this.sink(5, 10);
+    this.toilet(6, 10);
 
-    // OPERAÇÕES
-    this.desk(1, 8, 0xA88860);
-    this.desk(3, 8, 0xA88860);
-    this.monitor(1, 8);
-    this.monitor(3, 8);
-    this.chair(1, 9, 0xF57F17);
-    this.chair(3, 9, 0xF57F17);
-    this.kanbanBoard(2, 7, 0xF57F17);
+    // DELIVERY (room: 0,8,5,5 — Ana, Bruno, Beatriz, Roberto)
+    this.desk(1, 9, 0xA88860);
+    this.desk(3, 9, 0xA88860);
+    this.desk(1, 11, 0xA88860);
+    this.desk(3, 11, 0xA88860);
+    this.monitor(1, 9, 0x5b21b6);
+    this.monitor(3, 9, 0x2563eb);
+    this.monitor(1, 11, 0x7c3aed);
+    this.monitor(3, 11, 0x059669);
+    this.chair(1, 10, 0x5b21b6);
+    this.chair(3, 10, 0x2563eb);
+    this.chair(1, 12, 0x7c3aed);
+    this.chair(3, 12, 0x059669);
+    this.kanbanBoard(2, 8, 0x5b21b6);
+    this.bookshelf(0, 11);
+    this.plant(4, 11);
 
-    // DELIVERY (4 mesas — Ana, Bruno, Beatriz, Roberto)
-    this.desk(1, 4, 0xA88860);
-    this.desk(3, 4, 0xA88860);
-    this.desk(1, 6, 0xA88860);
-    this.desk(3, 6, 0xA88860);
-    this.monitor(1, 4, 0x5b21b6);
-    this.monitor(3, 4, 0x2563eb);
-    this.monitor(1, 6, 0x7c3aed);
-    this.monitor(3, 6, 0x059669);
-    this.chair(1, 5, 0x5b21b6);
-    this.chair(3, 5, 0x2563eb);
-    this.chair(1, 7, 0x7c3aed);
-    this.chair(3, 7, 0x059669);
-    this.kanbanBoard(2, 3, 0x5b21b6);
-    this.bookshelf(0, 6);
-    this.plant(4, 6);
+    // REUNIÃO (room: 9,8,5,4)
+    this.roundTable(11, 10);
+    this.chair(10, 9, 0x37474F);
+    this.chair(12, 9, 0x37474F);
+    this.chair(11, 8, 0x37474F);
+    this.chair(11, 11, 0x37474F);
+    this.whiteboard(9, 8);
 
-    // TI
-    this.desk(6, 12, 0x2a2a3a);
-    this.desk(7, 12, 0x2a2a3a);
-    this.monitor(6, 12, 0x06b6d4);
-    this.monitor(7, 12, 0x06b6d4);
-    this.chair(6, 13, 0xDB2777);
-    this.chair(7, 13, 0xDB2777);
-    this.serverRack(8, 12);
-    this.serverRack(8, 13);
+    // OPERAÇÕES (room: 16,8,5,4)
+    this.desk(17, 9, 0xA88860);
+    this.desk(19, 9, 0xA88860);
+    this.monitor(17, 9);
+    this.monitor(19, 9);
+    this.chair(17, 10, 0xF57F17);
+    this.chair(19, 10, 0xF57F17);
+    this.kanbanBoard(18, 8, 0xF57F17);
 
-    // COPA
-    this.counter(0, 1);
-    this.counter(1, 1);
-    this.coffeeMachine(0, 1);
-    this.fridge(2, 0);
-    this.barTable(1, 2);
+    // GESTÃO (room: 4,16,4,4)
+    this.desk(5, 17, 0xC8A96E);
+    this.desk(6, 17, 0xC8A96E);
+    this.chair(5, 18, 0x4a3a2a);
+    this.chair(6, 18, 0x4a3a2a);
+    this.monitor(5, 17);
+    this.monitor(6, 17);
+    this.plant(7, 16);
+    this.bookshelf(4, 16);
 
-    // WC
-    this.sink(3, 1);
-    this.toilet(4, 2);
+    // TI (room: 11,16,4,4)
+    this.desk(12, 17, 0x2a2a3a);
+    this.desk(13, 17, 0x2a2a3a);
+    this.monitor(12, 17, 0x06b6d4);
+    this.monitor(13, 17, 0x06b6d4);
+    this.chair(12, 18, 0xDB2777);
+    this.chair(13, 18, 0xDB2777);
+    this.serverRack(14, 17);
+    this.serverRack(14, 18);
   }
 
   // ============ Generic isometric box ============
