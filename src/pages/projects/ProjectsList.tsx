@@ -261,7 +261,7 @@ export default function ProjectsList() {
   const portfolioProjects = (data ?? []).filter((p) => p.is_portfolio);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
         <div>
@@ -291,7 +291,7 @@ export default function ProjectsList() {
 
       {/* Kanban View */}
       {view === "kanban" && (
-        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
           {isLoading ? (
             <div className="flex gap-4 p-6">
               {STATUS_COLUMNS.map((col) => (
@@ -300,7 +300,7 @@ export default function ProjectsList() {
             </div>
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex gap-4 p-6 h-full" style={{ minWidth: "max-content" }}>
+              <div className="flex gap-4 p-6" style={{ minWidth: "max-content" }}>
                 {STATUS_COLUMNS.map((col) => (
                   <KanbanColumn
                     key={col.id}
