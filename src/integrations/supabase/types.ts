@@ -1589,6 +1589,54 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_projects: {
+        Row: {
+          id: string
+          vercel_project_id: string | null
+          name: string
+          client_name: string
+          description: string | null
+          category: "saas" | "site" | "crm" | "internal" | "automation"
+          tech_stack: string[]
+          url: string | null
+          status: "live" | "dev" | "archived"
+          workspace_id: string | null
+          thumbnail_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          vercel_project_id?: string | null
+          name: string
+          client_name: string
+          description?: string | null
+          category?: "saas" | "site" | "crm" | "internal" | "automation"
+          tech_stack?: string[]
+          url?: string | null
+          status?: "live" | "dev" | "archived"
+          workspace_id?: string | null
+          thumbnail_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          vercel_project_id?: string | null
+          name?: string
+          client_name?: string
+          description?: string | null
+          category?: "saas" | "site" | "crm" | "internal" | "automation"
+          tech_stack?: string[]
+          url?: string | null
+          status?: "live" | "dev" | "archived"
+          workspace_id?: string | null
+          thumbnail_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       okrs: {
         Row: {
           active: boolean
