@@ -261,7 +261,7 @@ export default function ProjectsList() {
   const portfolioProjects = (data ?? []).filter((p) => p.is_portfolio);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
         <div>
@@ -325,7 +325,7 @@ export default function ProjectsList() {
 
       {/* Portfolio View */}
       {view === "portfolio" && (
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {portfolioProjects.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
