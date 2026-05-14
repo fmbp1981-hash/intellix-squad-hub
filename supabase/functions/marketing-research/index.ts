@@ -11,8 +11,23 @@ const QUERIES = [
   "transformação digital liderança executiva",
 ];
 
+async function getBraveKey(): Promise<string | null> {
+  const env = Deno.env.get("BRAVE_SEARCH_API_KEY");
+  if (env) return env;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return null;
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/app_secrets?key=eq.BRAVE_SEARCH_API_KEY&select=value`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+  );
+  if (!res.ok) return null;
+  const rows: { value: string }[] = await res.json();
+  return rows?.[0]?.value || null;
+}
+
 async function fetchBraveSearch(query: string): Promise<{ title: string; url: string; snippet: string }[]> {
-  const key = Deno.env.get("BRAVE_SEARCH_API_KEY");
+  const key = await getBraveKey();
   if (!key) return [];
   const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=10&freshness=pw`;
   const res = await fetch(url, { headers: { "X-Subscription-Token": key, Accept: "application/json" } });

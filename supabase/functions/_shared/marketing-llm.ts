@@ -16,13 +16,32 @@ const AGENT_GATEWAY_MODEL: Record<string, { model: string; temperature: number; 
   otto:  { model: "anthropic/claude-sonnet-4-6",          temperature: 0.7, maxTokens: 4096 },
 };
 
+async function getSecret(key: string): Promise<string | null> {
+  // Prefer env var (Supabase Secrets vault)
+  const envVal = Deno.env.get(key);
+  if (envVal) return envVal;
+
+  // Fall back to app_secrets table (configured by user in-app)
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return null;
+
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/app_secrets?key=eq.${encodeURIComponent(key)}&select=value`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" } },
+  );
+  if (!res.ok) return null;
+  const rows: { value: string }[] = await res.json();
+  return rows?.[0]?.value || null;
+}
+
 export async function callMarketingAgent(
   agent: keyof typeof AGENT_GATEWAY_MODEL,
   messages: LlmMessage[],
 ): Promise<LlmResult> {
   const cfg = AGENT_GATEWAY_MODEL[agent];
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+  const apiKey = await getSecret("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY not set — configure em Configurações → Marketing Squad → Chaves de API");
 
   const t0 = Date.now();
   const res = await fetch(GATEWAY, {
