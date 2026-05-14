@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -154,92 +152,138 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_profiles: {
+        Row: {
+          analyzed_at: string | null
+          avg_engagement_rate: number | null
+          dominant_format: string | null
+          editorial_insights: string | null
+          handle_or_url: string
+          id: string
+          platform: string | null
+          posting_frequency: string | null
+          posts_analyzed: number | null
+          raw_data: Json | null
+          recommended_adaptations: Json | null
+        }
+        Insert: {
+          analyzed_at?: string | null
+          avg_engagement_rate?: number | null
+          dominant_format?: string | null
+          editorial_insights?: string | null
+          handle_or_url: string
+          id?: string
+          platform?: string | null
+          posting_frequency?: string | null
+          posts_analyzed?: number | null
+          raw_data?: Json | null
+          recommended_adaptations?: Json | null
+        }
+        Update: {
+          analyzed_at?: string | null
+          avg_engagement_rate?: number | null
+          dominant_format?: string | null
+          editorial_insights?: string | null
+          handle_or_url?: string
+          id?: string
+          platform?: string | null
+          posting_frequency?: string | null
+          posts_analyzed?: number | null
+          raw_data?: Json | null
+          recommended_adaptations?: Json | null
+        }
+        Relationships: []
+      }
       content_calendar: {
         Row: {
           approved_at: string | null
           approved_by: string | null
-          based_on_report_id: string | null
-          created_at: string
+          created_at: string | null
+          format: string | null
+          hook_suggestion: string | null
           id: string
-          notes_for_felipe: string | null
-          posts_json: Json
-          rejection_reason: string | null
-          status: string
-          updated_at: string
+          notes: string | null
+          pillar: string | null
+          scheduled_for: string
+          status: string | null
+          theme: string
+          trends_curated_ids: Json | null
           week_start: string
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
-          based_on_report_id?: string | null
-          created_at?: string
+          created_at?: string | null
+          format?: string | null
+          hook_suggestion?: string | null
           id?: string
-          notes_for_felipe?: string | null
-          posts_json: Json
-          rejection_reason?: string | null
-          status?: string
-          updated_at?: string
+          notes?: string | null
+          pillar?: string | null
+          scheduled_for: string
+          status?: string | null
+          theme: string
+          trends_curated_ids?: Json | null
           week_start: string
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
-          based_on_report_id?: string | null
-          created_at?: string
+          created_at?: string | null
+          format?: string | null
+          hook_suggestion?: string | null
           id?: string
-          notes_for_felipe?: string | null
-          posts_json?: Json
-          rejection_reason?: string | null
-          status?: string
-          updated_at?: string
+          notes?: string | null
+          pillar?: string | null
+          scheduled_for?: string
+          status?: string | null
+          theme?: string
+          trends_curated_ids?: Json | null
           week_start?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "content_calendar_based_on_report_id_fkey"
-            columns: ["based_on_report_id"]
-            isOneToOne: false
-            referencedRelation: "trends_reports"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       content_drafts: {
         Row: {
-          calendar_id: string
-          created_at: string
-          frameworks_used: Json | null
+          calendar_id: string | null
+          caption: string
+          created_at: string | null
+          cta: string | null
+          forbidden_terms_found: string[] | null
+          hashtags: string[] | null
+          hook: string
           id: string
-          instagram_json: Json | null
-          linkedin_json: Json | null
-          open_questions: Json | null
-          post_number: number
-          status: string
-          updated_at: string
+          slide_structure: Json | null
+          status: string | null
+          updated_at: string | null
+          word_count: number | null
         }
         Insert: {
-          calendar_id: string
-          created_at?: string
-          frameworks_used?: Json | null
+          calendar_id?: string | null
+          caption: string
+          created_at?: string | null
+          cta?: string | null
+          forbidden_terms_found?: string[] | null
+          hashtags?: string[] | null
+          hook: string
           id?: string
-          instagram_json?: Json | null
-          linkedin_json?: Json | null
-          open_questions?: Json | null
-          post_number: number
-          status?: string
-          updated_at?: string
+          slide_structure?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          word_count?: number | null
         }
         Update: {
-          calendar_id?: string
-          created_at?: string
-          frameworks_used?: Json | null
+          calendar_id?: string | null
+          caption?: string
+          created_at?: string | null
+          cta?: string | null
+          forbidden_terms_found?: string[] | null
+          hashtags?: string[] | null
+          hook?: string
           id?: string
-          instagram_json?: Json | null
-          linkedin_json?: Json | null
-          open_questions?: Json | null
-          post_number?: number
-          status?: string
-          updated_at?: string
+          slide_structure?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          word_count?: number | null
         }
         Relationships: [
           {
@@ -247,6 +291,86 @@ export type Database = {
             columns: ["calendar_id"]
             isOneToOne: false
             referencedRelation: "content_calendar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_dna_extracted: {
+        Row: {
+          avg_words_per_slide: number | null
+          body_font: string | null
+          brand_dark: string | null
+          brand_light: string | null
+          brand_primary: string | null
+          competitor_profile_id: string | null
+          confidence_score: number | null
+          copy_framework: string | null
+          created_at: string | null
+          cta_slide_style: string | null
+          emoji_usage: string | null
+          hashtag_count: number | null
+          heading_font: string | null
+          hook_patterns: Json | null
+          id: string
+          layout_style: string | null
+          notes: string | null
+          text_density: string | null
+          uses_face: boolean | null
+          uses_illustrations: boolean | null
+          uses_photography: boolean | null
+        }
+        Insert: {
+          avg_words_per_slide?: number | null
+          body_font?: string | null
+          brand_dark?: string | null
+          brand_light?: string | null
+          brand_primary?: string | null
+          competitor_profile_id?: string | null
+          confidence_score?: number | null
+          copy_framework?: string | null
+          created_at?: string | null
+          cta_slide_style?: string | null
+          emoji_usage?: string | null
+          hashtag_count?: number | null
+          heading_font?: string | null
+          hook_patterns?: Json | null
+          id?: string
+          layout_style?: string | null
+          notes?: string | null
+          text_density?: string | null
+          uses_face?: boolean | null
+          uses_illustrations?: boolean | null
+          uses_photography?: boolean | null
+        }
+        Update: {
+          avg_words_per_slide?: number | null
+          body_font?: string | null
+          brand_dark?: string | null
+          brand_light?: string | null
+          brand_primary?: string | null
+          competitor_profile_id?: string | null
+          confidence_score?: number | null
+          copy_framework?: string | null
+          created_at?: string | null
+          cta_slide_style?: string | null
+          emoji_usage?: string | null
+          hashtag_count?: number | null
+          heading_font?: string | null
+          hook_patterns?: Json | null
+          id?: string
+          layout_style?: string | null
+          notes?: string | null
+          text_density?: string | null
+          uses_face?: boolean | null
+          uses_illustrations?: boolean | null
+          uses_photography?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_dna_extracted_competitor_profile_id_fkey"
+            columns: ["competitor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "competitor_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -376,36 +500,61 @@ export type Database = {
       }
       published_posts: {
         Row: {
-          channel: string
-          created_at: string
+          calendar_id: string | null
+          comments: number | null
           draft_id: string | null
-          external_post_url: string | null
           id: string
-          metrics_json: Json | null
-          published_at: string | null
-          scheduled_for: string | null
+          impressions: number | null
+          instagram_url: string | null
+          likes: number | null
+          metrics_collected_at: string | null
+          notes: string | null
+          published_at: string
+          reach: number | null
+          reel_views: number | null
+          saves: number | null
+          shares: number | null
         }
         Insert: {
-          channel: string
-          created_at?: string
+          calendar_id?: string | null
+          comments?: number | null
           draft_id?: string | null
-          external_post_url?: string | null
           id?: string
-          metrics_json?: Json | null
-          published_at?: string | null
-          scheduled_for?: string | null
+          impressions?: number | null
+          instagram_url?: string | null
+          likes?: number | null
+          metrics_collected_at?: string | null
+          notes?: string | null
+          published_at?: string
+          reach?: number | null
+          reel_views?: number | null
+          saves?: number | null
+          shares?: number | null
         }
         Update: {
-          channel?: string
-          created_at?: string
+          calendar_id?: string | null
+          comments?: number | null
           draft_id?: string | null
-          external_post_url?: string | null
           id?: string
-          metrics_json?: Json | null
-          published_at?: string | null
-          scheduled_for?: string | null
+          impressions?: number | null
+          instagram_url?: string | null
+          likes?: number | null
+          metrics_collected_at?: string | null
+          notes?: string | null
+          published_at?: string
+          reach?: number | null
+          reel_views?: number | null
+          saves?: number | null
+          shares?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "published_posts_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "published_posts_draft_id_fkey"
             columns: ["draft_id"]
@@ -417,49 +566,31 @@ export type Database = {
       }
       review_results: {
         Row: {
-          areas_of_excellence: Json | null
-          coherence_issues_json: Json | null
-          copy_issues_json: Json | null
-          created_at: string
+          checklist: Json | null
           draft_id: string | null
           id: string
-          next_action: string | null
-          ready_for_felipe: boolean
-          review_notes: string | null
-          summary_for_felipe: string | null
-          verdict: string
-          visual_brief_id: string | null
-          visual_issues_json: Json | null
+          issues_found: string[] | null
+          reviewed_at: string | null
+          status: string
+          suggestions: string | null
         }
         Insert: {
-          areas_of_excellence?: Json | null
-          coherence_issues_json?: Json | null
-          copy_issues_json?: Json | null
-          created_at?: string
+          checklist?: Json | null
           draft_id?: string | null
           id?: string
-          next_action?: string | null
-          ready_for_felipe?: boolean
-          review_notes?: string | null
-          summary_for_felipe?: string | null
-          verdict: string
-          visual_brief_id?: string | null
-          visual_issues_json?: Json | null
+          issues_found?: string[] | null
+          reviewed_at?: string | null
+          status: string
+          suggestions?: string | null
         }
         Update: {
-          areas_of_excellence?: Json | null
-          coherence_issues_json?: Json | null
-          copy_issues_json?: Json | null
-          created_at?: string
+          checklist?: Json | null
           draft_id?: string | null
           id?: string
-          next_action?: string | null
-          ready_for_felipe?: boolean
-          review_notes?: string | null
-          summary_for_felipe?: string | null
-          verdict?: string
-          visual_brief_id?: string | null
-          visual_issues_json?: Json | null
+          issues_found?: string[] | null
+          reviewed_at?: string | null
+          status?: string
+          suggestions?: string | null
         }
         Relationships: [
           {
@@ -467,13 +598,6 @@ export type Database = {
             columns: ["draft_id"]
             isOneToOne: false
             referencedRelation: "content_drafts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "review_results_visual_brief_id_fkey"
-            columns: ["visual_brief_id"]
-            isOneToOne: false
-            referencedRelation: "visual_briefs"
             referencedColumns: ["id"]
           },
         ]
@@ -589,6 +713,30 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_context: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       system_context: {
         Row: {
           content: string
@@ -616,30 +764,101 @@ export type Database = {
         }
         Relationships: []
       }
-      trends_reports: {
+      trends_curated: {
         Row: {
-          created_at: string
+          angulo_editorial: string | null
+          batch_id: string | null
+          categoria: string | null
+          curated_at: string | null
+          fonte: string | null
+          formato_sugerido: string | null
           id: string
-          items_json: Json
-          run_date: string
-          source_agent: string
-          week_start: string
+          is_top_5_semana: boolean | null
+          is_viral_candidate: boolean | null
+          potencial_engajamento: string | null
+          relevancia_score: number | null
+          titulo_original: string
+          trends_raw_id: string | null
+          url: string | null
+          used_in_post: boolean | null
         }
         Insert: {
-          created_at?: string
+          angulo_editorial?: string | null
+          batch_id?: string | null
+          categoria?: string | null
+          curated_at?: string | null
+          fonte?: string | null
+          formato_sugerido?: string | null
           id?: string
-          items_json: Json
-          run_date?: string
-          source_agent?: string
-          week_start: string
+          is_top_5_semana?: boolean | null
+          is_viral_candidate?: boolean | null
+          potencial_engajamento?: string | null
+          relevancia_score?: number | null
+          titulo_original: string
+          trends_raw_id?: string | null
+          url?: string | null
+          used_in_post?: boolean | null
         }
         Update: {
-          created_at?: string
+          angulo_editorial?: string | null
+          batch_id?: string | null
+          categoria?: string | null
+          curated_at?: string | null
+          fonte?: string | null
+          formato_sugerido?: string | null
           id?: string
-          items_json?: Json
-          run_date?: string
-          source_agent?: string
-          week_start?: string
+          is_top_5_semana?: boolean | null
+          is_viral_candidate?: boolean | null
+          potencial_engajamento?: string | null
+          relevancia_score?: number | null
+          titulo_original?: string
+          trends_raw_id?: string | null
+          url?: string | null
+          used_in_post?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trends_curated_trends_raw_id_fkey"
+            columns: ["trends_raw_id"]
+            isOneToOne: false
+            referencedRelation: "trends_raw"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trends_raw: {
+        Row: {
+          batch_id: string
+          collected_at: string | null
+          content_snippet: string | null
+          id: string
+          published_at: string | null
+          raw_metadata: Json | null
+          source: string | null
+          title: string | null
+          url: string | null
+        }
+        Insert: {
+          batch_id?: string
+          collected_at?: string | null
+          content_snippet?: string | null
+          id?: string
+          published_at?: string | null
+          raw_metadata?: Json | null
+          source?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Update: {
+          batch_id?: string
+          collected_at?: string | null
+          content_snippet?: string | null
+          id?: string
+          published_at?: string | null
+          raw_metadata?: Json | null
+          source?: string | null
+          title?: string | null
+          url?: string | null
         }
         Relationships: []
       }
@@ -663,33 +882,58 @@ export type Database = {
       }
       visual_briefs: {
         Row: {
-          created_at: string
-          draft_id: string
+          accent_color: string | null
+          bg_color: string | null
+          canva_master_prompt: string | null
+          competitor_dna_id: string | null
+          cover_style: string | null
+          created_at: string | null
+          draft_id: string | null
+          font_body: string | null
+          font_heading: string | null
           id: string
-          instagram_brief_json: Json | null
-          linkedin_brief_json: Json | null
-          status: string
-          updated_at: string
+          primary_color: string | null
+          slide_specs: Json | null
+          uses_face: boolean | null
         }
         Insert: {
-          created_at?: string
-          draft_id: string
+          accent_color?: string | null
+          bg_color?: string | null
+          canva_master_prompt?: string | null
+          competitor_dna_id?: string | null
+          cover_style?: string | null
+          created_at?: string | null
+          draft_id?: string | null
+          font_body?: string | null
+          font_heading?: string | null
           id?: string
-          instagram_brief_json?: Json | null
-          linkedin_brief_json?: Json | null
-          status?: string
-          updated_at?: string
+          primary_color?: string | null
+          slide_specs?: Json | null
+          uses_face?: boolean | null
         }
         Update: {
-          created_at?: string
-          draft_id?: string
+          accent_color?: string | null
+          bg_color?: string | null
+          canva_master_prompt?: string | null
+          competitor_dna_id?: string | null
+          cover_style?: string | null
+          created_at?: string | null
+          draft_id?: string | null
+          font_body?: string | null
+          font_heading?: string | null
           id?: string
-          instagram_brief_json?: Json | null
-          linkedin_brief_json?: Json | null
-          status?: string
-          updated_at?: string
+          primary_color?: string | null
+          slide_specs?: Json | null
+          uses_face?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "visual_briefs_competitor_dna_id_fkey"
+            columns: ["competitor_dna_id"]
+            isOneToOne: false
+            referencedRelation: "design_dna_extracted"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visual_briefs_draft_id_fkey"
             columns: ["draft_id"]
@@ -725,6 +969,8 @@ export type Database = {
         | "strategist"
         | "reviewer"
         | "manager"
+        | "content-curator"
+        | "intelligence-analyst"
       internal_job_kind:
         | "daily-standup"
         | "weekly-review"
@@ -883,6 +1129,8 @@ export const Constants = {
         "strategist",
         "reviewer",
         "manager",
+        "content-curator",
+        "intelligence-analyst",
       ],
       internal_job_kind: [
         "daily-standup",
