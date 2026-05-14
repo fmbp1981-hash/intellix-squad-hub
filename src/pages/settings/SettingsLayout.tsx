@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Bell, MessageSquare, Cpu, Users, Layers, DollarSign, Mail, Plug, User, HardDrive } from "lucide-react";
+import { Bell, MessageSquare, Cpu, Users, Layers, DollarSign, Mail, Plug, User, HardDrive, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SECTIONS: { label: string; items: { to: string; label: string; icon: any }[] }[] = [
@@ -14,9 +14,10 @@ const SECTIONS: { label: string; items: { to: string; label: string; icon: any }
   {
     label: "IA & Agentes",
     items: [
-      { to: "/settings/models", label: "Modelos LLM", icon: Cpu },
-      { to: "/settings/agents", label: "Agentes", icon: Users },
-      { to: "/settings/squads", label: "Squads", icon: Layers },
+      { to: "/settings/models",    label: "Modelos LLM",    icon: Cpu },
+      { to: "/settings/agents",    label: "Agentes",        icon: Users },
+      { to: "/settings/squads",    label: "Squads",         icon: Layers },
+      { to: "/settings/marketing", label: "Marketing Squad", icon: Megaphone },
     ],
   },
   {

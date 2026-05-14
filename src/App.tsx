@@ -33,6 +33,7 @@ const SquadsSettings = lazy(() => import("./pages/settings/SquadsSettings"));
 const BudgetsSettings = lazy(() => import("./pages/settings/BudgetsSettings"));
 const ProfileSettings = lazy(() => import("./pages/settings/ProfileSettings"));
 const DriveSetupSettings = lazy(() => import("./pages/settings/DriveSetupSettings"));
+const MarketingSettings  = lazy(() => import("./pages/settings/MarketingSettings"));
 const ExportsPage = lazy(() => import("./pages/ExportsPage"));
 const NotificationPreferences = lazy(() =>
   import("./components/notifications/NotificationPreferences").then((m) => ({ default: m.NotificationPreferences }))
@@ -65,6 +66,13 @@ const SquadsListPage = lazy(() => import("./pages/squads/SquadsListPage"));
 const SquadDetailPage = lazy(() => import("./pages/squads/SquadDetailPage"));
 const ProjetoDetailPage = lazy(() => import("./pages/projetos/ProjetoDetailPage"));
 const ConfigPage = lazy(() => import("./pages/config/ConfigPage"));
+const MarketingLayout      = lazy(() => import("./components/marketing/MarketingLayout"));
+const MarketingDashboard   = lazy(() => import("./pages/marketing/MarketingDashboard"));
+const MarketingCalendar    = lazy(() => import("./pages/marketing/MarketingCalendar"));
+const MarketingProduction  = lazy(() => import("./pages/marketing/MarketingProduction"));
+const MarketingResearch    = lazy(() => import("./pages/marketing/MarketingResearch"));
+const MarketingMetrics     = lazy(() => import("./pages/marketing/MarketingMetrics"));
+const MarketingIntelligence = lazy(() => import("./pages/marketing/MarketingIntelligence"));
 
 const queryClient = new QueryClient();
 
@@ -115,6 +123,7 @@ const App = () => (
                     <Route path="profile" element={<ProfileSettings />} />
                     <Route path="drive" element={<DriveSetupSettings />} />
                     <Route path="integrations" element={<IntegrationsPage />} />
+                    <Route path="marketing" element={<MarketingSettings />} />
                   </Route>
                   <Route path="/exports" element={<ExportsPage />} />
                   <Route path="/office" element={<OfficePage />} />
@@ -152,6 +161,15 @@ const App = () => (
                   <Route path="/projetos/new" element={<NewProject />} />
                   <Route path="/projetos/:id" element={<ProjetoDetailPage />} />
                   <Route path="/config" element={<ConfigPage />} />
+
+                  <Route path="/marketing" element={<MarketingLayout />}>
+                    <Route index element={<MarketingDashboard />} />
+                    <Route path="calendario"   element={<MarketingCalendar />} />
+                    <Route path="producao"     element={<MarketingProduction />} />
+                    <Route path="pesquisa"     element={<MarketingResearch />} />
+                    <Route path="metricas"     element={<MarketingMetrics />} />
+                    <Route path="inteligencia" element={<MarketingIntelligence />} />
+                  </Route>
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

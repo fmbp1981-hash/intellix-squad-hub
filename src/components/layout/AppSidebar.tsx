@@ -1,6 +1,6 @@
 import {
   Building2, Settings as SettingsIcon, LogOut, LayoutGrid,
-  Briefcase, Target, Rocket, Home, ChevronRight, Sun, Moon
+  Briefcase, Target, Rocket, Home, ChevronRight, Sun, Moon, Megaphone
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 import { useTheme } from "@/hooks/useTheme";
 
-type BadgeKey = "jobs" | "engagements" | "leads";
+type BadgeKey = "jobs" | "engagements" | "leads" | "marketing";
 
 const groups: {
   label: string;
@@ -28,6 +28,10 @@ const groups: {
   {
     label: "Squad Hub",
     items: [{ to: "/squads", label: "Squads", icon: Building2, badge: "engagements" }],
+  },
+  {
+    label: "Marketing",
+    items: [{ to: "/marketing", label: "Marketing", icon: Megaphone, badge: "marketing" as BadgeKey }],
   },
   { label: "Projetos Ágeis", items: [{ to: "/projetos", label: "Projetos", icon: Rocket }] },
   { label: "Sistema", items: [{ to: "/config", label: "Config", icon: SettingsIcon }] },

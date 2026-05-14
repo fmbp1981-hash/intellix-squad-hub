@@ -84,6 +84,27 @@ export const AGENTS: AgentDef[] = [
     pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0xf97316,
     eyeColor: 0x1a6b00,
   }),
+  mk("teo", "Téo", "marketing", "specialist", "Copy", false, {
+    skinBase: 0xD4935A, skinShadow: 0xB07840, skinHighlight: 0xE8A86E,
+    hairBase: 0x1a1a2e, hairHighlight: 0x2a2a3e, hairStyle: "medium_male",
+    shirtBase: 0xe11d48, shirtShadow: 0xbe123c, shirtDetail: 0xfb7185,
+    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1a1a1a,
+    eyeColor: 0x1a1a2e,
+  }),
+  mk("vera", "Vera", "marketing", "specialist", "Visual", true, {
+    skinBase: 0xF0D0A0, skinShadow: 0xD0B080, skinHighlight: 0xFFE4C0,
+    hairBase: 0x6d28d9, hairHighlight: 0x8b5cf6, hairStyle: "long_female",
+    shirtBase: 0x7c3aed, shirtShadow: 0x5b21b6, shirtDetail: 0xa78bfa,
+    pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0x7c3aed,
+    hasEarring: true, eyeColor: 0x4c1d95,
+  }),
+  mk("sofia", "Sofia", "marketing", "reviewer", "Revisora", true, {
+    skinBase: 0xECB88A, skinShadow: 0xCC9870, skinHighlight: 0xFFCCA0,
+    hairBase: 0x2d1b00, hairHighlight: 0x4a3520, hairStyle: "bob",
+    shirtBase: 0x059669, shirtShadow: 0x047857, shirtDetail: 0x34d399,
+    pantsBase: 0x1e293b, pantsShadow: 0x0f172a, shoeBase: 0x1a1a1a,
+    hasBadge: true, badgeColor: 0x10b981, eyeColor: 0x1a4b00,
+  }),
   mk("heitor", "Heitor", "ti", "tech", "TI", false, {
     skinBase: 0xECC99A, skinShadow: 0xCCAA7A, skinHighlight: 0xFFDDB0,
     hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "buzz",
