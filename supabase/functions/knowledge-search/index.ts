@@ -88,6 +88,32 @@ async function embedQuery(query: string): Promise<number[]> {
   return json.data[0].embedding;
 }
 
-async function search(_req: Request, _p: SearchRequest): Promise<ChunkResult[]> {
-  throw new Error("not_implemented");
+async function search(req: Request, p: SearchRequest): Promise<ChunkResult[]> {
+  const [isAdmin, queryEmbedding] = await Promise.all([
+    isAdminRequest(req),
+    embedQuery(p.query),
+  ]);
+
+  const supa = adminClient();
+
+  const { data, error } = await supa.rpc("match_knowledge_chunks", {
+    query_embedding:      queryEmbedding,
+    similarity_threshold: SIMILARITY_THRESHOLD,
+    match_count:          p.top_k,
+    filter_restricted:    !isAdmin,
+    filter_layer:         p.layer ?? null,
+  });
+
+  if (error) throw new Error(`rpc_failed: ${error.message}`);
+  if (!data) return [];
+
+  return (data as ChunkResult[]).map((row) => ({
+    chunk_id:       row.chunk_id,
+    document_id:    row.document_id,
+    doc_number:     row.doc_number,
+    document_title: row.document_title,
+    section_title:  row.section_title,
+    content:        row.content,
+    similarity:     row.similarity,
+  }));
 }
