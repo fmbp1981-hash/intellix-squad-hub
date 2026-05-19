@@ -140,6 +140,65 @@ async function embedBatch(inputs: string[]): Promise<number[][]> {
   return all;
 }
 
-async function ingest(_p: IngestRequest): Promise<Record<string, unknown>> {
-  throw new Error("not_implemented");
+async function ingest(p: IngestRequest): Promise<Record<string, unknown>> {
+  const supa = adminClient();
+
+  const { data: docRow, error: upErr } = await supa
+    .from("knowledge_documents")
+    .upsert(
+      {
+        doc_number:    p.doc_number,
+        title:         p.title,
+        version:       p.version,
+        layer:         p.layer,
+        is_restricted: p.is_restricted,
+        full_content:  p.content,
+        metadata:      p.metadata,
+      },
+      { onConflict: "doc_number" },
+    )
+    .select("id")
+    .single();
+  if (upErr || !docRow) throw new Error(`document_upsert_failed: ${upErr?.message ?? "no_row"}`);
+
+  const documentId = docRow.id as string;
+
+  const { error: delErr, count: chunksDeleted } = await supa
+    .from("knowledge_chunks")
+    .delete({ count: "exact" })
+    .eq("document_id", documentId);
+  if (delErr) throw new Error(`chunks_delete_failed: ${delErr.message}`);
+
+  const chunks = chunkMarkdown(p.content);
+  if (chunks.length === 0) {
+    return {
+      doc_number:     p.doc_number,
+      title:          p.title,
+      chunks_deleted: chunksDeleted ?? 0,
+      chunks_created: 0,
+    };
+  }
+
+  const embeddings = await embedBatch(chunks.map((c) => c.content));
+  if (embeddings.length !== chunks.length) {
+    throw new Error(`embedding_count_mismatch: ${embeddings.length} vs ${chunks.length}`);
+  }
+
+  const rows = chunks.map((c, idx) => ({
+    document_id:   documentId,
+    chunk_index:   idx,
+    section_title: c.section_title,
+    content:       c.content,
+    embedding:     embeddings[idx],
+  }));
+
+  const { error: insErr } = await supa.from("knowledge_chunks").insert(rows);
+  if (insErr) throw new Error(`chunks_insert_failed: ${insErr.message}`);
+
+  return {
+    doc_number:     p.doc_number,
+    title:          p.title,
+    chunks_deleted: chunksDeleted ?? 0,
+    chunks_created: rows.length,
+  };
 }
