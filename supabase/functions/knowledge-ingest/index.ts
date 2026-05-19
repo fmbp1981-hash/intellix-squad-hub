@@ -41,6 +41,10 @@ const TARGET_TOKENS = 600;
 const OVERLAP_TOKENS = 100;
 const MIN_SECTION_TOKENS = 50;
 
+if (OVERLAP_TOKENS >= TARGET_TOKENS) {
+  throw new Error("chunker_config_invalid: OVERLAP_TOKENS must be less than TARGET_TOKENS");
+}
+
 function estimateTokens(s: string): number {
   return Math.ceil(s.length / 4);
 }
@@ -135,6 +139,9 @@ async function embedBatch(inputs: string[]): Promise<number[][]> {
       throw new Error(`openai_embeddings_failed_${resp.status}: ${text.slice(0, 200)}`);
     }
     const json = await resp.json() as { data: { embedding: number[] }[] };
+    if (!Array.isArray(json.data)) {
+      throw new Error(`openai_embeddings_unexpected_response: ${JSON.stringify(json).slice(0, 200)}`);
+    }
     for (const item of json.data) all.push(item.embedding);
   }
   return all;
