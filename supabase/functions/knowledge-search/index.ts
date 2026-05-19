@@ -49,6 +49,45 @@ Deno.serve(async (req) => {
   }
 });
 
+const OPENAI_EMBED_MODEL = "text-embedding-3-small";
+const SIMILARITY_THRESHOLD = 0.70;
+
+async function isAdminRequest(req: Request): Promise<boolean> {
+  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (bearer === (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")) return true;
+  const check = await requireAdmin(req);
+  return !("error" in check);
+}
+
+async function embedQuery(query: string): Promise<number[]> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!apiKey) throw new Error("openai_api_key_missing");
+
+  const resp = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model:      OPENAI_EMBED_MODEL,
+      input:      query,
+      dimensions: 1536,
+    }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(`openai_embeddings_failed_${resp.status}: ${text.slice(0, 200)}`);
+  }
+
+  const json = await resp.json() as { data: { embedding: number[] }[] };
+  if (!Array.isArray(json.data) || json.data.length === 0) {
+    throw new Error(`openai_embeddings_unexpected_response: ${JSON.stringify(json).slice(0, 200)}`);
+  }
+  return json.data[0].embedding;
+}
+
 async function search(_req: Request, _p: SearchRequest): Promise<ChunkResult[]> {
   throw new Error("not_implemented");
 }
