@@ -54,7 +54,12 @@ const SIMILARITY_THRESHOLD = 0.70;
 
 async function isAdminRequest(req: Request): Promise<boolean> {
   const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (bearer === (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")) return true;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (serviceKey.length > 0 && bearer.length === serviceKey.length) {
+    const a = new TextEncoder().encode(bearer);
+    const b = new TextEncoder().encode(serviceKey);
+    if (crypto.subtle.timingSafeEqual(a, b)) return true;
+  }
   const check = await requireAdmin(req);
   return !("error" in check);
 }
@@ -78,12 +83,14 @@ async function embedQuery(query: string): Promise<number[]> {
 
   if (!resp.ok) {
     const text = await resp.text().catch(() => "");
-    throw new Error(`openai_embeddings_failed_${resp.status}: ${text.slice(0, 200)}`);
+    console.error("[knowledge-search] OpenAI error", resp.status, text.slice(0, 200));
+    throw new Error(`openai_embeddings_failed`);
   }
 
   const json = await resp.json() as { data: { embedding: number[] }[] };
   if (!Array.isArray(json.data) || json.data.length === 0) {
-    throw new Error(`openai_embeddings_unexpected_response: ${JSON.stringify(json).slice(0, 200)}`);
+    console.error("[knowledge-search] OpenAI unexpected response", JSON.stringify(json).slice(0, 200));
+    throw new Error("openai_embeddings_unexpected_response");
   }
   return json.data[0].embedding;
 }
@@ -104,7 +111,10 @@ async function search(req: Request, p: SearchRequest): Promise<ChunkResult[]> {
     filter_layer:         p.layer ?? null,
   });
 
-  if (error) throw new Error(`rpc_failed: ${error.message}`);
+  if (error) {
+    console.error("[knowledge-search] RPC error", error);
+    throw new Error("rpc_failed");
+  }
   if (!data) return [];
 
   return (data as ChunkResult[]).map((row) => ({
