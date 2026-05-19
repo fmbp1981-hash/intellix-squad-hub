@@ -108,6 +108,38 @@ function chunkMarkdown(md: string): Chunk[] {
   return chunks.filter((c) => c.content.length > 0);
 }
 
+const OPENAI_EMBED_MODEL = "text-embedding-3-small";
+const EMBED_BATCH_SIZE = 100;
+
+async function embedBatch(inputs: string[]): Promise<number[][]> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!apiKey) throw new Error("openai_api_key_missing");
+
+  const all: number[][] = [];
+  for (let i = 0; i < inputs.length; i += EMBED_BATCH_SIZE) {
+    const batch = inputs.slice(i, i + EMBED_BATCH_SIZE);
+    const resp = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OPENAI_EMBED_MODEL,
+        input: batch,
+        dimensions: 1536,
+      }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      throw new Error(`openai_embeddings_failed_${resp.status}: ${text.slice(0, 200)}`);
+    }
+    const json = await resp.json() as { data: { embedding: number[] }[] };
+    for (const item of json.data) all.push(item.embedding);
+  }
+  return all;
+}
+
 async function ingest(_p: IngestRequest): Promise<Record<string, unknown>> {
   throw new Error("not_implemented");
 }
