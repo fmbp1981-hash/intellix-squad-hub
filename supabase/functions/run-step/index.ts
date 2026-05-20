@@ -1,7 +1,38 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
-import { loadLlmConfig, runLlm, LlmMessage } from "../_shared/llm-provider.ts";
+import { invokeAgent, LlmMessage } from "../_shared/llm-provider.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
+
+interface RagChunk {
+  document_title: string;
+  section_title:  string | null;
+  content:        string;
+  similarity:     number;
+}
+
+async function fetchRagContext(query: string, agentId: string): Promise<string> {
+  const url  = `${Deno.env.get("SUPABASE_URL")}/functions/v1/knowledge-search`;
+  // Anon key → filter_restricted=true → Doc 09 (precificação) bloqueado por RLS
+  const auth = `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({ query, agent_id: agentId, top_k: 5 }),
+    });
+    if (!res.ok) return "";
+    const json = await res.json() as { success: boolean; results?: RagChunk[] };
+    if (!json.success || !json.results?.length) return "";
+    return json.results
+      .map((r, i) => {
+        const title = r.section_title ? `${r.document_title} — ${r.section_title}` : r.document_title;
+        return `**[${i + 1}] ${title}**\n${r.content}`;
+      })
+      .join("\n\n");
+  } catch {
+    return "";
+  }
+}
 
 const BodySchema = z.object({ run_id: z.string().uuid() });
 
@@ -65,28 +96,45 @@ Deno.serve(async (req) => {
   const agent = agents[nextIdx];
   const prevMd = (doneSteps ?? []).map((s) => s.output_markdown ?? "").join("\n\n---\n\n");
 
+  const isRagEnabled = agent.persona?.includes("knowledge_search") ?? false;
+  const ragQuery     = typeof input === "string" ? input : JSON.stringify(input);
+  const ragContext   = isRagEnabled
+    ? await fetchRagContext(ragQuery.slice(0, 800), agent.id)
+    : "";
+
   const { data: stepRow } = await supa.from("run_steps").insert({
     run_id,
     agent_id: agent.id,
     step_index: nextIdx,
-    input: { brief: input, previous: prevMd },
+    input: { brief: input, previous: prevMd, rag_chunks: ragContext.length },
     status: "running",
     started_at: new Date().toISOString(),
   }).select("id").single();
 
   try {
-    const cfg = await loadLlmConfig(agent.llm_config_key);
+
+    const systemContent = ragContext
+      ? `Você é ${agent.name}, ${agent.persona ?? ""}. Responda em Markdown.\n\n## Contexto relevante da Base de Conhecimento\n\n${ragContext}`
+      : `Você é ${agent.name}, ${agent.persona ?? ""}. Responda em Markdown.`;
+
     const messages: LlmMessage[] = [
-      { role: "system", content: `Você é ${agent.name}, ${agent.persona ?? ""}. Responda em Markdown.` },
+      { role: "system", content: systemContent },
       { role: "user", content: `Briefing:\n${JSON.stringify(input, null, 2)}\n\nContexto anterior:\n${prevMd || "(nenhum)"}` },
     ];
-    const result = await runLlm(cfg, messages);
+    const result = await invokeAgent({
+      agent_name: agent.name,
+      messages,
+      idempotency_key: `run-${run_id}-step-${nextIdx}`,
+    });
 
     await supa.from("run_steps").update({
       output_markdown: result.content,
       tokens_in: result.tokens_in,
       tokens_out: result.tokens_out,
-      latency_ms: result.latency_ms,
+      latency_ms: result.duration_ms,
+      llm_provider: result.provider,
+      llm_model: result.model,
+      agent_run_id: result.agent_run_id,
       status: "completed",
       completed_at: new Date().toISOString(),
     }).eq("id", stepRow!.id);

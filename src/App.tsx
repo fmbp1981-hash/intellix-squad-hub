@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +17,16 @@ import Dashboard from "./pages/Dashboard";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 import PainelPage from "./pages/painel/PainelPage";
+
+// OpenSquad v2.1 — 5 telas planas
+const Engagements = lazy(() => import("./pages/Engagements"));
+const EngagementDetail = lazy(() => import("./pages/EngagementDetail"));
+const Squad = lazy(() => import("./pages/Squad"));
+const Metrics = lazy(() => import("./pages/Metrics"));
+const MetricDetail = lazy(() => import("./pages/MetricDetail"));
+const SettingsFlat = lazy(() => import("./pages/Settings"));
+const TemplatesSettings = lazy(() => import("./pages/settings-v2/TemplatesSettings"));
+const UsersSettings = lazy(() => import("./pages/settings-v2/UsersSettings"));
 
 // Lazy: heavier sections
 const WorkspacesList = lazy(() => import("./pages/workspaces/WorkspacesList"));
@@ -88,7 +98,15 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 >
-                  <Route path="/" element={<Navigate to="/painel" replace />} />
+                  {/* OpenSquad v2.1 — 5 telas planas */}
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/engagements" element={<Engagements />} />
+                  <Route path="/engagements/:id" element={<EngagementDetail />} />
+                  <Route path="/squad" element={<Squad />} />
+                  <Route path="/metrics" element={<Metrics />} />
+                  <Route path="/metrics/:key" element={<MetricDetail />} />
+
+                  {/* Rotas legadas */}
                   <Route path="/painel" element={<PainelPage />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/workspaces" element={<WorkspacesList />} />
@@ -103,18 +121,23 @@ const App = () => (
                     path="/workspaces/:id/runs/:runId"
                     element={<Placeholder title="Output Viewer" step="Prompt 6" description="Markdown do relatório renderizado + link Drive." />}
                   />
-                  <Route path="/settings" element={<SettingsLayout />}>
+                  {/* Settings flat (cards-link grid + sub-rotas planas) */}
+                  <Route path="/settings" element={<SettingsFlat />} />
+                  <Route path="/settings/agents" element={<AgentsSettings />} />
+                  <Route path="/settings/templates" element={<TemplatesSettings />} />
+                  <Route path="/settings/squads" element={<SquadsSettings />} />
+                  <Route path="/settings/users" element={<UsersSettings />} />
+                  <Route path="/settings/integrations" element={<IntegrationsPage />} />
+                  <Route path="/settings/notifications" element={<NotificationPreferences />} />
+                  <Route path="/settings/whatsapp" element={<WhatsAppSettings />} />
+                  <Route path="/settings/models" element={<ModelSettings />} />
+                  <Route path="/settings/email-templates" element={<EmailTemplatesPage />} />
+                  <Route path="/settings/budgets" element={<BudgetsSettings />} />
+                  <Route path="/settings/profile" element={<ProfileSettings />} />
+                  <Route path="/settings/drive" element={<DriveSetupSettings />} />
+                  {/* Legado: SettingsLayout antigo */}
+                  <Route path="/settings-legacy" element={<SettingsLayout />}>
                     <Route index element={<SettingsPage />} />
-                    <Route path="notifications" element={<NotificationPreferences />} />
-                    <Route path="whatsapp" element={<WhatsAppSettings />} />
-                    <Route path="models" element={<ModelSettings />} />
-                    <Route path="email-templates" element={<EmailTemplatesPage />} />
-                    <Route path="agents" element={<AgentsSettings />} />
-                    <Route path="squads" element={<SquadsSettings />} />
-                    <Route path="budgets" element={<BudgetsSettings />} />
-                    <Route path="profile" element={<ProfileSettings />} />
-                    <Route path="drive" element={<DriveSetupSettings />} />
-                    <Route path="integrations" element={<IntegrationsPage />} />
                   </Route>
                   <Route path="/exports" element={<ExportsPage />} />
                   <Route path="/office" element={<OfficePage />} />

@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 });
 
 const OPENAI_EMBED_MODEL = "text-embedding-3-small";
-const SIMILARITY_THRESHOLD = 0.70;
+const SIMILARITY_THRESHOLD = 0.55;
 
 async function isAdminRequest(req: Request): Promise<boolean> {
   const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");

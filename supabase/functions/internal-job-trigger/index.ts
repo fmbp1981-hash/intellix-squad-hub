@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
-import { loadLlmConfig, runLlm, LlmMessage } from "../_shared/llm-provider.ts";
+import { invokeAgent, LlmMessage } from "../_shared/llm-provider.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const BodySchema = z.object({
@@ -24,12 +24,16 @@ Deno.serve(async (req) => {
   if (!job) return jsonResponse({ error: "insert_failed" }, 500);
 
   try {
-    const cfg = await loadLlmConfig(`internal:gestao:${kind}`);
     const messages: LlmMessage[] = [
       { role: "system", content: `Você é Ágata, CEO virtual. Gere um relatório em Markdown para o ritual: ${kind}.` },
       { role: "user", content: JSON.stringify({ department, payload }, null, 2) },
     ];
-    const result = await runLlm(cfg, messages);
+    const result = await invokeAgent({
+      agent_name: "Ágata",
+      messages,
+      idempotency_key: `job-${job.id}`,
+      job_name: kind,
+    });
     await supa.from("internal_jobs").update({
       status: "completed",
       output_markdown: result.content,

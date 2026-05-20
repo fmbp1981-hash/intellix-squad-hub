@@ -1,4 +1,86 @@
+// Cliente da LLM Factory (edge function `llm-invoke`).
+// Strangler-fig: as funções legadas `loadLlmConfig`/`runLlm` continuam exportadas
+// como wrappers depreciados. Novos callers devem usar `invokeAgent` direto.
+//
+// Substituiu Lovable Gateway → SDKs nativos (Anthropic, OpenAI, Google) atrás
+// de `llm-invoke`, com idempotency e logging em `agent_runs`.
+
 import { adminClient } from "./auth.ts";
+
+export interface LlmMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface InvokeAgentInput {
+  agent_name: string;
+  messages: LlmMessage[];
+  idempotency_key: string;
+  engagement_id?: string;
+  job_name?: string;
+}
+
+export interface InvokeAgentResult {
+  content: string;
+  tokens_in: number;
+  tokens_out: number;
+  provider: string;
+  model: string;
+  cost_usd: number;
+  duration_ms: number;
+  agent_run_id: string;
+  cached: boolean;
+}
+
+export async function invokeAgent(input: InvokeAgentInput): Promise<InvokeAgentResult> {
+  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/llm-invoke`;
+  const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: auth },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    const err = new Error(`llm-invoke ${res.status}: ${text}`);
+    (err as { status?: number }).status = res.status;
+    throw err;
+  }
+  return await res.json() as InvokeAgentResult;
+}
+
+// ----- Ágata output parsing helpers -----
+export function extractDirectivesJson(output: string): unknown[] {
+  const re = /```json\s*([\s\S]*?)\s*```/g;
+  for (const m of output.matchAll(re)) {
+    try {
+      const p = JSON.parse(m[1]);
+      if (Array.isArray((p as { directives?: unknown[] })?.directives)) {
+        return (p as { directives: unknown[] }).directives;
+      }
+    } catch { /* try next */ }
+  }
+  return [];
+}
+
+export function extractDecisionsForFelipe(output: string): string[] {
+  const re = /```json\s*([\s\S]*?)\s*```/g;
+  for (const m of output.matchAll(re)) {
+    try {
+      const p = JSON.parse(m[1]);
+      if (Array.isArray((p as { decisions_for_felipe?: string[] })?.decisions_for_felipe)) {
+        return (p as { decisions_for_felipe: string[] }).decisions_for_felipe;
+      }
+    } catch { /* try next */ }
+  }
+  return [];
+}
+
+// =============================================================================
+// DEPRECATED — wrappers para callers ainda em llm_configs.config_key.
+// Resolve config_key → agent_name e delega a invokeAgent.
+// Remover na Fase 3 quando todos os callers migrarem.
+// =============================================================================
 
 export interface LlmConfig {
   config_key: string;
@@ -10,11 +92,6 @@ export interface LlmConfig {
   max_tokens: number;
 }
 
-export interface LlmMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
 export interface LlmResult {
   content: string;
   tokens_in: number;
@@ -23,88 +100,35 @@ export interface LlmResult {
   latency_ms: number;
 }
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
+/** @deprecated Use invokeAgent({ agent_name, ... }) directamente. */
 export async function loadLlmConfig(key: string): Promise<LlmConfig> {
   const supa = adminClient();
-  const { data, error } = await supa
-    .from("llm_configs")
-    .select("*")
-    .eq("config_key", key)
-    .maybeSingle();
-  if (error || !data) {
-    const { data: def } = await supa
-      .from("llm_configs")
-      .select("*")
-      .eq("config_key", "default")
-      .single();
-    return def as LlmConfig;
-  }
-  return data as LlmConfig;
+  const { data } = await supa.from("llm_configs").select("*").eq("config_key", key).maybeSingle();
+  if (data) return data as LlmConfig;
+  const { data: def } = await supa.from("llm_configs").select("*").eq("config_key", "default").single();
+  return def as LlmConfig;
 }
 
-async function callGateway(model: string, messages: LlmMessage[], temperature: number, maxTokens: number) {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
-  const t0 = Date.now();
-  const res = await fetch(GATEWAY, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens }),
-  });
-  const latency_ms = Date.now() - t0;
-  if (!res.ok) {
-    const text = await res.text();
-    const err = new Error(`gateway ${res.status}: ${text}`);
-    (err as any).status = res.status;
-    throw err;
-  }
-  const json = await res.json();
-  const content = json.choices?.[0]?.message?.content ?? "";
-  return {
-    content,
-    tokens_in: json.usage?.prompt_tokens ?? 0,
-    tokens_out: json.usage?.completion_tokens ?? 0,
-    model_used: model,
-    latency_ms,
-  };
-}
-
+/** @deprecated Use invokeAgent. Mantido só durante strangler-fig (1 sprint). */
 export async function runLlm(cfg: LlmConfig, messages: LlmMessage[]): Promise<LlmResult> {
-  try {
-    return await callGateway(cfg.model, messages, cfg.temperature, cfg.max_tokens);
-  } catch (e) {
-    const status = (e as any).status;
-    if ((status === 429 || status === 402) && cfg.fallback_model) {
-      console.warn(`[llm] fallback ${cfg.model} -> ${cfg.fallback_model} (status ${status})`);
-      return await callGateway(cfg.fallback_model, messages, cfg.temperature, cfg.max_tokens);
-    }
-    throw e;
-  }
-}
+  // Mapeia config_key → agent_name (best-effort): assume 1:1 nas config_keys
+  // padronizadas. Para "default" / "internal:gestao:*", roteia para Ágata.
+  const supa = adminClient();
+  const { data: agent } = await supa
+    .from("agent_configs")
+    .select("name")
+    .eq("llm_config_key", cfg.config_key)
+    .limit(1)
+    .maybeSingle();
 
-// ----- Ágata output parsing helpers -----
-export function extractDirectivesJson(output: string): unknown[] {
-  const re = /```json\s*([\s\S]*?)\s*```/g;
-  for (const m of output.matchAll(re)) {
-    try {
-      const p = JSON.parse(m[1]);
-      if (Array.isArray(p?.directives)) return p.directives;
-    } catch { /* try next */ }
-  }
-  return [];
-}
-
-export function extractDecisionsForFelipe(output: string): string[] {
-  const re = /```json\s*([\s\S]*?)\s*```/g;
-  for (const m of output.matchAll(re)) {
-    try {
-      const p = JSON.parse(m[1]);
-      if (Array.isArray(p?.decisions_for_felipe)) return p.decisions_for_felipe;
-    } catch { /* try next */ }
-  }
-  return [];
+  const agent_name = agent?.name ?? "Ágata";
+  const idempotency_key = `legacy-${cfg.config_key}-${crypto.randomUUID()}`;
+  const out = await invokeAgent({ agent_name, messages, idempotency_key });
+  return {
+    content: out.content,
+    tokens_in: out.tokens_in,
+    tokens_out: out.tokens_out,
+    model_used: out.model,
+    latency_ms: out.duration_ms,
+  };
 }
