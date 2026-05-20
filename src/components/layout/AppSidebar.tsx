@@ -12,7 +12,7 @@ import { useTheme } from "@/hooks/useTheme";
 
 type BadgeKey = "jobs" | "engagements" | "leads";
 
-// Sidebar OpenSquad v2.1
+// Sidebar Intellix Squad Hub v2.1
 const navItems: { to: string; label: string; icon: any; badge?: BadgeKey; end?: boolean }[] = [
   { to: "/",            label: "Dashboard",         icon: Home,         end: true },
   { to: "/engagements", label: "Engagements",       icon: Briefcase,    badge: "engagements" },

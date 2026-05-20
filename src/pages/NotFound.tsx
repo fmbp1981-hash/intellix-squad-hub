@@ -12,7 +12,7 @@ export default function NotFound() {
           Página não encontrada
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          A rota que você procura não existe no OpenSquad.
+          A rota que você procura não existe no Intellix Squad Hub.
         </p>
         <Button asChild className="mt-6 bg-gradient-brand text-primary-foreground hover:opacity-90">
           <Link to="/workspaces">Voltar para Workspaces</Link>

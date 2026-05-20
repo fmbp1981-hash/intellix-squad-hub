@@ -22,7 +22,7 @@ export function BrandLogo({ variant = "full", className }: BrandLogoProps) {
       <img src={logo} alt="IntelliX.AI" className="h-10 w-10 object-contain" />
       <div className="flex flex-col leading-tight">
         <span className="font-display text-sm font-semibold text-foreground">
-          OpenSquad Platform
+          Intellix Squad Hub
         </span>
         <span className="text-[11px] text-muted-foreground">
           IntelliX.AI · Consultoria Inteligente

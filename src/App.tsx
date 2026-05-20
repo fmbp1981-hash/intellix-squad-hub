@@ -18,7 +18,7 @@ import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 import PainelPage from "./pages/painel/PainelPage";
 
-// OpenSquad v2.1 — 5 telas planas
+// Intellix Squad Hub v2.1 — 5 telas planas
 const Engagements = lazy(() => import("./pages/Engagements"));
 const EngagementDetail = lazy(() => import("./pages/EngagementDetail"));
 const Squad = lazy(() => import("./pages/Squad"));
@@ -98,7 +98,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 >
-                  {/* OpenSquad v2.1 — 5 telas planas */}
+                  {/* Intellix Squad Hub v2.1 — 5 telas planas */}
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/engagements" element={<Engagements />} />
                   <Route path="/engagements/:id" element={<EngagementDetail />} />

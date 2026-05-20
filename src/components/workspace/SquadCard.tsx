@@ -25,7 +25,7 @@ export function SquadCard({ workspaceId, squadId, label, icon, color }: Props) {
         </div>
         <div>
           <h4 className="font-display text-sm font-semibold text-foreground">{label}</h4>
-          <p className="text-[11px] text-muted-foreground">Squad OpenSquad</p>
+          <p className="text-[11px] text-muted-foreground">Intellix Squad Hub</p>
         </div>
       </div>
 

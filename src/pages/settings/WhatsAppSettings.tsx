@@ -63,7 +63,7 @@ export default function WhatsAppSettings() {
     if (!cfg.admin_number) return toast.error('Defina o número admin');
     setTesting(true);
     const { data, error } = await supabase.functions.invoke('send-whatsapp', {
-      body: { to: cfg.admin_number, message: '✅ Teste OpenSquad — Evolution conectada.' },
+      body: { to: cfg.admin_number, message: '✅ Teste Intellix Squad Hub — Evolution conectada.' },
     });
     setTesting(false);
     if (error) return toast.error('Falha', { description: error.message });

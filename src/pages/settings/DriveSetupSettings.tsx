@@ -50,7 +50,7 @@ export default function DriveSetupSettings() {
   });
   const [templateText, setTemplateText] = useState(JSON.stringify(DEFAULT_TEMPLATE, null, 2));
   const [folders, setFolders] = useState<DriveFolder[]>([]);
-  const [folderName, setFolderName] = useState("OpenSquad");
+  const [folderName, setFolderName] = useState("Intellix Squad Hub");
   const [creatingFolder, setCreatingFolder] = useState(false);
 
   const loadFolders = async () => {
