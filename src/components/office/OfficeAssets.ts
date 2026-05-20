@@ -105,13 +105,6 @@ export const AGENTS: AgentDef[] = [
     pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1e3a5f,
     hasBadge: true, badgeColor: 0x3b82f6, eyeColor: 0x1a1a2e,
   }),
-  mk("beatriz", "Beatriz", "delivery", "strategist", "Strategist", true, {
-    skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
-    hairBase: 0x8B4513, hairHighlight: 0xA0612B, hairStyle: "medium_female",
-    shirtBase: 0x7c3aed, shirtShadow: 0x6d28d9, shirtDetail: 0x9f67ff,
-    pantsBase: 0x292524, pantsShadow: 0x1c1917, shoeBase: 0x7c3aed,
-    hasBadge: true, badgeColor: 0x7c3aed, eyeColor: 0x2d4b00,
-  }),
   mk("roberto", "Roberto", "delivery", "reviewer", "Reviewer", false, {
     skinBase: 0xC68642, skinShadow: 0xA06B30, skinHighlight: 0xD89B56,
     hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "short_male",
