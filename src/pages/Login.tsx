@@ -110,8 +110,8 @@ export default function Login() {
               Acesso interno IntelliX.AI
             </div>
             <h1 className="font-display text-4xl font-bold leading-tight text-white">
-              OpenSquad{" "}
-              <span className="text-gradient-brand">Platform</span>
+              Intellix{" "}
+              <span className="text-gradient-brand">Squad Hub</span>
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
               Cockpit interno para orquestrar squads de agentes IA em engagements de consultoria empresarial.
