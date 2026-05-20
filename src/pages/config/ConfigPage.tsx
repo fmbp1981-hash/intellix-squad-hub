@@ -1,11 +1,15 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, MessageSquare, User } from "lucide-react";
+import { Bot, Database, MessageSquare, User } from "lucide-react";
 import AgentsSettings from "@/pages/settings/AgentsSettings";
 import WhatsAppSettings from "@/pages/settings/WhatsAppSettings";
 import ModelSettings from "@/pages/settings/ModelSettings";
 import ProfileSettings from "@/pages/settings/ProfileSettings";
+import { KnowledgeBaseTab } from "@/pages/config/KnowledgeBaseTab";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export default function ConfigPage() {
+  const { isAdmin } = useIsAdmin();
+
   return (
     <Tabs defaultValue="agents" className="flex h-full flex-col">
       <div className="border-b border-border px-6 pt-4">
@@ -22,6 +26,12 @@ export default function ConfigPage() {
             <User className="h-4 w-4" />
             Perfil
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="base" className="gap-2">
+              <Database className="h-4 w-4" />
+              Base de Conhecimento
+            </TabsTrigger>
+          )}
         </TabsList>
       </div>
       <TabsContent value="agents" className="flex-1 overflow-auto mt-0">
@@ -48,6 +58,13 @@ export default function ConfigPage() {
           <ProfileSettings />
         </div>
       </TabsContent>
+      {isAdmin && (
+        <TabsContent value="base" className="flex-1 overflow-auto mt-0">
+          <div className="p-6">
+            <KnowledgeBaseTab />
+          </div>
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
