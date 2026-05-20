@@ -12,6 +12,7 @@ import OfficeViewer2D from "@/components/office/OfficeViewer2D";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 
 const STATUS_COLOR: Record<string, string> = {
   working:    "bg-primary/15 text-primary border-primary/30",
@@ -102,7 +103,7 @@ export default function OfficePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-xl font-semibold">
-            <span className="text-gradient-brand">IntelliX.AI</span>
+            <IntelliXBrand />
             <span className="text-muted-foreground"> · Escritório Virtual</span>
           </h1>
           <p className="text-xs text-muted-foreground">

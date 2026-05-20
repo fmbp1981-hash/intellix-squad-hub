@@ -1,5 +1,6 @@
 import logo from "@/assets/intellix-logo-transparent.png";
 import { cn } from "@/lib/utils";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 
 interface BrandLogoProps {
   variant?: "compact" | "full";
@@ -25,7 +26,7 @@ export function BrandLogo({ variant = "full", className }: BrandLogoProps) {
           Intellix Squad Hub
         </span>
         <span className="text-[11px] text-muted-foreground">
-          IntelliX.AI · Consultoria Inteligente
+          <IntelliXBrand /> · Consultoria Inteligente
         </span>
       </div>
     </div>

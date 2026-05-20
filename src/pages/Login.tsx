@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -107,7 +108,7 @@ export default function Login() {
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Acesso interno IntelliX.AI
+              Acesso interno <IntelliXBrand />
             </div>
             <h1 className="font-display text-4xl font-bold leading-tight text-white">
               Intellix{" "}
@@ -140,7 +141,7 @@ export default function Login() {
         </div>
 
         <p className="relative text-xs text-muted-foreground/50">
-          © 2025 IntelliX.AI · Consultoria Inteligente
+          © 2025 <IntelliXBrand /> · Consultoria Inteligente
         </p>
       </div>
 
@@ -197,7 +198,7 @@ export default function Login() {
               Entrar
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Acesse sua conta IntelliX.AI
+              Acesse sua conta <IntelliXBrand />
             </p>
 
             {!isSupabaseConfigured && (

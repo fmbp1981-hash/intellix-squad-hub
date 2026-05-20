@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { FolderPlus, Plus } from 'lucide-react';
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 
 import { Button } from '@/components/ui/button';
 import { WorkspaceCard } from '@/components/workspace/WorkspaceCard';
@@ -26,7 +27,7 @@ export default function WorkspacesList() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-foreground">Workspaces</h1>
           <p className="text-sm text-muted-foreground">
-            Engagements ativos e concluídos da IntelliX.AI.
+            Engagements ativos e concluídos da <IntelliXBrand />.
           </p>
         </div>
         <Button asChild className="bg-gradient-brand text-primary-foreground hover:opacity-90">

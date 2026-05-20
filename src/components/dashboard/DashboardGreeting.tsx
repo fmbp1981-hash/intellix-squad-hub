@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Sparkles } from "lucide-react";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 
 const greeting = (h: number) =>
   h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
@@ -46,7 +47,7 @@ export function DashboardGreeting() {
         </h1>
 
         <p className="text-sm text-muted-foreground">
-          Visão em tempo real — squads, pipeline e projetos da IntelliX.AI
+          Visão em tempo real — squads, pipeline e projetos da <IntelliXBrand />
         </p>
       </div>
 

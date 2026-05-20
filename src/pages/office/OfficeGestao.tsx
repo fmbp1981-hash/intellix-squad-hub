@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useGestao } from "@/hooks/useGestao";
@@ -22,7 +23,7 @@ export default function OfficeGestao() {
         </div>
         <div className="flex-1">
           <h1 className="text-xl font-bold">Ágata</h1>
-          <p className="text-sm text-muted-foreground">COO Digital da IntelliX.AI</p>
+          <p className="text-sm text-muted-foreground">COO Digital da <IntelliXBrand /></p>
         </div>
         <Badge variant="outline">
           {last ? `Último briefing: ${new Date(last.created_at).toLocaleString("pt-BR")}` : "Sem briefings ainda"}

@@ -2,6 +2,7 @@ import {
   Home, Briefcase, Users, BarChart3, Settings as SettingsIcon,
   LogOut, ChevronRight, Sun, Moon, FolderKanban, Building2,
 } from "lucide-react";
+import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -153,7 +154,7 @@ export function AppSidebar() {
             >
               {user?.email?.split("@")[0] ?? "—"}
             </p>
-            <p className="text-[10px] text-muted-foreground">IntelliX.AI · Admin</p>
+            <p className="text-[10px] text-muted-foreground"><IntelliXBrand /> · Admin</p>
           </div>
         </div>
 
