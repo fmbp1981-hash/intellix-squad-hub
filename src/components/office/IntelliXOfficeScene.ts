@@ -142,13 +142,14 @@ export class IntelliXOfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     this.cameras.main.setBackgroundColor(0x0D1B2A);
-    // Bounds must be larger than viewport (2400×1360 at zoom 0.5) to allow centering.
-    // Layout spans world x: -384 to 640, y: -40 to 640. Add generous padding.
-    this.cameras.main.setBounds(-1200, -500, 3200, 2000);
-    // Zoom out to see all 3 rows of islands at once
-    this.cameras.main.setZoom(0.5);
-    // Center on the midpoint of the full layout content (world ≈128,288 = tile ~11,7)
-    const { x, y } = isoToScreen(11, 7);
+    // Content bounding box: x ∈ [-512, 672], y ∈ [0, 560] (see IsoUtils rooms).
+    // Bounds large enough so at min zoom (0.6) viewport half (1000×567) can still
+    // center on content centroid (80, 280): bounds must extend ≥1000px each side in x.
+    this.cameras.main.setBounds(-1000, -320, 2200, 1300);
+    // Zoom 0.9 → viewport 1333×756, content 1184×560 — content fills ~89%/74% of frame
+    this.cameras.main.setZoom(0.9);
+    // Center on content centroid: average of all active rooms → tile ~(10, 7)
+    const { x, y } = isoToScreen(10, 7);
     this.cameras.main.centerOn(x, y);
   }
 
@@ -170,7 +171,7 @@ export class IntelliXOfficeScene extends Phaser.Scene {
     this.input.on("pointerup", () => { this.isDragging = false; });
 
     this.input.on("wheel", (_p: unknown, _g: unknown, _dx: number, dy: number) => {
-      const newZoom = Phaser.Math.Clamp(this.cameras.main.zoom - dy * 0.001, 0.5, 2.0);
+      const newZoom = Phaser.Math.Clamp(this.cameras.main.zoom - dy * 0.001, 0.6, 2.5);
       this.tweens.add({
         targets: this.cameras.main,
         zoom: newZoom,

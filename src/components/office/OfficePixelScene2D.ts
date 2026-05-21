@@ -174,6 +174,10 @@ export class OfficePixelScene2D extends Phaser.Scene {
     this.add.text(COLS * TILE - 3, 6 * TILE + 2, "D\nR\nI\nV\nE", {
       fontFamily: "monospace", fontSize: "4px", color: "#78350f", lineSpacing: 1,
     }).setOrigin(0.5, 0.5).setDepth(61);
+
+    // Scroll camera to trim empty col-0/row-0 margins (rooms start at tile 1,1 = px 64,64)
+    // Canvas 896×620 < world 960×768 → scroll range: X ∈ [0,64], Y ∈ [0,148]
+    this.cameras.main.setScroll(TILE * 0.7, TILE * 0.65);
   }
 
   // ── Update loop ───────────────────────────────────────────────────────

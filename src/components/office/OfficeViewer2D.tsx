@@ -30,8 +30,8 @@ export default function OfficeViewer2D({ agentExternalStates }: Props) {
       const scene = new OfficePixelScene2D();
       const game = new Phaser.Game({
         type: Phaser.CANVAS,
-        width: 960,
-        height: 768,
+        width: 896,
+        height: 620,
         parent: containerRef.current,
         backgroundColor: "#0a0a0f",
         scene: [scene],
@@ -72,7 +72,7 @@ export default function OfficeViewer2D({ agentExternalStates }: Props) {
     <div
       ref={containerRef}
       className="w-full overflow-hidden rounded-xl border border-border bg-[#0a0a0f]"
-      style={{ height: 680 }}
+      style={{ height: 680, position: "relative" }}
     />
   );
 }

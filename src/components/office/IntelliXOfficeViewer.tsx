@@ -84,7 +84,7 @@ export function IntelliXOfficeViewer({ agentStates, squadRun, onAgentClick, heig
     <div
       ref={containerRef}
       className="overflow-hidden rounded-xl border border-border bg-[#0D1B2A] shadow-card"
-      style={{ height }}
+      style={{ height, position: "relative" }}
     />
   );
 }
