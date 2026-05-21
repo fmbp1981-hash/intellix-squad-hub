@@ -2,9 +2,11 @@
 
 > Especificação Mestra — versão ancorada no estado REAL do repositório
 > Formato Spec Driven Development (SDD) · Compatível com Epic Workflow
-> Versão 3.0 · Maio 2026
+> Versão 3.1 · Maio 2026
 >
-> **Diferença vs v2:** v2 foi feita antes de analisar o repositório e supunha um sistema a construir do zero. A v3 reconhece que o sistema **já existe** com 296 commits, 39 tabelas e 24 edge functions implementadas. Foco da v3: fechar gaps específicos, não recriar.
+> **Mudanças v3.1:** Correção da estrutura de agentes após análise da UI real.
+> Squad Marketing tem 7 agentes já implementados (Maya, Iris, Lúcio, Otto, Sofia, Téo, Vera).
+> Ana, Bruno, Flora, Márcio são legados inativos. Fases B e C atualizadas.
 
 ---
 
@@ -230,54 +232,113 @@ Essa atualização sai como nova migration: `20260521_update_personas_with_rag.s
 
 ---
 
-## 5. Fase B — Personas dos 8 agentes restantes
+## 5. Fase B — Personas dos agentes ativos sem persona detalhada
 
-Depois da Base de Conhecimento como RAG funcionando, completar as personas dos agentes ainda genéricos.
+> ⚠️ **Correção v3.1:** A Fase B original listava agentes incorretos.
+> Estrutura real confirmada por Felipe em 20/05/2026 — ver ESTADO_ATUAL.md seção 5.
 
-### 5.1 — Agentes a completar
+Depois da Base de Conhecimento como RAG funcionando, completar as personas dos
+9 agentes ativos que ainda têm persona genérica.
 
-| Agente | Squad provável | Papel a definir | Status persona |
-|---|---|---|---|
-| Ana | (a definir) | (a definir) | ⚠️ genérica |
-| Bruno | (a definir) | (a definir) | ⚠️ genérica |
-| Roberto | (a definir) | (a definir) | ⚠️ genérica |
-| **Ágata** | orquestração | Gestão Operacional, despacha directives | ⚠️ genérica (papel claro, persona não) |
-| Márcio | internal-operacoes | (a definir) | ⚠️ genérica |
-| Flora | (a definir) | (a definir) | ⚠️ genérica |
-| Maya | internal-marketing | Marketing | ⚠️ genérica |
-| Heitor | (a definir) | (a definir) | ⚠️ genérica |
+### 5.1 — Prioridade 1: Ágata (orquestradora)
 
-### 5.2 — Decisões necessárias antes da Fase B
+Ágata tem papel claro (`internal:gestao:daily-standup`) mas persona genérica.
+Por ser a orquestradora de todo o sistema, sua persona é a mais crítica depois de Bia e Carlos.
 
-**Felipe precisa definir:**
-1. Qual o papel exato de cada um dos 8 agentes acima?
-2. Quais squads existem além de `internal-marketing`, `internal-sdr`, `internal-operacoes`?
-3. A Ágata é um agente "como os outros" ou tem natureza diferente (orquestradora pura)?
-
-> Estas decisões NÃO são tarefa do Claude Code — são de Felipe. Quando definidas, vira input para migration de atualização de personas (similar ao `fase1b_update_personas.sql`).
+**O que a persona da Ágata precisa cobrir:**
+- Como ela conduz o daily-standup do squad
+- Como ela despacha directives para os agentes
+- Como ela monitora o funil comercial e projetos em andamento
+- Como ela gera alertas para Felipe
+- Tom de comunicação (interno — mais direto que Bia/Carlos)
 
 ---
 
-## 6. Fase C — Bug fix dos sprites (paralelo, baixa complexidade)
+### 5.2 — Prioridade 2: Squad Marketing (7 agentes)
 
-Do `.lovable/plan.md`: 5 dos 10 sprites têm PNG corrompido no banco.
+Os 7 agentes do Squad Marketing já existem no banco com roles e squads corretos.
+**O trabalho da Fase B é completar as personas — não criar os agentes.**
 
-### 6.1 — Sprites a regravar
-- agata (IHDR com CRC inválido)
-- marcio (IDAT com CRC inválido)
-- flora (IDAT truncado, ~507 bytes)
-- maya (IDAT truncado, ~16 bytes)
-- heitor (IDAT truncado, ~39 bytes)
+| Agente | Role | Squad | O que a persona precisa cobrir |
+|---|---|---|---|
+| **Maya** | manager:strategist | squad:marketing | Estratégia geral do squad, priorização de pautas, alinhamento com a identidade IntelliX |
+| **Iris** | content-curator | squad:marketing:curator | Como selecionar e curar conteúdo externo relevante para IntelliX |
+| **Lúcio** | lead-analyst:researcher | squad:marketing:researcher | Como pesquisar tendências, concorrentes, oportunidades de pauta |
+| **Otto** | intelligence-analyst | squad:marketing:intelligence | Como analisar dados de engajamento e performance de conteúdo |
+| **Sofia** | reviewer:editor | squad:marketing:editor | Como revisar conteúdo para tom Satya Nadella, Glossário (Doc 02) e qualidade |
+| **Téo** | specialist:copywriter | squad:marketing:copywriter | Como escrever copy para LinkedIn, Instagram, e-mail; tom anti-hype |
+| **Vera** | specialist:art-director | squad:marketing:art-director | Como orientar criação visual, identidade visual IntelliX |
 
-### 6.2 — Como resolver
+**Insumo obrigatório para todas as personas do Squad Marketing:**
+Docs 01 (Identidade), 02 (Glossário) e 05 (Portfólio) da Base de Conhecimento.
+
+---
+
+### 5.3 — Prioridade 3: Heitor (gestão de incidentes)
+
+Heitor (`internal:gestao:incident-response`) tem papel de resposta a incidentes operacionais.
+Persona precisa cobrir: quando acionar, como escalar, o que fazer em falha crítica de sistema.
+
+---
+
+### 5.4 — Agentes que NÃO entram na Fase B (legados)
+
+| Agente | Motivo |
+|---|---|
+| Ana | Legado squad:default — não atua nesta fase |
+| Bruno | Legado squad:default — não atua nesta fase |
+| Flora | Legado job-weight — não atua nesta fase |
+| Márcio | Legado job-weight — não atua nesta fase |
+
+**Regra:** zero esforço de configuração nos legados. Não participam do fluxo de execução.
+Reativar somente no futuro se um squad de execução/delivery for criado.
+
+---
+
+### 5.5 — Como implementar personas na Fase B
+
+Cada persona vira uma migration `UPDATE` em `agent_configs` — nunca `DELETE`.
+Seguir o padrão estabelecido em `20260508_fase1b_update_personas.sql`.
+
+```sql
+-- Exemplo de padrão a seguir
+UPDATE agent_configs
+SET persona = '...',
+    updated_at = NOW()
+WHERE name = 'agata';
+```
+
+Felipe revisa cada persona antes de executar a migration.
+
+---
+
+## 6. Fase C — Bug fix dos sprites
+
+Sprites corrompidos nos agentes ativos. A lista corrigida (baseada na estrutura real):
+
+### 6.1 — Sprites a corrigir (agentes ATIVOS)
+- **agata** — IHDR com CRC inválido (prioritário — é a orquestradora)
+- **maya** — IDAT truncado (~16 bytes)
+- **heitor** — IDAT truncado (~39 bytes)
+
+### 6.2 — Sprites a verificar (Squad Marketing — podem não ter sprite ainda)
+- **iris, lucio, otto, sofia, teo, vera** — verificar se existem em `sprite_assets`
+  ou se usam fallback genérico. Se não existem, criar na mesma migration.
+
+### 6.3 — Sprites dos LEGADOS (não priorizar)
+- **flora, marcio** — corrompidos, mas agentes legados. Corrigir somente se houver
+  tempo sobrando na Fase C. Não bloquear o restante.
+
+### 6.4 — Como resolver
 
 Duas opções:
 1. **Felipe envia os PNGs originais** (96×144 por frame, 10 frames = 960×144)
-2. **Gerar proceduralmente** novos PNGs em pixel-art seguindo a estrutura dos que funcionam
+2. **Gerar proceduralmente** novos PNGs pixel-art seguindo estrutura dos que funcionam
 
 Migration: `20260520_fix_corrupted_sprites.sql` — UPSERT em `sprite_assets`.
 
-**Atenção:** após renomear Beatriz para Bia (P7 no PIVOTS), confirmar se o `sprite_key` da Bia é `beatriz` ou `bia`. Se for `beatriz`, ou renomear o sprite_key, ou ajustar o loader para mapear.
+**Atenção:** confirmar se `sprite_key` da Bia ainda é `beatriz` — se sim, corrigir
+para `bia` ou ajustar o loader.
 
 ---
 
@@ -301,12 +362,23 @@ A tabela `whatsapp_configs` existe, a edge function `send-whatsapp` existe, mas 
 
 ## 8. O que NÃO está nas Fases (intencional)
 
-### O que NÃO faremos agora (apesar de aparecer na SPEC v2)
+### O que NÃO faremos agora
 
-- ❌ **Migração para Anthropic Claude** — o sistema usa Lovable AI Gateway (Gemini + GPT-5). Mudar requer alterações arquiteturais grandes; não é prioridade. Se um agente específico exigir Claude no futuro, decidir separadamente.
-- ❌ **Multi-tenant** — Felipe confirmou: single-tenant. Não introduzir conceito de tenant_id nas tabelas.
-- ❌ **Reescrever sistemas existentes** (CRM, Projetos Ágeis, etc.) — eles funcionam. Não tocar a não ser que haja bug específico reportado.
-- ❌ **7 agentes de marketing como na SPEC v2** — o sistema real tem 10 agentes (não 7 + 2 + 1 = 10). A Base de Conhecimento documental precisa ser atualizada para refletir isso, mas no código os 10 já existem.
+- ❌ **Migração para Anthropic Claude** — sistema usa Lovable AI Gateway (Gemini + GPT-5). Mudar requer alterações arquiteturais; não é prioridade.
+- ❌ **Multi-tenant** — Felipe confirmou: single-tenant. Não introduzir `tenant_id`.
+- ❌ **Reescrever sistemas existentes** (CRM, Projetos Ágeis, etc.) — funcionam. Não tocar sem bug reportado.
+- ❌ **Configurar agentes legados** (Ana, Bruno, Flora, Márcio) — inativos por decisão. Zero esforço até novo squad de execução ser criado.
+
+### Decisões já tomadas e confirmadas por Felipe (não reabrir)
+
+| Decisão | Confirmado em |
+|---|---|
+| Sistema é single-tenant | 20/05/2026 |
+| Squad Marketing tem 7 agentes: Maya + Iris + Lúcio + Otto + Sofia + Téo + Vera | 20/05/2026 |
+| Squad Comercial: Bia (SDR) + Carlos (Closer) | Fase 1 migrations |
+| Orquestração: Ágata (daily-standup) + Heitor (incident-response) | 20/05/2026 |
+| Ana, Bruno, Flora, Márcio são legados inativos nesta fase | 20/05/2026 |
+| LLM provider: Lovable AI Gateway (não Anthropic) | Arquitetural |
 
 ### Decisões intencionalmente adiadas
 
