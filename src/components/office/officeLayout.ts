@@ -27,23 +27,23 @@ export interface Room {
   isDept?: boolean;
 }
 
-/** Grid is 15 cols x 11 rows. Each cell = CELL px in 2D / CELL units in 3D. */
-export const GRID_COLS = 15;
-export const GRID_ROWS = 11;
+/** Grid is 14 cols x 10 rows. Each cell = CELL px in 2D / CELL units in 3D. */
+export const GRID_COLS = 14;
+export const GRID_ROWS = 10;
 export const CELL_2D = 44;
 export const CELL_3D = 1;
 
 export const ROOMS: Room[] = [
-  { id: 'comercial',  label: 'COMERCIAL',  color: '#10b981', rect: [1, 1, 5, 4],   desks: 4, isDept: true },
-  { id: 'marketing',  label: 'MARKETING',  color: '#f97316', rect: [6, 1, 9, 4],   desks: 4, isDept: true },
-  { id: 'financeiro', label: 'FINANCEIRO', color: '#06b6d4', rect: [10, 1, 14, 4], desks: 4, isDept: true },
-  { id: 'pesquisa',   label: 'RH',         color: '#7c3aed', rect: [1, 7, 4, 10],  desks: 4, isDept: true },
-  { id: 'operacoes',  label: 'OPERAÇÕES',  color: '#f59e0b', rect: [5, 7, 8, 10],  desks: 4, isDept: true },
-  { id: 'gestao',     label: 'GESTÃO',     color: '#e2e8f0', rect: [9, 7, 11, 10], desks: 2, isDept: true },
-  { id: 'ti',         label: 'TI',         color: '#ec4899', rect: [12, 7, 14, 10], desks: 3, isDept: true },
-  { id: 'meeting',    label: 'REUNIÃO',    color: '#1e293b', rect: [6, 5, 10, 6],  desks: 0 },
-  { id: 'copa',       label: 'COPA',       color: '#475569', rect: [1, 5, 3, 6],   desks: 0 },
-  { id: 'wc',         label: 'WC',         color: '#334155', rect: [4, 5, 5, 6],   desks: 0 },
+  { id: 'comercial',  label: 'COMERCIAL',  color: '#10b981', rect: [0, 0, 4, 3],   desks: 4, isDept: true },
+  { id: 'marketing',  label: 'MARKETING',  color: '#f97316', rect: [5, 0, 8, 3],   desks: 4, isDept: true },
+  { id: 'financeiro', label: 'FINANCEIRO', color: '#06b6d4', rect: [9, 0, 13, 3],  desks: 4, isDept: true },
+  { id: 'pesquisa',   label: 'RH',         color: '#7c3aed', rect: [0, 6, 3, 9],   desks: 4, isDept: true },
+  { id: 'operacoes',  label: 'OPERAÇÕES',  color: '#f59e0b', rect: [4, 6, 7, 9],   desks: 4, isDept: true },
+  { id: 'gestao',     label: 'GESTÃO',     color: '#e2e8f0', rect: [8, 6, 10, 9],  desks: 2, isDept: true },
+  { id: 'ti',         label: 'TI',         color: '#ec4899', rect: [11, 6, 13, 9], desks: 3, isDept: true },
+  { id: 'meeting',    label: 'REUNIÃO',    color: '#1e293b', rect: [5, 4, 9, 5],   desks: 0 },
+  { id: 'copa',       label: 'COPA',       color: '#475569', rect: [0, 4, 2, 5],   desks: 0 },
+  { id: 'wc',         label: 'WC',         color: '#334155', rect: [3, 4, 4, 5],   desks: 0 },
 ];
 
 export const ROOM_BY_SQUAD: Record<SquadId, RoomId> = {
@@ -55,7 +55,7 @@ export const ROOM_BY_SQUAD: Record<SquadId, RoomId> = {
   rh: 'pesquisa',
 };
 
-export const DRIVE_DOOR: Cell = { col: 14, row: 6 };
+export const DRIVE_DOOR: Cell = { col: 13, row: 5 };
 
 export function getRoom(id: RoomId): Room {
   return ROOMS.find((r) => r.id === id)!;

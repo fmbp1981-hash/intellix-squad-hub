@@ -5,8 +5,8 @@ import { AGENTS } from "./OfficeAssets";
 
 // ── Layout ─────────────────────────────────────────────────────────────────
 const TILE = 64;
-const COLS = 15;
-const ROWS = 12; // active rooms go up to row 10; 12 gives clean bottom margin
+const COLS = 14;
+const ROWS = 10; // rooms now start at col/row 0 — world is 896×640
 const WALL_STRIP = 26; // taller wall strip → room labels easier to read
 
 // ── Agent home rooms ───────────────────────────────────────────────────────
@@ -39,32 +39,32 @@ const AGENT_CHAR: Record<string, { char: string; desk: "black" | "white" }> = {
 const MEETING_ORDER = ["agata","bia","carlos","maya","iris","teo","vera","lucio","sofia","otto","heitor"];
 
 // ── Movement destinations ─────────────────────────────────────────────────
-// Meeting room [6,5,10,6] → cols 6-10 rows 5-6 — expanded to fit 11 agents
+// Meeting room [5,4,9,5] — cols 5-9 rows 4-5 — expanded to fit 11 agents
 const MEETING_SEATS: Array<{ x: number; y: number }> = [
-  { x: 7 * TILE + 0,  y: 5 * TILE + 48 },
-  { x: 7 * TILE + 48, y: 5 * TILE + 48 },
-  { x: 8 * TILE + 32, y: 5 * TILE + 48 },
-  { x: 9 * TILE + 16, y: 5 * TILE + 48 },
-  { x: 9 * TILE + 56, y: 5 * TILE + 48 },
-  { x: 7 * TILE + 0,  y: 6 * TILE + 8  },
-  { x: 7 * TILE + 48, y: 6 * TILE + 8  },
-  { x: 8 * TILE + 32, y: 6 * TILE + 8  },
-  { x: 9 * TILE + 16, y: 6 * TILE + 8  },
-  { x: 9 * TILE + 56, y: 6 * TILE + 8  },
-  { x: 8 * TILE + 0,  y: 5 * TILE + 28 },
+  { x: 6 * TILE + 0,  y: 4 * TILE + 48 },
+  { x: 6 * TILE + 48, y: 4 * TILE + 48 },
+  { x: 7 * TILE + 32, y: 4 * TILE + 48 },
+  { x: 8 * TILE + 16, y: 4 * TILE + 48 },
+  { x: 8 * TILE + 56, y: 4 * TILE + 48 },
+  { x: 6 * TILE + 0,  y: 5 * TILE + 8  },
+  { x: 6 * TILE + 48, y: 5 * TILE + 8  },
+  { x: 7 * TILE + 32, y: 5 * TILE + 8  },
+  { x: 8 * TILE + 16, y: 5 * TILE + 8  },
+  { x: 8 * TILE + 56, y: 5 * TILE + 8  },
+  { x: 7 * TILE + 0,  y: 4 * TILE + 28 },
 ];
 
-// Copa [1,5,3,6] → center x=160 y=384
+// Copa [0,4,2,5]
 const COPA_SPOTS: Array<{ x: number; y: number }> = [
-  { x: 1 * TILE + 48, y: 5 * TILE + 50 },
-  { x: 2 * TILE + 16, y: 5 * TILE + 50 },
-  { x: 2 * TILE + 48, y: 6 * TILE + 12 },
+  { x: 0 * TILE + 48, y: 4 * TILE + 50 },
+  { x: 1 * TILE + 16, y: 4 * TILE + 50 },
+  { x: 1 * TILE + 48, y: 5 * TILE + 12 },
 ];
 
-// WC [4,5,5,6] → center x=320 y=384
+// WC [3,4,4,5]
 const WC_SPOTS: Array<{ x: number; y: number }> = [
-  { x: 4 * TILE + 28, y: 5 * TILE + 50 },
-  { x: 4 * TILE + 48, y: 6 * TILE + 10 },
+  { x: 3 * TILE + 28, y: 4 * TILE + 50 },
+  { x: 3 * TILE + 48, y: 5 * TILE + 10 },
 ];
 
 // ── Status colors (opensquad palette) ─────────────────────────────────────
@@ -167,17 +167,13 @@ export class OfficePixelScene2D extends Phaser.Scene {
       color: "rgba(148,163,184,0.25)",
     }).setOrigin(0.5, 0).setDepth(9999);
 
-    // DRIVE door
+    // DRIVE door (right edge, spans rows 4-5 in new layout)
     const door = this.add.graphics().setDepth(60);
     door.fillStyle(0xfbbf24, 1);
-    door.fillRoundedRect(COLS * TILE - 7, 5 * TILE + 8, 7, 2 * TILE - 16, 2);
-    this.add.text(COLS * TILE - 3, 6 * TILE + 2, "D\nR\nI\nV\nE", {
+    door.fillRoundedRect(COLS * TILE - 7, 4 * TILE + 8, 7, 2 * TILE - 16, 2);
+    this.add.text(COLS * TILE - 3, 5 * TILE + 2, "D\nR\nI\nV\nE", {
       fontFamily: "monospace", fontSize: "4px", color: "#78350f", lineSpacing: 1,
     }).setOrigin(0.5, 0.5).setDepth(61);
-
-    // Scroll camera to trim empty col-0/row-0 margins (rooms start at tile 1,1 = px 64,64)
-    // Canvas 896×620 < world 960×768 → scroll range: X ∈ [0,64], Y ∈ [0,148]
-    this.cameras.main.setScroll(TILE * 0.7, TILE * 0.65);
   }
 
   // ── Update loop ───────────────────────────────────────────────────────

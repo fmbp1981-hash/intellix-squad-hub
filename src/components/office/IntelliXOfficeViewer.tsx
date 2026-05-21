@@ -40,14 +40,12 @@ export function IntelliXOfficeViewer({ agentStates, squadRun, onAgentClick, heig
 
       const game = new Phaser.Game({
         type: Phaser.AUTO,
-        width: 1200,
-        height,
         parent: containerRef.current,
         backgroundColor: "#0D1B2A",
         scene: [scene],
         scale: {
-          mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
+          mode: Phaser.Scale.RESIZE,
+          autoCenter: Phaser.Scale.NO_CENTER,
         },
         render: { antialias: true, pixelArt: false },
       });
