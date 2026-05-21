@@ -6,50 +6,52 @@ import { AGENTS } from "./OfficeAssets";
 // ── Layout ─────────────────────────────────────────────────────────────────
 const TILE = 64;
 const COLS = 15;
-const ROWS = 16;
+const ROWS = 12; // active rooms go up to row 10; 12 gives clean bottom margin
 const WALL_STRIP = 26; // taller wall strip → room labels easier to read
 
 // ── Agent home rooms ───────────────────────────────────────────────────────
+// Marketing has 4 desk slots → maya/iris/teo/vera; lucio→pesquisa; otto→operacoes; sofia→pesquisa
 const AGENT_HOME: Record<string, string> = {
-  agata:   "gestao",    carlos:  "comercial",  bia:     "comercial",
-  marcio:  "operacoes", flora:   "financeiro", maya:    "marketing",  heitor:  "ti",
-  ana:     "delivery",  bruno:   "delivery",   beatriz: "delivery",   roberto: "delivery",
-};
-
-// Delivery desks — cols 1 and 4 for wider spacing between agents
-const DELIVERY_RECT: [number, number, number, number] = [0, 11, 4, 15];
-const DELIVERY_DESKS: Record<string, { col: number; row: number }> = {
-  ana:     { col: 1, row: 12 }, bruno:   { col: 4, row: 12 },
-  beatriz: { col: 1, row: 14 }, roberto: { col: 4, row: 14 },
+  agata:  "gestao",
+  bia:    "comercial",  carlos: "comercial",
+  maya:   "marketing",  iris:   "marketing", teo:   "marketing", vera:  "marketing",
+  lucio:  "pesquisa",   sofia:  "pesquisa",
+  otto:   "operacoes",
+  heitor: "ti",
 };
 
 // ── Character assignment per agent ────────────────────────────────────────
 const AGENT_CHAR: Record<string, { char: string; desk: "black" | "white" }> = {
-  agata:   { char: "Female1", desk: "black" },
-  carlos:  { char: "Male1",   desk: "white" },
-  bia:     { char: "Female3", desk: "white" },
-  marcio:  { char: "Male2",   desk: "black" },
-  flora:   { char: "Female2", desk: "white" },
-  maya:    { char: "Female3", desk: "black" },
-  heitor:  { char: "Male3",   desk: "white" },
-  ana:     { char: "Female4", desk: "black" },
-  bruno:   { char: "Male4",   desk: "white" },
-  beatriz: { char: "Female5", desk: "black" },
-  roberto: { char: "Male2",   desk: "white" },
+  agata:  { char: "Female1", desk: "black" },
+  bia:    { char: "Female3", desk: "white" },
+  carlos: { char: "Male1",   desk: "white" },
+  maya:   { char: "Female3", desk: "black" },
+  iris:   { char: "Female4", desk: "black" },
+  teo:    { char: "Male2",   desk: "black" },
+  vera:   { char: "Female2", desk: "white" },
+  lucio:  { char: "Male4",   desk: "black" },
+  sofia:  { char: "Female5", desk: "black" },
+  otto:   { char: "Male3",   desk: "white" },
+  heitor: { char: "Male1",   desk: "black" },
 };
 
-// Meeting seat order (consistent across agents)
-const MEETING_ORDER = ["agata","carlos","bia","marcio","flora","maya","heitor","ana","bruno","beatriz","roberto"];
+// Meeting seat order (active agents)
+const MEETING_ORDER = ["agata","bia","carlos","maya","iris","teo","vera","lucio","sofia","otto","heitor"];
 
 // ── Movement destinations ─────────────────────────────────────────────────
-// Meeting room grid rect [6,5,10,6] → pixel area x=384..704, y=320..448
+// Meeting room [6,5,10,6] → cols 6-10 rows 5-6 — expanded to fit 11 agents
 const MEETING_SEATS: Array<{ x: number; y: number }> = [
-  { x: 7 * TILE + 32, y: 5 * TILE + 52 },
-  { x: 8 * TILE + 32, y: 5 * TILE + 52 },
-  { x: 9 * TILE + 32, y: 5 * TILE + 52 },
-  { x: 7 * TILE + 32, y: 6 * TILE + 12 },
-  { x: 8 * TILE + 32, y: 6 * TILE + 12 },
-  { x: 9 * TILE + 32, y: 6 * TILE + 12 },
+  { x: 7 * TILE + 0,  y: 5 * TILE + 48 },
+  { x: 7 * TILE + 48, y: 5 * TILE + 48 },
+  { x: 8 * TILE + 32, y: 5 * TILE + 48 },
+  { x: 9 * TILE + 16, y: 5 * TILE + 48 },
+  { x: 9 * TILE + 56, y: 5 * TILE + 48 },
+  { x: 7 * TILE + 0,  y: 6 * TILE + 8  },
+  { x: 7 * TILE + 48, y: 6 * TILE + 8  },
+  { x: 8 * TILE + 32, y: 6 * TILE + 8  },
+  { x: 9 * TILE + 16, y: 6 * TILE + 8  },
+  { x: 9 * TILE + 56, y: 6 * TILE + 8  },
+  { x: 8 * TILE + 0,  y: 5 * TILE + 28 },
 ];
 
 // Copa [1,5,3,6] → center x=160 y=384
@@ -202,7 +204,6 @@ export class OfficePixelScene2D extends Phaser.Scene {
 
   private drawRooms(): void {
     ROOMS.forEach((room) => this.paintRoom(room.rect, room.color, room.label));
-    this.paintRoom(DELIVERY_RECT, "#5b21b6", "DELIVERY");
   }
 
   private paintRoom(
@@ -273,23 +274,18 @@ export class OfficePixelScene2D extends Phaser.Scene {
   private placeAgents(): void {
     const byRoom = new Map<string, typeof AGENTS[number][]>();
     AGENTS.forEach((a) => {
-      const roomId = AGENT_HOME[a.key] ?? "delivery";
+      const roomId = AGENT_HOME[a.key] ?? "operacoes";
       const list = byRoom.get(roomId) ?? [];
       list.push(a);
       byRoom.set(roomId, list);
     });
 
     byRoom.forEach((agents, roomId) => {
+      const positions = deskPositions(roomId as RoomId, agents.length);
       agents.forEach((agent, i) => {
-        let col: number, row: number;
-        if (roomId === "delivery") {
-          const seat = DELIVERY_DESKS[agent.key];
-          col = seat?.col ?? 1; row = seat?.row ?? 12;
-        } else {
-          const positions = deskPositions(roomId as RoomId, agents.length);
-          const pos = positions[i];
-          col = pos?.col ?? 1; row = pos?.row ?? 1;
-        }
+        const pos = positions[i];
+        const col = pos?.col ?? 1;
+        const row = pos?.row ?? 1;
         this.buildAgent(agent, col * TILE + TILE / 2, row * TILE + TILE / 2);
       });
     });
@@ -520,8 +516,5 @@ export class OfficePixelScene2D extends Phaser.Scene {
         .setOrigin(0.5, 0.5).setScale(0.95).setDepth(ey + 2);
     }
 
-    // Delivery corner plants
-    img(DELIVERY_RECT[0] * TILE + 10, (DELIVERY_RECT[1] + 1) * TILE, "monstera_small", 0.9);
-    img((DELIVERY_RECT[2] + 1) * TILE - 8, (DELIVERY_RECT[3] + 1) * TILE, "plant_poof", 0.9);
   }
 }

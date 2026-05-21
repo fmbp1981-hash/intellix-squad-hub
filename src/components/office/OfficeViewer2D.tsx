@@ -31,7 +31,7 @@ export default function OfficeViewer2D({ agentExternalStates }: Props) {
       const game = new Phaser.Game({
         type: Phaser.CANVAS,
         width: 960,
-        height: 1024,
+        height: 768,
         parent: containerRef.current,
         backgroundColor: "#0a0a0f",
         scene: [scene],
