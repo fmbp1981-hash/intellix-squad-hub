@@ -42,6 +42,7 @@ const mk = (
 });
 
 export const AGENTS: AgentDef[] = [
+  // ── Ágata — COO Digital ───────────────────────────────────────────────────
   mk("agata", "Ágata", "gestao", "manager", "COO", true, {
     skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
     hairBase: 0x1a1a2e, hairHighlight: 0x2d2d4e, hairStyle: "bob",
@@ -49,6 +50,7 @@ export const AGENTS: AgentDef[] = [
     pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0x1a1a1a,
     hasBadge: true, badgeColor: 0xfbbf24, eyeColor: 0x2d1b00,
   }),
+  // ── Squad Comercial ───────────────────────────────────────────────────────
   mk("bia", "Bia", "comercial", "sdr", "SDR", true, {
     skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
     hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "bob",
@@ -63,55 +65,63 @@ export const AGENTS: AgentDef[] = [
     pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x3b2507,
     eyeColor: 0x1a1a2e,
   }),
-  mk("marcio", "Márcio", "operacoes", "ops", "Scrum Master", false, {
-    skinBase: 0xD4935A, skinShadow: 0xB07840, skinHighlight: 0xE8A86E,
-    hairBase: 0x2d1b00, hairHighlight: 0x4a3520, hairStyle: "medium_male",
-    shirtBase: 0xf59e0b, shirtShadow: 0xd97706, shirtDetail: 0xfcd34d,
-    pantsBase: 0x292524, pantsShadow: 0x1c1917, shoeBase: 0x292524,
-    hasGlasses: true, glassesColor: 0x1a1a2e, eyeColor: 0x2d1b00,
-  }),
-  mk("flora", "Flora", "financeiro", "finance", "Financeiro", true, {
-    skinBase: 0xF0D0A0, skinShadow: 0xD0B080, skinHighlight: 0xFFE4C0,
-    hairBase: 0x8B4513, hairHighlight: 0xA0612B, hairStyle: "ponytail",
-    shirtBase: 0x06b6d4, shirtShadow: 0x0891b2, shirtDetail: 0x67e8f9,
-    pantsBase: 0x1e293b, pantsShadow: 0x0f172a, shoeBase: 0x1a1a1a,
-    hasEarring: true, eyeColor: 0x2d6b00,
-  }),
-  mk("maya", "Maya", "marketing", "marketing", "Marketing", true, {
+  // ── Squad Marketing ───────────────────────────────────────────────────────
+  mk("maya", "Maya", "marketing", "strategist", "Estrategista", true, {
     skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
     hairBase: 0xff6b35, hairHighlight: 0xff8c5a, hairStyle: "curly",
     shirtBase: 0xf97316, shirtShadow: 0xea580c, shirtDetail: 0xfb923c,
     pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0xf97316,
-    eyeColor: 0x1a6b00,
+    hasBadge: true, badgeColor: 0xf97316, eyeColor: 0x1a6b00,
   }),
+  mk("lucio", "Lúcio", "marketing", "researcher", "Pesquisa", false, {
+    skinBase: 0xD4935A, skinShadow: 0xB07840, skinHighlight: 0xE8A86E,
+    hairBase: 0x1a1a2e, hairHighlight: 0x2a2a3e, hairStyle: "medium_male",
+    shirtBase: 0x3b82f6, shirtShadow: 0x2563eb, shirtDetail: 0x93c5fd,
+    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1e3a5f,
+    hasGlasses: true, glassesColor: 0x1e3a5f, eyeColor: 0x1a1a2e,
+  }),
+  mk("iris", "Iris", "marketing", "curator", "Curadoria", true, {
+    skinBase: 0xECB88A, skinShadow: 0xCC9870, skinHighlight: 0xFFCCA0,
+    hairBase: 0x7c3aed, hairHighlight: 0x9f67ff, hairStyle: "long_female",
+    shirtBase: 0xa855f7, shirtShadow: 0x7c3aed, shirtDetail: 0xd8b4fe,
+    pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0x7c3aed,
+    hasEarring: true, eyeColor: 0x4c1d95,
+  }),
+  mk("otto", "Otto", "marketing", "analyst", "Dados", false, {
+    skinBase: 0xF0D0A0, skinShadow: 0xD0B080, skinHighlight: 0xFFE4C0,
+    hairBase: 0x292524, hairHighlight: 0x44403c, hairStyle: "buzz",
+    shirtBase: 0x0891b2, shirtShadow: 0x0e7490, shirtDetail: 0x67e8f9,
+    pantsBase: 0x292524, pantsShadow: 0x1c1917, shoeBase: 0x1e3a5f,
+    hasGlasses: true, glassesColor: 0x0e7490, eyeColor: 0x164e63,
+  }),
+  mk("teo", "Téo", "marketing", "copywriter", "Copy", false, {
+    skinBase: 0xC68642, skinShadow: 0xA06B30, skinHighlight: 0xD89B56,
+    hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "short_male",
+    shirtBase: 0xf59e0b, shirtShadow: 0xd97706, shirtDetail: 0xfcd34d,
+    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x3b2507,
+    eyeColor: 0x2d1b00,
+  }),
+  mk("vera", "Vera", "marketing", "art-director", "Arte", true, {
+    skinBase: 0xF5C6A0, skinShadow: 0xD4A882, skinHighlight: 0xFFDBC2,
+    hairBase: 0x831843, hairHighlight: 0xbe185d, hairStyle: "ponytail",
+    shirtBase: 0xec4899, shirtShadow: 0xdb2777, shirtDetail: 0xf9a8d4,
+    pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0xbe185d,
+    hasEarring: true, eyeColor: 0x831843,
+  }),
+  mk("sofia", "Sofia", "marketing", "reviewer", "Revisão", true, {
+    skinBase: 0xECC99A, skinShadow: 0xCCAA7A, skinHighlight: 0xFFDDB0,
+    hairBase: 0x2d1b00, hairHighlight: 0x4a3520, hairStyle: "medium_female",
+    shirtBase: 0x059669, shirtShadow: 0x047857, shirtDetail: 0x6ee7b7,
+    pantsBase: 0x1e293b, pantsShadow: 0x0f172a, shoeBase: 0x065f46,
+    eyeColor: 0x14532d,
+  }),
+  // ── Squad Gestão TI ───────────────────────────────────────────────────────
   mk("heitor", "Heitor", "ti", "tech", "TI", false, {
     skinBase: 0xECC99A, skinShadow: 0xCCAA7A, skinHighlight: 0xFFDDB0,
     hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "buzz",
     shirtBase: 0xec4899, shirtShadow: 0xdb2777, shirtDetail: 0xf472b6,
     pantsBase: 0x1e293b, pantsShadow: 0x0f172a, shoeBase: 0x374151,
     hasGlasses: true, glassesColor: 0x374151, eyeColor: 0x1a3b6b,
-  }),
-  mk("ana", "Ana", "delivery", "analyst", "Lead Analyst", true, {
-    skinBase: 0xECB88A, skinShadow: 0xCC9870, skinHighlight: 0xFFCCA0,
-    hairBase: 0x2d1b00, hairHighlight: 0x4a3520, hairStyle: "long_female",
-    shirtBase: 0x5b21b6, shirtShadow: 0x4c1d95, shirtDetail: 0x7c3aed,
-    pantsBase: 0x1e1e2e, pantsShadow: 0x141420, shoeBase: 0x1a1a1a,
-    hasBadge: true, badgeColor: 0x14b8a6, eyeColor: 0x2d1b00,
-  }),
-  mk("bruno", "Bruno", "delivery", "developer", "Developer", false, {
-    skinBase: 0xD4935A, skinShadow: 0xB07840, skinHighlight: 0xE8A86E,
-    hairBase: 0x1a1a2e, hairHighlight: 0x2a2a3e, hairStyle: "medium_male",
-    shirtBase: 0x2563eb, shirtShadow: 0x1d4ed8, shirtDetail: 0x3b82f6,
-    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1e3a5f,
-    hasBadge: true, badgeColor: 0x3b82f6, eyeColor: 0x1a1a2e,
-  }),
-  mk("roberto", "Roberto", "delivery", "reviewer", "Reviewer", false, {
-    skinBase: 0xC68642, skinShadow: 0xA06B30, skinHighlight: 0xD89B56,
-    hairBase: 0x3d2b1f, hairHighlight: 0x5a4030, hairStyle: "short_male",
-    shirtBase: 0x059669, shirtShadow: 0x047857, shirtDetail: 0x10b981,
-    pantsBase: 0x1f2937, pantsShadow: 0x111827, shoeBase: 0x1a1a1a,
-    hasGlasses: true, glassesColor: 0x059669,
-    hasBadge: true, badgeColor: 0x22c55e, eyeColor: 0x1a1a2e,
   }),
 ];
 
