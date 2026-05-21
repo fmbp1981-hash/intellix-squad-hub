@@ -2,8 +2,12 @@
 
 > **Documento da Base de Conhecimento — Camada 3 (Operação)**
 > Consolida o processo comercial completo: da prospecção ao fechamento e handoff
-> Versão 1.0 · Maio 2026
+> Versão 2.0 · Maio 2026
 > ⚠️ Documento interno — não compartilhar com cliente
+>
+> **Mudança v2.0:** Carlos reformulado de "Closer" para "Pre-Sales Strategist".
+> Carlos monta proposta pré-liminar (intencionalmente incompleta) e agenda reunião x1 com Felipe.
+> Felipe conduz a reunião x1, apresenta proposta definitiva e fecha o negócio.
 
 ---
 
@@ -31,32 +35,37 @@ Este é o manual operacional do time comercial IntelliX. Define como Bia SDR e C
 │                                                                  │
 │  E1          E2          E3          E4          E5          E6  │
 │                                                                  │
-│ PROSPEC-   QUALIFI-   DIAGNÓS-   PROPOSTA   FECHA-    HANDOFF   │
-│  ÇÃO        CAÇÃO      TICO                  MENTO               │
+│ PROSPEC-   QUALIFI-   PROPOSTA   REUNIÃO    FECHA-    HANDOFF   │
+│  ÇÃO        CAÇÃO      PRÉ-LIM.   X1         MENTO               │
 │                                                                  │
-│  Lead      Lead       Reunião    Proposta   Contrato   Início    │
-│ captado   qualifi-   de 30-60   enviada    assinado   do FORJA   │
-│           cado       min                              /serviço   │
+│  Lead      Lead       Proposta   Reunião    Contrato   Início    │
+│ captado   qualifi-   pré-liminar escopo +   assinado   do FORJA  │
+│           cado       enviada    proposta             /serviço    │
+│                                 definitiva                       │
 │                                                                  │
-│  Bia SDR  Bia SDR    Carlos     Carlos     Carlos    Ágata +     │
-│                      Closer     Closer     Closer    Felipe      │
+│  Bia SDR  Bia SDR    Carlos     Felipe      Felipe    Ágata +    │
+│                      Pre-Sales  (fecha)     (fecha)   Felipe     │
 └──────────────────────────────────────────────────────────────────┘
 
+Regra central: Carlos aquece e agenda. Felipe fecha.
+A proposta pré-liminar (E3) é intencionalmente incompleta —
+cria curiosidade e necessidade da reunião x1 com Felipe.
+
 Tempo médio por etapa:
-E1→E2: 0-48h  │  E2→E3: 2-5 dias  │  E3→E4: 2-3 dias
-E4→E5: 3-10 dias  │  E5→E6: 1-3 dias
+E1→E2: 0-48h  │  E2→E3: 1-3 dias  │  E3→E4: 2-5 dias
+E4→E5: 1-3 dias  │  E5→E6: 1-3 dias
 ```
 
 ### 1.2 — Critérios de avanço entre etapas
 
-| De | Para | Critério obrigatório |
-|---|---|---|
-| E1 Prospecção | E2 Qualificação | Lead respondeu ao primeiro contato |
-| E2 Qualificação | E3 Diagnóstico | Passou os 4 critérios BANT (ver 3.3) |
-| E3 Diagnóstico | E4 Proposta | Carlos confirmou fit e oportunidade real |
-| E4 Proposta | E5 Fechamento | Cliente recebeu + leu a proposta |
-| E5 Fechamento | E6 Handoff | Contrato assinado + Fase 1 paga (30%) |
-| E6 Handoff | (entrega) | Briefing técnico completo recebido |
+| De | Para | Responsável | Critério obrigatório |
+|---|---|---|---|
+| E1 Prospecção | E2 Qualificação | Bia | Lead respondeu ao primeiro contato |
+| E2 Qualificação | E3 Proposta Pré-liminar | Bia → Carlos | Passou os 4 critérios BANT (ver 3.3) |
+| E3 Proposta Pré-liminar | E4 Reunião x1 | Carlos | Cliente demonstrou interesse e aceitou a reunião |
+| E4 Reunião x1 | E5 Fechamento | Felipe | Cliente recebeu proposta definitiva e está decidindo |
+| E5 Fechamento | E6 Handoff | Felipe | Contrato assinado + Fase 1 paga (30%) |
+| E6 Handoff | (entrega) | Ágata + Felipe | Briefing técnico completo recebido |
 
 ### 1.3 — Regra de descarte
 
@@ -228,162 +237,124 @@ OBSERVAÇÕES PARA CARLOS
 
 ---
 
-## Parte 4 — Etapa 3: Diagnóstico (Carlos Closer)
+## Parte 4 — Etapa 3: Proposta Pré-liminar (Carlos Pre-Sales)
 
-### 4.1 — Objetivo da reunião de diagnóstico
+### 4.1 — Objetivo da etapa
 
-Reunião de **30 a 60 minutos**. Objetivo único: entender o problema com profundidade suficiente para propor a frente certa, com o ROI estimado correto.
+Carlos recebe o briefing da Bia e tem um objetivo: fazer o cliente **querer a reunião com Felipe**.
+Não há reunião nessa etapa — Carlos opera via mensagem (WhatsApp, e-mail ou chat).
 
 **O que Carlos faz:**
-- Ouve mais do que fala (70/30 no mínimo)
-- Faz perguntas que revelam o custo real do problema
-- Identifica a frente e o escopo corretos
-- Ao final: confirma se avança com proposta ou recomenda outro caminho
+- Aprofunda 2 a 3 pontos de contexto via mensagem (se o briefing da Bia não for suficiente)
+- Monta a proposta pré-liminar
+- Envia e faz follow-up até conseguir a reunião marcada
 
-**O que Carlos não faz:**
-- Não vende na reunião de diagnóstico
-- Não dá preço antes de entender o escopo
-- Não promete resultado específico antes de calcular
+**O que Carlos NÃO faz:**
+- Não conduz reunião de diagnóstico (esse papel passou para a reunião x1 com Felipe)
+- Não dá preço exato — apenas faixa de investimento
+- Não fecha escopo — esse é papel de Felipe na reunião x1
+- Não tenta fechar o negócio
 
-### 4.2 — Estrutura da reunião de diagnóstico
+### 4.2 — A proposta pré-liminar
 
-**Bloco 1 — Abertura e contexto (5 min)**
+> ⚠️ **Princípio fundamental:** a proposta pré-liminar é uma isca inteligente, não uma proposta completa.
+> Se o cliente puder decidir sozinho após lê-la, está detalhada demais.
 
-> *"[Nome], muito bom te conhecer. Antes de qualquer coisa, quero entender seu negócio. Pode me dar uma visão geral de como vocês operam — o que fazem, quem são os clientes, como funciona o dia a dia da operação?"*
+**Deve conter:**
+- O problema (nas palavras do cliente — 2-3 linhas)
+- Enquadramento da solução (linguagem de negócio, sem jargão técnico)
+- Faixa de investimento (ex: "entre R$ 8.000 e R$ 18.000 dependendo do escopo")
+- O que ainda precisa ser definido (2-4 pontos — cria necessidade da reunião)
+- Prazo estimado em faixa (ex: "30 a 60 dias após definição de escopo")
+- CTA único: agendar 30 min com Felipe
 
-Ouvir sem interromper. Tomar notas.
+**NÃO deve conter:**
+- Preço exato
+- Escopo técnico completo
+- KPIs e critérios de sucesso
+- Cálculo de ROI detalhado
+- Cronograma com datas
 
-**Bloco 2 — O problema central (10-15 min)**
+### 4.3 — Checklist de Carlos antes de enviar a proposta
 
-> *"Você mencionou [repete o problema do briefing da Bia]. Me conta mais sobre isso — como esse problema aparece no dia a dia, na prática?"*
+- [ ] O problema está descrito nas palavras do cliente (não em jargão técnico)
+- [ ] A faixa de investimento está correta para a frente recomendada
+- [ ] Há pelo menos 2 itens "que precisamos definir juntos" — eles criam a necessidade da reunião
+- [ ] O CTA é claro: agendar reunião com Felipe
+- [ ] A proposta NÃO tem informação suficiente para o cliente decidir sem a reunião
 
-Aprofundar com:
-- *"Com que frequência isso acontece?"*
-- *"Quem é afetado quando isso ocorre?"*
-- *"O que já foi tentado para resolver?"*
-- *"Se isso não mudar nos próximos 6 meses, o que acontece com o negócio?"*
-
-**Bloco 3 — Quantificação do impacto (10 min)**
-
-Aqui Carlos transforma o problema em número. Fazer naturalmente, não como interrogatório:
-
-> *"Só para eu ter uma dimensão melhor: quantas horas por semana sua equipe gasta com isso hoje?"*
-> *"Qual é o custo aproximado disso — seja em horas perdidas, clientes que saem, ou receita que não entra?"*
-> *"Se você resolvesse esse problema amanhã, qual seria o impacto nos próximos 12 meses?"*
-
-**Bloco 4 — Contexto organizacional (5 min)**
-
-> *"Para eu propor a solução certa: além de você, quem mais estaria envolvido na decisão de avançar?"*
-> *"Vocês têm alguma restrição de ferramenta, sistema ou fornecedor que eu precisa considerar?"*
-> *"Existe algum prazo específico para ter isso funcionando?"*
-
-**Bloco 5 — Diagnóstico e encaminhamento (5-10 min)**
-
-Carlos não apresenta proposta nesse momento. Apresenta o racional:
-
-> *"Baseado no que você me contou, o que vejo é [resumo do problema em 2 linhas]. A abordagem que faz mais sentido para o seu caso é [frente recomendada], porque [razão específica]. O impacto estimado, baseado em casos similares, é de [ROI estimado]. Nos próximos dias preparo uma proposta detalhada com escopo, investimento e os KPIs que vamos medir juntos. Faz sentido avançar assim?"*
-
-**Se o lead confirmar:** Carlos agenda a entrega da proposta (em até 3 dias úteis).
-
-**Se o lead hesitar:** Carlos aplica o roteiro de diagnóstico de objeção (Documento 07).
-
-**Se o problema não tiver fit:** Carlos é honesto.
-> *"Ouvindo tudo, vou ser direto: o problema que você descreveu não é onde a IntelliX entrega seu maior valor. [Motivo específico]. O que eu recomendaria neste caso é [alternativa honesta]. Posso ajudar com isso de outra forma, mas não seria correto propor uma solução que não vai gerar o retorno que você merece."*
-
-### 4.3 — Checklist de Carlos ao final do diagnóstico
-
-Antes de avançar para proposta, confirmar mentalmente:
-
-- [ ] Entendi o problema central com clareza
-- [ ] Consigo estimar o custo do problema em R$
-- [ ] Identifiquei a frente e o pilar corretos
-- [ ] Sei quem são todos os decisores
-- [ ] Não há bloqueio de budget, prazo ou decisão que inviabilize a venda
-- [ ] O cliente confirmou que quer ver a proposta
-
-Se algum item estiver incompleto, não enviar proposta. Voltar para a pergunta que falta.
+Se algum item falhar — revisar antes de enviar.
 
 ---
 
-## Parte 5 — Etapa 4: Proposta
+## Parte 5 — Etapa 4: Reunião x1 e Proposta Definitiva (Felipe)
 
-### 5.1 — Princípios da proposta IntelliX
+### 5.1 — Objetivo da reunião x1
 
-1. **Proposta nunca chega por e-mail frio.** É sempre apresentada em reunião (mesmo que curta — 20 min).
-2. **ROI antes de preço.** A seção de investimento é sempre a última.
-3. **3 cenários sempre.** Conservador, realista, otimista. Nunca um número só.
-4. **KPIs escritos.** Os indicadores que definem o sucesso são explícitos na proposta.
-5. **Risk reversal destacado.** A garantia aparece em destaque visual — não no rodapé.
-6. **Máximo 8 páginas.** Proposta longa é proposta que não é lida.
+Reunião de **30 a 60 minutos**. Conduzida por Felipe com o cliente.
+A proposta pré-liminar gerou interesse — agora é hora de fechar o escopo real, calcular o ROI e apresentar a proposta definitiva.
 
-### 5.2 — Estrutura da proposta (ordem obrigatória)
+**O que Felipe faz:**
+- Confirma e aprofunda o diagnóstico (70/30 — ouve mais do que fala)
+- Quantifica o custo real do problema em R$
+- Define e confirma o escopo completo
+- Apresenta a proposta definitiva com preço exato, KPIs e garantia
+- Conduz o fechamento ou identifica o próximo passo necessário
 
-**Página 1 — Capa**
-Nome do cliente · problema em 1 frase · data · versão
+**O que Felipe NÃO faz:**
+- Não improvisa proposta — ela é preparada antes da reunião com base no briefing de Carlos
+- Não dá desconto sem justificativa documentada
 
-**Página 2 — O diagnóstico: o que entendemos**
-Resumo do problema em 3-5 pontos. Escrito nas palavras do cliente (usar o que ele disse na reunião). Nenhum jargão técnico.
+### 5.2 — Estrutura da proposta definitiva (Felipe prepara antes da reunião)
 
-**Página 3 — O impacto: o que está custando hoje**
-Custo do problema em R$/mês. Projeção 12 meses sem solução. Gráfico simples se ajudar.
+1. **ROI antes de preço.** A seção de investimento é sempre a última.
+2. **3 cenários sempre.** Conservador, realista, otimista.
+3. **KPIs escritos.** Os indicadores que definem o sucesso são explícitos.
+4. **Risk reversal destacado.** A garantia aparece em destaque visual — não no rodapé.
+5. **Máximo 8 páginas.** Proposta longa é proposta que não é lida.
 
-**Página 4 — A solução: o que vamos construir**
-Descrição em linguagem de negócio do que será entregue. Sem nomes de ferramentas. Sem arquitetura técnica.
+**Estrutura (ordem obrigatória):**
 
-**Página 5 — O retorno esperado**
-Tabela de ROI com 3 cenários. Payback em meses. Tipos de retorno (T1 a T5 em linguagem de cliente, não em código).
+| Página | Conteúdo |
+|---|---|
+| 1 — Capa | Nome do cliente · problema em 1 frase · data |
+| 2 — Diagnóstico | Problema em 3-5 pontos, nas palavras do cliente |
+| 3 — Impacto | Custo do problema em R$/mês · projeção 12 meses sem solução |
+| 4 — Solução | O que será entregue, em linguagem de negócio |
+| 5 — Retorno | Tabela ROI com 3 cenários · payback em meses |
+| 6 — Cronograma | Fases, entregas e prazos — visual |
+| 7 — Investimento e garantia | Preço exato · condições (3 fases) · KPIs do contrato |
+| 8 — Próximo passo | Uma única ação pedida |
 
-**Página 6 — O cronograma**
-Fases, entregas e prazos. Visual, não texto corrido.
+### 5.3 — Estrutura da reunião x1 (Felipe conduz)
 
-**Página 7 — O investimento e a garantia**
-Preço, condições de pagamento (3 fases), risk reversal em destaque. KPIs definidos para ativação da Fase 3.
-
-**Página 8 — Próximo passo**
-Uma única ação: *"Para começar, basta assinar o documento e fazer o depósito da Fase 1 (30%). Estamos disponíveis para responder qualquer dúvida antes disso."*
-
-### 5.3 — Apresentação da proposta (reunião de 20-30 min)
-
-**Nunca enviar proposta sem apresentar.** Proposta enviada sem apresentação vira PDF abandonado.
-
-**Estrutura da reunião de proposta:**
-
-1. **(2 min) Confirmação do diagnóstico:**
-> *"Antes de entrar na proposta, quero confirmar que entendi corretamente. Você me descreveu [problema resumido]. Está correto?"*
-
-2. **(5 min) O impacto do problema:**
-> *"O que identificamos é que esse problema está custando aproximadamente R$ X por mês. Em 12 meses sem solução, isso soma R$ Y."*
-
-3. **(5 min) A solução:**
-> *"O que propusemos é [solução em linguagem de negócio]. Em 30 dias, você terá [resultado concreto]."*
-
-4. **(5 min) O retorno:**
-> *"Com base em casos similares, o retorno no cenário conservador é de [X]. No realista, [Y]. E o que temos visto acontecer com clientes do seu perfil é mais próximo do [realista ou otimista]."*
-
-5. **(5 min) Investimento e garantia:**
-> *"O investimento é de R$ Z, em 3 fases. Você começa com R$ [30%]. Os KPIs que definem o resultado final estão escritos no contrato. Se não atingirmos, a Fase 3 reflete isso."*
-
-6. **(5 min) Próximos passos e perguntas:**
-> *"O que você precisa para tomar a decisão com segurança?"*
+| Bloco | Duração | Conteúdo |
+|---|---|---|
+| Confirmação do diagnóstico | 5 min | *"Você me descreveu [problema]. Está correto?"* |
+| Impacto do problema | 5 min | *"Isso está custando aprox. R$ X/mês. Em 12 meses, R$ Y."* |
+| A solução | 5 min | O que será entregue em linguagem de negócio |
+| O retorno | 5 min | ROI nos 3 cenários — conservador, realista, otimista |
+| Investimento e garantia | 5 min | Preço exato · fases de pagamento · KPIs do contrato |
+| Próximos passos | 5 min | *"O que você precisa para tomar a decisão com segurança?"* |
 
 ---
 
-## Parte 6 — Etapa 5: Fechamento
+## Parte 6 — Etapa 5: Fechamento (Felipe)
 
 ### 6.1 — Tipos de fechamento
 
 **Fechamento natural (ideal):**
-O cliente diz "vamos em frente" na própria reunião de proposta. Carlos confirma cronograma e envia contrato no mesmo dia.
+O cliente diz "vamos em frente" na própria reunião x1. Felipe confirma cronograma e envia contrato no mesmo dia.
 
 **Fechamento com follow-up (mais comum):**
-Cliente pediu tempo. Carlos aplica o protocolo de acompanhamento:
+Cliente pediu tempo. Felipe (com apoio de Carlos no follow-up) aplica o protocolo de acompanhamento:
 
-| Dia | Ação | Mensagem |
-|---|---|---|
-| D+1 | WhatsApp breve | *"[Nome], ficou com alguma dúvida sobre a proposta? Estou à disposição."* |
-| D+3 | Follow-up com valor | *"[Nome], lembrei do seu caso e achei esse [dado/case/insight] relevante para o que conversamos. [Conteúdo breve.] A proposta segue em aberto."* |
-| D+7 | Pergunta direta | *"[Nome], quero ser direto: você ainda está avaliando avançar, ou o momento mudou? Prefiro saber para ajustar minha agenda."* |
-| D+14 | Encerramento | *"[Nome], vou deixar a proposta em aberto por mais alguns dias. Se o cenário mudar, é só me chamar — terei prazer em retomar."* |
+| Dia | Responsável | Ação | Mensagem |
+|---|---|---|---|
+| D+1 | Carlos | WhatsApp breve | *"[Nome], ficou com alguma dúvida sobre a proposta? Estou à disposição."* |
+| D+3 | Carlos | Follow-up com valor | *"[Nome], lembrei do seu caso e achei esse [dado/case/insight] relevante. [Conteúdo breve.] A proposta segue em aberto."* |
+| D+7 | Felipe | Pergunta direta | *"[Nome], quero ser direto: você ainda está avaliando avançar, ou o momento mudou? Prefiro saber para ajustar minha agenda."* |
+| D+14 | Felipe | Encerramento | *"[Nome], vou deixar a proposta em aberto por mais alguns dias. Se o cenário mudar, é só me chamar."* |
 
 **Após D+14 sem resposta:** registrar como "Proposta expirada" no CRM. Colocar em fluxo de reativação em 60 dias.
 
@@ -539,5 +510,5 @@ Toda segunda-feira Ágata verifica:
 ---
 
 *IntelliX.AI · Base de Conhecimento · Documento 08 · Playbook Comercial*
-*⚠️ Documento interno · Versão 1.0 · Maio 2026*
+*⚠️ Documento interno · Versão 2.0 · Maio 2026*
 *Atualizar: a cada 3 meses ou quando houver mudança de frente, preço ou processo*
