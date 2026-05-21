@@ -250,16 +250,17 @@ export default function OfficePage() {
             </p>
             <div className="space-y-1">
               {[
-                { key: "agata", name: "Ágata", role: "COO", color: "#7c3aed" },
-                { key: "carlos", name: "Carlos", role: "Comercial", color: "#10b981" },
-                { key: "flora", name: "Flora", role: "Financeiro", color: "#06b6d4" },
-                { key: "maya", name: "Maya", role: "Marketing", color: "#f97316" },
-                { key: "heitor", name: "Heitor", role: "TI", color: "#ec4899" },
-                { key: "marcio", name: "Márcio", role: "Ops", color: "#f59e0b" },
-                { key: "ana", name: "Ana", role: "Analyst", color: "#5b21b6" },
-                { key: "bruno", name: "Bruno", role: "Dev", color: "#2563eb" },
-                { key: "beatriz", name: "Beatriz", role: "Strategist", color: "#7c3aed" },
-                { key: "roberto", name: "Roberto", role: "Reviewer", color: "#059669" },
+                { key: "agata",  name: "Ágata",  role: "COO",          color: "#7c3aed" },
+                { key: "bia",    name: "Bia",    role: "SDR",           color: "#00897B" },
+                { key: "carlos", name: "Carlos", role: "Comercial",     color: "#10b981" },
+                { key: "maya",   name: "Maya",   role: "Estrategista",  color: "#f97316" },
+                { key: "lucio",  name: "Lúcio",  role: "Pesquisa",      color: "#3b82f6" },
+                { key: "iris",   name: "Iris",   role: "Curadoria",     color: "#a855f7" },
+                { key: "otto",   name: "Otto",   role: "Dados",         color: "#0891b2" },
+                { key: "teo",    name: "Téo",    role: "Copy",          color: "#f59e0b" },
+                { key: "vera",   name: "Vera",   role: "Arte",          color: "#ec4899" },
+                { key: "sofia",  name: "Sofia",  role: "Revisão",       color: "#059669" },
+                { key: "heitor", name: "Heitor", role: "TI",            color: "#db2777" },
               ].map((a) => {
                 const active = agentStates.find((s) => s.agentKey === a.key);
                 return (
