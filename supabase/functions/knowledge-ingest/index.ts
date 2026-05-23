@@ -1,10 +1,10 @@
 // supabase/functions/knowledge-ingest/index.ts
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "npm:zod@3.23.8";
 
 const IngestRequestSchema = z.object({
-  doc_number:    z.number().int().min(1).max(11),
+  doc_number:    z.number().int().min(1).max(99),
   content:       z.string().min(100),
   title:         z.string().min(1),
   version:       z.string().default("v1.0"),
