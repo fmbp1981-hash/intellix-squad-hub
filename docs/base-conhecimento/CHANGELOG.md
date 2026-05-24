@@ -23,13 +23,13 @@ Toda alteração em documento gera entrada neste CHANGELOG.
 |---|---|---|---|---|
 | 01 | Identidade | v1.0 | ✅ Estável | Público (interno) |
 | 02 | Glossário | v1.0 | ✅ Estável | Público (interno) |
-| 03 | Frentes Comerciais | v1.0 | ✅ Estável | Público (interno) |
+| 03 | Frentes Comerciais | **v1.1** | ✅ Estável | Público (interno) |
 | 04 | Pilares Técnicos | v1.0 | ✅ Estável | Público (interno) |
 | 05 | Portfólio | v1.0 | ✅ Estável | Público (interno) |
 | 06 | Taxonomia ROI | v1.0 | ✅ Estável | Público (interno) |
-| 07 | Objeções Comerciais | v1.0 | ✅ Estável | Público (interno) |
+| 07 | Objeções Comerciais | **v1.1** | ✅ Estável | Público (interno) |
 | 08 | Playbook Comercial | v1.0 | ✅ Estável | Público (interno) |
-| 09 | Precificação Interna | **v1.2** | ✅ Estável | ⚠️ **Restrito a Felipe** |
+| 09 | Precificação Interna | **v1.3** | ✅ Estável | ⚠️ **Restrito a Felipe** |
 | 10 | Processo de Entrega | **v2.0** | ✅ Estável (revisado) | Público (interno) |
 | 11 | Renovação e Retenção | **v2.0** | ✅ Estável (revisado) | Público (interno) |
 
@@ -71,6 +71,11 @@ CAMADA 3 — OPERAÇÃO
 ### Doc 03 · Frentes Comerciais
 - **v1.0** (Maio 2026) — Versão inicial com RADAR (Express, Diagnóstico, Pulse), FORJA (MVP, Completo, Evolve), TRILHA, Virada. Inclui SLA, risk reversal e princípios comerciais
 
+- **v1.1** (Maio 2026) — Adição de contexto de mercado:
+  - ➕ Nova subseção **"Reconhecendo clientes que falam o Método IDEAL"** no bloco RADAR
+  - Tabela mapeando linguagem do cliente → frente IntelliX correspondente (IDEAL = RADAR + FORJA + Evolve)
+  - Instrução explícita: não renomear produtos, apenas traduzir a linguagem do lead
+
 ### Doc 04 · Pilares Técnicos
 - **v1.0** (Maio 2026) — Versão inicial com P1 (IA), P2 (Sistemas), P3 (Automação), P4 (Presença Digital), P5 (Sob medida). Inclui mapa Pilares × Frentes
 
@@ -94,6 +99,12 @@ CAMADA 3 — OPERAÇÃO
   - Parte 6: Objeções de processo interno (4)
   - Parte 7: Objeções de alternativa (4)
   - Parte 8: Padrões (4 passos de toda resposta + sinais de venda que não deve avançar)
+
+- **v1.1** (Maio 2026) — Adição de dados de mercado brasileiro:
+  - ➕ **Bloco de dados na seção 3.3** ("Vou esperar a tecnologia amadurecer")
+  - 6 dados de mercado 2024-2025 (McKinsey, Zoox Smart Data, HostGator, Microsoft/Edelman, AITools)
+  - Script Carlos Closer com dado dos 75% das PMEs + Brasil 3º no mundo
+  - Transforma argumento de opinião em dado verificável
 
 ### Doc 08 · Playbook Comercial
 - **v1.0** (Maio 2026) — Versão inicial. Define 6 etapas do funil:
@@ -121,6 +132,12 @@ CAMADA 3 — OPERAÇÃO
     - 4 ofertas sazonais (S1-S4)
     - 5 descontos pontuais autorizados em negociação
     - Princípios e regras de validação de desconto
+
+- **v1.3** (Maio 2026) — Adição de argumento comercial:
+  - ➕ Nova subseção em **2.9** — "Argumento de venda para Virada in-company baseado em dados de mercado"
+  - Dado Zoox Smart Data (2024-2025): resistência cultural como principal barreira à adoção de IA em PMEs
+  - Script Carlos Closer direcionado ao gestor/dono que compra Virada in-company
+  - Reposiciona o produto de "treinamento técnico" para "remoção da principal barreira humana"
 
 - **v1.2** (Maio 2026) — Correção de mercado:
   - ✏️ Espaço + Coffee da Virada turma aberta passa a ser tratado como **consumação mínima única de R$ 2.000** (padrão dos espaços profissionais em Recife — formato Duma)

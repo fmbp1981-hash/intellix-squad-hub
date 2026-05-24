@@ -2,7 +2,7 @@
 
 > **Documento da Base de Conhecimento — Camada 2 (Oferta Comercial)**
 > Consolida as principais objeções de venda com respostas alinhadas ao tom IntelliX
-> Versão 1.0 · Maio 2026
+> Versão 1.1 · Maio 2026
 
 ---
 
@@ -146,11 +146,25 @@ Objeções diferentes surgem em momentos diferentes. Identificar o estágio orie
 
 **O que está por trás:** desconfiança sobre a maturidade da IA / medo de investir em algo que vai mudar rapidamente.
 
+**Dados de mercado brasileiro para embasar a resposta** (fontes: McKinsey, Zoox Smart Data, HostGator, Microsoft/Edelman, AITools — pesquisas 2024-2025):
+
+- O Brasil é o 3º país que mais usa ferramentas de IA no mundo, com 4,3% do tráfego global em plataformas de IA (atrás apenas de EUA e Índia)
+- 75,86% das PMEs brasileiras já usam IA em suas operações diárias
+- 61,41% das PMEs já incorporaram IA; 26,73% planejam adotar em breve
+- 75% das MPMEs estão otimistas sobre o impacto da IA
+- 73% pretendem continuar investindo ou iniciar investimentos nos próximos anos
+- Empresas que implementaram IA com estratégia madura reportam aumento médio de 20% nos lucros (McKinsey)
+
+**Como usar:** citar esses números quando o cliente diz que "vai esperar o momento certo" ou "vai esperar a tecnologia amadurecer". O argumento muda de opinião para dado — quem está esperando já está atrás de 75% do mercado.
+
 **Resposta:**
 > *"Esse raciocínio fazia sentido em 2022. Em 2026, as empresas que esperaram a tecnologia amadurecer já estão 2 anos atrás das que começaram. Isso não significa que tudo está pronto — significa que o que entregamos hoje é testado, está em produção em clientes reais e resolve problemas reais. O risco de esperar já ultrapassou o risco de agir."*
 
 **Complemento se necessário:**
 > *"Existe, de fato, um aspecto que vai continuar evoluindo: as ferramentas por baixo. Mas o que construímos para você é agnóstico de ferramenta — quando uma tecnologia melhor surgir, o sistema do cliente pode ser atualizado sem reconstruir tudo do zero. Propriedade do cliente foi uma decisão arquitetural justamente por isso."*
+
+**Script com dados de mercado (Carlos Closer):**
+> *"Entendo a cautela. Mas um dado que muda essa equação: 75% das empresas do seu porte no Brasil já usam IA hoje. O Brasil é o 3º país do mundo em adoção. O momento de 'começar cedo' passou em 2023. Quem começa agora ainda está em tempo — mas esperar mais um ano é perder posição para concorrentes que já partiram."*
 
 ---
 
@@ -376,5 +390,5 @@ Existem leads que não devem virar clientes. Reconhecer esses sinais economiza t
 ---
 
 *IntelliX.AI · Base de Conhecimento · Documento 07 · Objeções Comerciais*
-*Versão 1.0 · Maio 2026*
+*Versão 1.1 · Maio 2026*
 *Atualizar: sempre que surgir objeção nova recorrente nos atendimentos*

@@ -2,7 +2,7 @@
 
 > **Documento da Base de Conhecimento — Camada 2 (Oferta Comercial)**
 > Define o que a IntelliX vende, para quem, por quanto, com qual mecanismo de risco e qual ROI
-> Versão 1.0 · Maio 2026
+> Versão 1.1 · Maio 2026
 
 ---
 
@@ -142,6 +142,24 @@ Mapa estratégico documentado com:
 | Conservador | 5 oportunidades médias | R$ 200.000 | **17x** |
 | Realista | 8 oportunidades + 2 estratégicas | R$ 500.000 | **42x** |
 | Otimista | Roadmap completo executado | R$ 1.000.000+ | **83x+** |
+
+---
+
+### Reconhecendo clientes que falam o "Método IDEAL"
+
+Alguns clientes chegam com conhecimento prévio de frameworks como o "Método IDEAL" (Identificar, Definir, Experimentar, Avaliar, Lançar) — publicado pela Alura, HostGator e outros canais de educação sobre IA para PMEs.
+
+Se o cliente usar essa linguagem, Carlos pode conectar diretamente ao que a IntelliX entrega:
+
+| O que o cliente chama de... | O que a IntelliX entrega |
+|---|---|
+| "Identificar oportunidades" | RADAR (Express ou Diagnóstico) |
+| "Definir objetivos e métricas" | RADAR entrega roadmap + KPIs |
+| "Experimentar com piloto" | FORJA MVP |
+| "Avaliar resultados" | O3 (60 dias pós-entrega com KPIs) |
+| "Lançar e escalar" | FORJA Completo + Evolve |
+
+**O que NÃO fazer:** não chamar o produto de "RADAR método IDEAL" nem mudar a nomenclatura IntelliX. Apenas reconhecer a linguagem do cliente e traduzir para o que a IntelliX entrega — facilita a conversa com quem já foi impactado por conteúdo educativo de mercado.
 
 ---
 
@@ -499,5 +517,5 @@ Esta matriz é o algoritmo de roteamento que a Bia (SDR) usa para encaminhar cad
 ---
 
 *IntelliX.AI · Base de Conhecimento · Documento 03 · As 4 Frentes Comerciais*
-*Versão 1.0 · Maio 2026*
+*Versão 1.1 · Maio 2026*
 *Fonte da verdade para todos os agentes (Bia, Carlos, Téo, Maya) e para o site*

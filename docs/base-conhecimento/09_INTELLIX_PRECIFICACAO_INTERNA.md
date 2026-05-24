@@ -2,7 +2,7 @@
 
 > **Documento da Base de Conhecimento — Camada 3 (Operação)**
 > Composição de custos, margem, fórmulas de cálculo automático e estrutura de descontos
-> Versão 1.2 · Maio 2026
+> Versão 1.3 · Maio 2026
 >
 > ⚠️ **DOCUMENTO ESTRITAMENTE INTERNO — Acesso exclusivo: Felipe Maranhão**
 > Agentes de IA (Bia, Carlos, Ágata, Téo, Maya) **não têm acesso** a este documento.
@@ -470,6 +470,17 @@ A premissa de operar 2-4 turmas por mês transforma a margem percentual menor em
 
 ---
 
+#### Argumento de venda para Virada in-company baseado em dados de mercado
+
+**Dado de mercado** (Zoox Smart Data, 2024-2025): a resistência cultural é identificada como a principal barreira à adoção de IA em PMEs — manifestada em medo de substituição de empregos, desconfiança na tecnologia, falta de compreensão e receio de mudanças.
+
+**Por que isso fortalece a venda da Virada in-company:** o gestor que compra uma Virada in-company não está comprando um treinamento técnico — está comprando a remoção da principal barreira que impede sua empresa de adotar IA: o fator humano.
+
+**Script para Carlos ao vender Virada in-company:**
+> *"O maior obstáculo que empresas do seu porte encontram para adotar IA não é tecnológico — é cultural. As pesquisas são claras: resistência da equipe, medo de substituição, desconfiança. A Virada ataca exatamente isso: em 4 horas, sua equipe sai usando IA na prática, não com medo dela. É o investimento com menor custo e maior impacto comportamental que existe hoje."*
+
+---
+
 ## Parte 3 — Pacotes Promocionais e Estrutura de Descontos
 
 > Estrutura **permanente** de pacotes + ofertas **sazonais** + descontos pontuais autorizados. Toda promoção tem regra clara, condição objetiva e prazo definido.
@@ -783,6 +794,17 @@ Exemplo FORJA MVP com custo R$ 12.000:
 
 ## Parte 7 — Changelog
 
+### v1.3 — Maio 2026
+
+**Adição de argumento comercial baseado em dados de mercado:**
+
+1. ➕ **Nova subseção em 2.9** — "Argumento de venda para Virada in-company baseado em dados de mercado"
+   - Dado Zoox Smart Data (2024-2025): resistência cultural como principal barreira à adoção de IA em PMEs
+   - Script Carlos Closer para usar ao vender Virada in-company
+   - Reforça que o produto vende remoção da barreira humana, não treinamento técnico
+
+---
+
 ### v1.2 — Maio 2026
 
 **Mudança crítica de mercado:** ajuste de custo do espaço da Virada turma aberta
@@ -812,5 +834,5 @@ Exemplo FORJA MVP com custo R$ 12.000:
 ---
 
 *IntelliX.AI · Base de Conhecimento · Documento 09 · Precificação Interna*
-*⚠️ Acesso exclusivo: Felipe Maranhão · Versão 1.2 · Maio 2026*
+*⚠️ Acesso exclusivo: Felipe Maranhão · Versão 1.3 · Maio 2026*
 *Próxima revisão: ao atingir 3 projetos FORJA entregues ou mudança de HH base*
