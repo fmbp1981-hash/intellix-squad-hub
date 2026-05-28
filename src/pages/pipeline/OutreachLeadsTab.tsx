@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOutreachLeads, useIcpSegments, useTriggerAnalysis } from '@/hooks/useOutreachLeads';
+import { OutreachApprovalCard } from './OutreachApprovalCard';
 import type { OutreachLead, LeadStatus } from '@/types/outreach';
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
@@ -126,17 +127,20 @@ export function OutreachLeadsTab() {
             <DialogTitle>{selectedLead?.company_name}</DialogTitle>
           </DialogHeader>
           {selectedLead?.lead_briefings ? (
-            <div className="space-y-3 text-sm">
-              <div><span className="font-semibold">Dor principal:</span> {selectedLead.lead_briefings.main_pain}</div>
-              <div><span className="font-semibold">Solução IntelliX:</span> {selectedLead.lead_briefings.intellix_solution}</div>
-              <div><span className="font-semibold">Ângulo de venda:</span> {selectedLead.lead_briefings.sales_angle}</div>
-              <div><span className="font-semibold">Tom recomendado:</span> {selectedLead.lead_briefings.recommended_tone}</div>
-              {selectedLead.lead_briefings.probable_objection && (
-                <div><span className="font-semibold">Objeção provável:</span> {selectedLead.lead_briefings.probable_objection}</div>
-              )}
-              {selectedLead.lead_briefings.objection_counter && (
-                <div><span className="font-semibold">Contra-argumento:</span> {selectedLead.lead_briefings.objection_counter}</div>
-              )}
+            <div className="space-y-4">
+              <div className="space-y-3 text-sm">
+                <div><span className="font-semibold">Dor principal:</span> {selectedLead.lead_briefings.main_pain}</div>
+                <div><span className="font-semibold">Solução IntelliX:</span> {selectedLead.lead_briefings.intellix_solution}</div>
+                <div><span className="font-semibold">Ângulo de venda:</span> {selectedLead.lead_briefings.sales_angle}</div>
+                <div><span className="font-semibold">Tom recomendado:</span> {selectedLead.lead_briefings.recommended_tone}</div>
+                {selectedLead.lead_briefings.probable_objection && (
+                  <div><span className="font-semibold">Objeção provável:</span> {selectedLead.lead_briefings.probable_objection}</div>
+                )}
+                {selectedLead.lead_briefings.objection_counter && (
+                  <div><span className="font-semibold">Contra-argumento:</span> {selectedLead.lead_briefings.objection_counter}</div>
+                )}
+              </div>
+              <OutreachApprovalCard lead={selectedLead} />
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">

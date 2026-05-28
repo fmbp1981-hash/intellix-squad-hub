@@ -50,6 +50,18 @@ export interface OutreachLead {
   // joins
   icp_segments?: IcpSegment;
   lead_briefings?: LeadBriefing;
+  outreach_messages?: OutreachMessage[];
+}
+
+export interface OutreachMessage {
+  id: string;
+  lead_id: string;
+  channel: ContactChannel;
+  message_text: string;
+  humanization_score: number;
+  status: 'draft' | 'approved' | 'sent' | 'failed';
+  sent_at: string | null;
+  created_at: string;
 }
 
 export interface LeadBriefing {
