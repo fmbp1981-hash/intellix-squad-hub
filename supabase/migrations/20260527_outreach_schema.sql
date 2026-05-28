@@ -65,6 +65,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS outreach_leads_updated_at ON outreach_leads;
 CREATE TRIGGER outreach_leads_updated_at
   BEFORE UPDATE ON outreach_leads
   FOR EACH ROW EXECUTE FUNCTION update_outreach_leads_updated_at();
@@ -78,6 +79,13 @@ CREATE POLICY "outreach_leads_select" ON outreach_leads FOR SELECT TO authentica
 CREATE POLICY "outreach_leads_insert" ON outreach_leads FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "outreach_leads_update" ON outreach_leads FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "lead_briefings_select" ON lead_briefings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "lead_briefings_insert" ON lead_briefings FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "lead_briefings_update" ON lead_briefings FOR UPDATE TO authenticated USING (true);
+
+-- Performance indexes
+CREATE INDEX IF NOT EXISTS idx_outreach_leads_segment_id ON outreach_leads(segment_id);
+CREATE INDEX IF NOT EXISTS idx_outreach_leads_status ON outreach_leads(status);
+CREATE INDEX IF NOT EXISTS idx_outreach_leads_segment_status ON outreach_leads(segment_id, status);
 
 -- Segmentos ICP iniciais
 INSERT INTO icp_segments (name, display_name, pain_description, qualification_signals, primary_channel, secondary_channel) VALUES
