@@ -54,9 +54,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization') ?? '';
+    const authResult = await requireAdmin(req);
+    if ('error' in authResult) return authResult.error;
     const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    await requireAdmin(authHeader, db);
 
     const { lead_id } = await req.json() as { lead_id: string };
 
