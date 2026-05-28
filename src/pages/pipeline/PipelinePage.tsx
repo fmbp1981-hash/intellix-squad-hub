@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Kanban, Rocket } from "lucide-react";
+import { Users, Kanban, Rocket, Target } from "lucide-react";
 import LeadList from "@/pages/crm/LeadList";
 import DealKanban from "@/pages/crm/DealKanban";
 import ProjectsList from "@/pages/projects/ProjectsList";
+import { OutreachLeadsTab } from "./OutreachLeadsTab";
 
 export default function PipelinePage() {
   return (
@@ -21,6 +22,10 @@ export default function PipelinePage() {
             <Rocket className="h-4 w-4" />
             Projetos
           </TabsTrigger>
+          <TabsTrigger value="outreach" className="gap-2">
+            <Target className="h-4 w-4" />
+            Leads SDR
+          </TabsTrigger>
         </TabsList>
       </div>
       <TabsContent value="leads" className="flex-1 overflow-auto mt-0">
@@ -31,6 +36,9 @@ export default function PipelinePage() {
       </TabsContent>
       <TabsContent value="projetos" className="flex-1 overflow-auto mt-0">
         <ProjectsList />
+      </TabsContent>
+      <TabsContent value="outreach" className="flex-1 overflow-auto mt-0">
+        <OutreachLeadsTab />
       </TabsContent>
     </Tabs>
   );
