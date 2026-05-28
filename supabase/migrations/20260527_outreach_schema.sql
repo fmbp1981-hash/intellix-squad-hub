@@ -78,3 +78,13 @@ CREATE POLICY "outreach_leads_select" ON outreach_leads FOR SELECT TO authentica
 CREATE POLICY "outreach_leads_insert" ON outreach_leads FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "outreach_leads_update" ON outreach_leads FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "lead_briefings_select" ON lead_briefings FOR SELECT TO authenticated USING (true);
+
+-- Segmentos ICP iniciais
+INSERT INTO icp_segments (name, display_name, pain_description, qualification_signals, primary_channel, secondary_channel) VALUES
+('clinicas', 'Clínicas e Consultórios', 'Agendamento e follow-up manuais, perda de pacientes fora do horário comercial', '["site sem chatbot", "avaliações reclamando de demora no agendamento", "vagas recepcionista abertas"]'::jsonb, 'whatsapp', 'email'),
+('imobiliarias', 'Imobiliárias e Corretores', 'Qualificação manual de leads e perda de compradores fora do horário', '["site sem chat ao vivo", "muitos anúncios sem resposta automatizada", "vagas SDR abertas"]'::jsonb, 'linkedin', 'whatsapp'),
+('ecommerce', 'E-commerces', 'Atendimento e pós-venda intensivos em humano, alto volume de tickets', '["suporte apenas por email", "tempo de resposta lento no ReclameAqui", "sem chatbot no site"]'::jsonb, 'whatsapp', 'email'),
+('contabilidade', 'Escritórios de Contabilidade', 'Comunicação repetitiva e relatórios manuais para dezenas de clientes', '["sem portal do cliente", "vagas assistente administrativo", "site institucional sem área do cliente"]'::jsonb, 'linkedin', 'email'),
+('construtoras', 'Construtoras e Incorporadoras', 'Prospecção e qualificação lenta de compradores de imóveis', '["sem simulador no site", "atendimento só por telefone", "vagas corretores internos"]'::jsonb, 'linkedin', 'whatsapp'),
+('servicos_locais', 'Prestadores de Serviço Local', 'Orçamento, agendamento e cobrança descentralizados', '["Google Maps sem resposta automática", "avaliações reclamando de demora", "sem site ou site desatualizado"]'::jsonb, 'whatsapp', 'instagram')
+ON CONFLICT DO NOTHING;
