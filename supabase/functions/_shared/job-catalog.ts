@@ -17,6 +17,7 @@ export const JOB_CATALOG: Record<string, JobDef[]> = {
     { id: "prospect-icp", displayName: "Prospectar ICP", slaMin: 20, estimatedTokens: 6000, cooldownMin: 60 },
     { id: "qualify-lead", displayName: "Qualificar Lead BANT", slaMin: 10, estimatedTokens: 3000 },
     { id: "followup-sequence", displayName: "Sequência Follow-up", slaMin: 10, estimatedTokens: 3000, cooldownMin: 1440 },
+    { id: "sdr-daily-prospecting", displayName: "Prospecção Diária SDR", slaMin: 30, estimatedTokens: 8000, cooldownMin: 720 },
   ],
   comercial: [
     { id: "run-diagnosis", displayName: "Diagnóstico do Deal", slaMin: 15, estimatedTokens: 4000 },
