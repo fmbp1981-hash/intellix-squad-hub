@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useOutreachLeads, useIcpSegments, useTriggerAnalysis } from '@/hooks/useOutreachLeads';
 import { OutreachApprovalCard } from './OutreachApprovalCard';
 import type { OutreachLead, LeadStatus } from '@/types/outreach';
+import { OutreachResponsesPanel } from './OutreachResponsesPanel';
+import { usePendingResponses } from '@/hooks/useOutreachResponses';
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
   prospected: 'Prospectado',
@@ -37,6 +39,7 @@ const STATUS_VARIANTS: Record<LeadStatus, 'default' | 'secondary' | 'outline' | 
 export function OutreachLeadsTab() {
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<OutreachLead | null>(null);
+  const { data: pendingResponses = [] } = usePendingResponses();
 
   const { data: leads = [], isLoading } = useOutreachLeads(
     segmentFilter !== 'all' ? { segment_id: segmentFilter } : undefined
@@ -120,6 +123,16 @@ export function OutreachLeadsTab() {
           </TableBody>
         </Table>
       )}
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">Respostas Pendentes</h3>
+          {pendingResponses.length > 0 && (
+            <Badge className="h-4 text-xs">{pendingResponses.length}</Badge>
+          )}
+        </div>
+        <OutreachResponsesPanel />
+      </div>
 
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
         <DialogContent className="max-w-lg">
