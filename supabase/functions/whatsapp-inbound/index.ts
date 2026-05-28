@@ -209,6 +209,29 @@ Deno.serve(async (req) => {
   const { phone, text } = extracted;
   const supa = adminClient();
 
+  // ── SDR: Verificar se é resposta de prospect outreach ──────────────────────
+  const normalizedPhone = phone.replace(/\D/g, '');
+  const { data: sdrLead } = await supa
+    .from('outreach_leads')
+    .select('id, status')
+    .or(`contact_value.eq.${phone},contact_value.eq.${normalizedPhone},contact_value.eq.+${normalizedPhone}`)
+    .in('status', ['sent', 'replied'])
+    .maybeSingle();
+
+  if (sdrLead) {
+    await fetch(`${FUNCTIONS_URL}/sdr-responder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({ lead_id: sdrLead.id, inbound_message: text }),
+    });
+    return new Response('OK', { headers: corsHeaders });
+  }
+  // ── Fluxo normal Bia/Carlos continua abaixo ────────────────────────────────
+
   // ── 1. Upsert lead ──────────────────────────────────────────────────────────
   const { data: lead } = await supa
     .from("leads")
