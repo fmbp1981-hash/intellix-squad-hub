@@ -90,10 +90,21 @@ serve(async (req) => {
 
     const messageText = completion.choices[0].message.content?.trim() ?? '';
 
+    const { data: siteProposal } = await db
+      .from('site_proposals')
+      .select('lovable_url')
+      .eq('lead_id', lead_id)
+      .eq('status', 'ready')
+      .maybeSingle();
+
+    const finalMessage = siteProposal?.lovable_url
+      ? messageText.replace('[link do vídeo]', siteProposal.lovable_url)
+      : messageText;
+
     const { error: msgErr } = await db.from('outreach_messages').upsert({
       lead_id,
       channel,
-      message_text: messageText,
+      message_text: finalMessage,
       status: 'draft',
       model_used: 'gpt-4o',
     }, { onConflict: 'lead_id' });
@@ -101,7 +112,7 @@ serve(async (req) => {
 
     await db.from('outreach_leads').update({ status: 'pending_approval' }).eq('id', lead_id);
 
-    return jsonResponse({ success: true, message: messageText, channel });
+    return jsonResponse({ success: true, message: finalMessage, channel });
   } catch (err) {
     console.error('[sdr-copywriter]', err);
     return jsonResponse({ error: String(err) }, 500);
