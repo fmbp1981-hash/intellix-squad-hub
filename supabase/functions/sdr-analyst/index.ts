@@ -24,10 +24,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    await requireAdmin(authHeader, db);
+    const authResult = await requireAdmin(req);
+    if ('error' in authResult) return authResult.error;
 
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { lead_id } = await req.json() as { lead_id: string };
 
     const { data: lead, error: leadErr } = await db
@@ -40,7 +40,11 @@ serve(async (req) => {
     await db.from('outreach_leads').update({ status: 'analyzing' }).eq('id', lead_id);
 
     const context = await collectPublicContext(lead);
-    const userPrompt = buildAnalystPrompt(lead, context);
+    const { site_audit_score, redesign_signals } = computeSiteAudit(
+      lead.website_url,
+      context.raw_html,
+    );
+    const userPrompt = buildAnalystPrompt(lead, context, site_audit_score, redesign_signals);
 
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
@@ -76,13 +80,15 @@ serve(async (req) => {
       ideal_channel: briefingData.ideal_channel,
       sources_analyzed: context.sources_analyzed,
       raw_context: context.raw,
+      site_audit_score,
+      redesign_signals,
       model_used: 'gpt-4o',
     }, { onConflict: 'lead_id' });
     if (briefErr) throw briefErr;
 
     await db.from('outreach_leads').update({ status: 'briefed' }).eq('id', lead_id);
 
-    return jsonResponse({ success: true, briefing: briefingData });
+    return jsonResponse({ success: true, briefing: briefingData, site_audit_score, redesign_signals });
   } catch (err) {
     console.error('[sdr-analyst]', err);
     return jsonResponse({ error: String(err) }, 500);
@@ -92,6 +98,7 @@ serve(async (req) => {
 interface LeadContext {
   sources_analyzed: string[];
   raw: Record<string, unknown>;
+  raw_html: string;
   website_text?: string;
 }
 
@@ -100,7 +107,7 @@ async function collectPublicContext(lead: {
   website_url?: string | null;
   icp_segments?: { pain_description: string } | null;
 }): Promise<LeadContext> {
-  const context: LeadContext = { sources_analyzed: [], raw: {} };
+  const context: LeadContext = { sources_analyzed: [], raw: {}, raw_html: '' };
 
   if (lead.website_url) {
     try {
@@ -110,17 +117,70 @@ async function collectPublicContext(lead: {
       });
       if (res.ok) {
         const html = await res.text();
+        context.raw_html = html;
         const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 3000);
         context.website_text = text;
         context.sources_analyzed.push('site');
         context.raw.website = text;
       }
     } catch (_e) {
-      // Site inacessível — não é erro fatal
+      context.sources_analyzed.push('site_unreachable');
     }
   }
 
   return context;
+}
+
+function computeSiteAudit(
+  websiteUrl: string | null | undefined,
+  html: string,
+): { site_audit_score: number; redesign_signals: string[] } {
+  if (!websiteUrl) {
+    return { site_audit_score: 10, redesign_signals: ['no_site'] };
+  }
+  if (!html) {
+    return { site_audit_score: 20, redesign_signals: ['site_unreachable'] };
+  }
+
+  const signals: string[] = [];
+  let score = 100;
+
+  if (!websiteUrl.startsWith('https://')) {
+    signals.push('no_ssl');
+    score -= 20;
+  }
+
+  if (!/<meta[^>]+name=["']viewport["']/i.test(html)) {
+    signals.push('no_mobile_meta');
+    score -= 25;
+  }
+
+  const copyrightMatch = html.match(/©\s*(\d{4})/) ?? html.match(/copyright[^0-9]*(\d{4})/i);
+  if (copyrightMatch) {
+    const year = parseInt(copyrightMatch[1]);
+    if (year < 2020) {
+      signals.push('outdated_copyright');
+      score -= 20;
+    }
+  }
+
+  const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (textContent.length < 500) {
+    signals.push('minimal_content');
+    score -= 20;
+  }
+
+  if (/<table[^>]*>/i.test(html) && !/<thead|<tbody/i.test(html)) {
+    signals.push('table_layout');
+    score -= 15;
+  }
+
+  if (!/(google-analytics|gtag\(|analytics\.js|_gaq)/i.test(html)) {
+    signals.push('no_analytics');
+    score -= 10;
+  }
+
+  return { site_audit_score: Math.max(0, score), redesign_signals: signals };
 }
 
 function buildAnalystPrompt(
@@ -130,17 +190,24 @@ function buildAnalystPrompt(
     contact_channel: string;
     icp_segments?: { display_name: string; pain_description: string } | null;
   },
-  context: LeadContext
+  context: LeadContext,
+  site_audit_score: number,
+  redesign_signals: string[],
 ): string {
+  const auditNote = redesign_signals.length > 0
+    ? `\nAUDITORIA DO SITE (score ${site_audit_score}/100): ${redesign_signals.join(', ')}`
+    : `\nAUDITORIA DO SITE: site com boa presença digital (score ${site_audit_score}/100)`;
+
   return `Analise a empresa abaixo e gere o briefing de prospecção.
 
 EMPRESA: ${lead.company_name}
 SEGMENTO: ${lead.icp_segments?.display_name ?? 'não identificado'}
 CANAL DE CONTATO: ${lead.contact_channel}
 DOR PROVÁVEL DO SEGMENTO: ${lead.icp_segments?.pain_description ?? lead.probable_pain ?? 'não identificada'}
+${auditNote}
 
 CONTEXTO COLETADO:
-${context.website_text ? `Site institucional (primeiros 3000 caracteres):\n${context.website_text}` : 'Site não disponível'}
+${context.website_text ? `Site institucional (primeiros 3000 caracteres):\n${context.website_text}` : 'Site não disponível ou inacessível'}
 
 Gere o briefing no JSON:
 {
