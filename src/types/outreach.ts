@@ -51,6 +51,7 @@ export interface OutreachLead {
   icp_segments?: IcpSegment;
   lead_briefings?: LeadBriefing;
   outreach_messages?: OutreachMessage[];
+  site_proposals?: SiteProposal;
 }
 
 export interface OutreachMessage {
@@ -79,6 +80,19 @@ export interface LeadBriefing {
   sources_analyzed: string[];
   generated_at: string;
   model_used: string;
+  site_audit_score: number | null;
+  redesign_signals: string[];
+}
+
+export interface SiteProposal {
+  id: string;
+  lead_id: string;
+  prd_text: string;
+  lovable_url: string;
+  redesign_signals: string[];
+  site_audit_score: number;
+  status: 'ready' | 'sent' | 'rejected';
+  generated_at: string;
 }
 
 export interface ProspectorPayload {
