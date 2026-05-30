@@ -77,5 +77,34 @@ serve(async (req) => {
   }
 
   console.log(`[sdr-daily] analyzed ${analyzed} leads`);
-  return jsonResponse({ prospected, analyzed, segment_name, location });
+
+  // Step 3: Site Builder — gerar PRD Lovable para leads briefados com site fraco
+  const { data: briefedLeads } = await db
+    .from('outreach_leads')
+    .select('id, lead_briefings(site_audit_score)')
+    .eq('status', 'briefed')
+    .order('created_at', { ascending: false })
+    .limit(analyst_top_n);
+
+  let siteBuilt = 0;
+  for (const lead of briefedLeads ?? []) {
+    const briefings = lead.lead_briefings as Array<{ site_audit_score: number | null }> | null;
+    const auditScore = Array.isArray(briefings) ? (briefings[0]?.site_audit_score ?? 0) : 0;
+    if (auditScore >= 60) continue;
+
+    try {
+      await fetch(`${fnBase}/sdr-site-builder`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ lead_id: lead.id }),
+      });
+      siteBuilt++;
+      await new Promise((r) => setTimeout(r, 1500));
+    } catch (e) {
+      console.error(`[sdr-daily] site-builder error for lead ${lead.id}:`, e);
+    }
+  }
+
+  console.log(`[sdr-daily] site proposals generated: ${siteBuilt}`);
+  return jsonResponse({ prospected, analyzed, siteBuilt, segment_name, location });
 });
