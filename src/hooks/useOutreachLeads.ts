@@ -27,7 +27,8 @@ export function useOutreachLeads(filters?: { status?: LeadStatus; segment_id?: s
           *,
           icp_segments(*),
           lead_briefings(*),
-          outreach_messages(*)
+          outreach_messages(*),
+          site_proposals(*)
         `)
         .order('heat_score', { ascending: false })
         .order('created_at', { ascending: false });

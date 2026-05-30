@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOutreachLeads, useIcpSegments, useTriggerAnalysis } from '@/hooks/useOutreachLeads';
 import { OutreachApprovalCard } from './OutreachApprovalCard';
-import type { OutreachLead, LeadStatus } from '@/types/outreach';
+import { ExternalLink } from 'lucide-react';
+import type { OutreachLead, LeadStatus, SiteProposal } from '@/types/outreach';
 import { OutreachResponsesPanel } from './OutreachResponsesPanel';
 import { usePendingResponses } from '@/hooks/useOutreachResponses';
 
@@ -154,6 +155,17 @@ export function OutreachLeadsTab() {
                 )}
               </div>
               <OutreachApprovalCard lead={selectedLead} />
+              {selectedLead?.site_proposals && (
+                <a
+                  href={(selectedLead.site_proposals as SiteProposal).lovable_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Ver protótipo no Lovable
+                </a>
+              )}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
