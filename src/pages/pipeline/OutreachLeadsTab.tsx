@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOutreachLeads, useIcpSegments, useTriggerAnalysis } from '@/hooks/useOutreachLeads';
 import { OutreachApprovalCard } from './OutreachApprovalCard';
-import { ExternalLink } from 'lucide-react';
+import { CampaignDispatchDialog } from './CampaignDispatchDialog';
+import { ExternalLink, Send } from 'lucide-react';
 import type { OutreachLead, LeadStatus, SiteProposal } from '@/types/outreach';
 import { OutreachResponsesPanel } from './OutreachResponsesPanel';
 import { usePendingResponses } from '@/hooks/useOutreachResponses';
@@ -40,6 +41,7 @@ const STATUS_VARIANTS: Record<LeadStatus, 'default' | 'secondary' | 'outline' | 
 export function OutreachLeadsTab() {
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<OutreachLead | null>(null);
+  const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
   const { data: pendingResponses = [] } = usePendingResponses();
 
   const { data: leads = [], isLoading } = useOutreachLeads(
@@ -48,21 +50,41 @@ export function OutreachLeadsTab() {
   const { data: segments = [] } = useIcpSegments();
   const triggerAnalysis = useTriggerAnalysis();
 
+  const draftLeads = leads.filter(
+    (l) => l.outreach_messages?.[0]?.status === 'draft'
+  );
+  const draftLeadIds = draftLeads.map((l) => l.id);
+
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Leads SDR Outbound</h2>
-        <Select value={segmentFilter} onValueChange={setSegmentFilter}>
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder="Todos os segmentos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os segmentos</SelectItem>
-            {segments.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          {draftLeadIds.length > 0 && (
+            <Button
+              size="sm"
+              onClick={() => setCampaignDialogOpen(true)}
+              className="gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Disparar campanha
+              <Badge variant="secondary" className="ml-1 h-4 text-xs">
+                {draftLeadIds.length}
+              </Badge>
+            </Button>
+          )}
+          <Select value={segmentFilter} onValueChange={setSegmentFilter}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Todos os segmentos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os segmentos</SelectItem>
+              {segments.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -134,6 +156,13 @@ export function OutreachLeadsTab() {
         </div>
         <OutreachResponsesPanel />
       </div>
+
+      <CampaignDispatchDialog
+        open={campaignDialogOpen}
+        onClose={() => setCampaignDialogOpen(false)}
+        draftLeadIds={draftLeadIds}
+        draftLeadCount={draftLeadIds.length}
+      />
 
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
         <DialogContent className="max-w-lg">
