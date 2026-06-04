@@ -1,27 +1,33 @@
 -- supabase/migrations/20260604_marketing_squad.sql
 
-create type marketing_pilar as enum (
-  'resultado_ia',
-  'educacao_pratica',
-  'bastidores',
-  'posicionamento',
-  'comercial'
-);
+do $$ begin
+  create type marketing_pilar as enum (
+    'resultado_ia',
+    'educacao_pratica',
+    'bastidores',
+    'posicionamento',
+    'comercial'
+  );
+exception when duplicate_object then null; end $$;
 
-create type marketing_status as enum (
-  'generated',
-  'approved',
-  'rejected',
-  'published'
-);
+do $$ begin
+  create type marketing_status as enum (
+    'generated',
+    'approved',
+    'rejected',
+    'published'
+  );
+exception when duplicate_object then null; end $$;
 
-create type marketing_platform as enum (
-  'linkedin',
-  'instagram',
-  'whatsapp'
-);
+do $$ begin
+  create type marketing_platform as enum (
+    'linkedin',
+    'instagram',
+    'whatsapp'
+  );
+exception when duplicate_object then null; end $$;
 
-create table marketing_drafts (
+create table if not exists marketing_drafts (
   id                uuid primary key default gen_random_uuid(),
   title             text not null,
   content           text not null,
@@ -38,6 +44,11 @@ create table marketing_drafts (
 
 alter table marketing_drafts enable row level security;
 
-create policy "marketing admin only"
+create policy "marketing_admin_only"
   on marketing_drafts for all
-  using (auth.jwt() ->> 'role' = 'admin');
+  to authenticated
+  using (public.has_role(auth.uid(), 'admin'))
+  with check (public.has_role(auth.uid(), 'admin'));
+
+create index if not exists idx_marketing_drafts_status on marketing_drafts(status);
+create index if not exists idx_marketing_drafts_created_at on marketing_drafts(created_at desc);
