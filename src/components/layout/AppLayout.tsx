@@ -12,6 +12,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/projetos": "Projetos",
   "/config": "Configurações",
   "/dashboard": "Dashboard",
+  "/marketing": "Marketing",
 };
 
 function usePageTitle(): string {

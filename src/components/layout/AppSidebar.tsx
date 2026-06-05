@@ -1,6 +1,6 @@
 import {
   Home, Briefcase, Users, BarChart3, Settings as SettingsIcon,
-  LogOut, ChevronRight, Sun, Moon, FolderKanban, Building2,
+  LogOut, ChevronRight, Sun, Moon, FolderKanban, Building2, Megaphone,
 } from "lucide-react";
 import { IntelliXBrand } from "@/components/brand/IntelliXBrand";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ const navItems: { to: string; label: string; icon: any; badge?: BadgeKey; end?: 
   { to: "/projetos",    label: "Projetos",          icon: FolderKanban },
   { to: "/squad",       label: "Squad",             icon: Users },
   { to: "/escritorio",  label: "Escritório virtual", icon: Building2 },
+  { to: "/marketing",   label: "Marketing",          icon: Megaphone },
   { to: "/metrics",     label: "Métricas",          icon: BarChart3 },
   { to: "/settings",    label: "Configurações",     icon: SettingsIcon },
 ];

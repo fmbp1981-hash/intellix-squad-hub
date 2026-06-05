@@ -44,3 +44,12 @@ verify_jwt = false
 
 [functions.sdr-responder]
 verify_jwt = false
+
+[functions.marketing-ideator]
+verify_jwt = false
+
+[functions.marketing-writer]
+verify_jwt = false
+
+[functions.marketing-orchestrator]
+verify_jwt = false
