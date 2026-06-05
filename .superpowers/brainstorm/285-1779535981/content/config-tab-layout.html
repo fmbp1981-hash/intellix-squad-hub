@@ -1,0 +1,70 @@
+<h2>WhatsApp Config Tab — Layout</h2>
+<p class="subtitle">Como a tela de configuração aparece dentro de /config. Escolha a abordagem.</p>
+
+<div class="options" style="margin-top: 24px;">
+
+  <!-- Option A -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Seletor de provider + formulário dinâmico</h3>
+      <p>Usuário escolhe o provider (Evolution / WhatsApp Business) e o formulário abaixo muda dinamicamente para mostrar os campos corretos. Uma só tela.</p>
+      <div style="margin-top: 12px; background: #0f172a; border-radius: 8px; padding: 12px; font-size: 12px; font-family: monospace;">
+        <div style="color: #94a3b8; margin-bottom: 8px;">[ Evolution API ] &nbsp; [ WhatsApp Business ]</div>
+        <div style="color: #64748b;">━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+        <div style="color: #e2e8f0; margin-top: 8px;">URL da instância: ___________</div>
+        <div style="color: #e2e8f0;">API Key: ___________</div>
+        <div style="color: #e2e8f0;">Nome da instância: ___________</div>
+        <div style="margin-top: 8px; color: #7c3aed;">[ Testar conexão ] &nbsp; [ Salvar ]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Cards de provider com status</h3>
+      <p>Dois cards lado a lado — Evolution API e WhatsApp Business. Cada card tem status (configurado/pendente), botão de configurar, e o card ativo fica destacado com um badge "Em uso".</p>
+      <div style="margin-top: 12px; background: #0f172a; border-radius: 8px; padding: 12px; font-size: 12px; display: flex; gap: 8px;">
+        <div style="flex: 1; border: 1px solid #7c3aed; border-radius: 6px; padding: 8px;">
+          <div style="color: #7c3aed; font-weight: 700;">Evolution API</div>
+          <div style="color: #6ee7b7; font-size: 11px;">● Em uso</div>
+          <div style="color: #64748b; margin-top: 4px;">WA-Pessoal</div>
+          <div style="color: #7c3aed; margin-top: 8px; font-size: 11px;">[ Editar ]</div>
+        </div>
+        <div style="flex: 1; border: 1px solid #334155; border-radius: 6px; padding: 8px;">
+          <div style="color: #94a3b8; font-weight: 700;">WhatsApp Business</div>
+          <div style="color: #64748b; font-size: 11px;">○ Não configurado</div>
+          <div style="color: #475569; margin-top: 4px;">—</div>
+          <div style="color: #64748b; margin-top: 8px; font-size: 11px;">[ Configurar ]</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Wizard em etapas</h3>
+      <p>Fluxo guiado: Etapa 1 escolhe provider → Etapa 2 preenche credenciais → Etapa 3 testa conexão e mostra URL do webhook. Mais simples para primeira configuração, mais cliques para reconfigurar.</p>
+      <div style="margin-top: 12px; background: #0f172a; border-radius: 8px; padding: 12px; font-size: 12px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+          <span style="background: #7c3aed; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">1</span>
+          <span style="color: #64748b;">──────</span>
+          <span style="border: 1px solid #334155; color: #475569; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">2</span>
+          <span style="color: #64748b;">──────</span>
+          <span style="border: 1px solid #334155; color: #475569; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">3</span>
+        </div>
+        <div style="color: #e2e8f0;">Escolha o provider:</div>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <div style="border: 1px solid #7c3aed; border-radius: 6px; padding: 6px 12px; color: #a78bfa; font-size: 11px;">Evolution API</div>
+          <div style="border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; color: #64748b; font-size: 11px;">WhatsApp Business</div>
+        </div>
+        <div style="color: #7c3aed; margin-top: 10px; font-size: 11px;">[ Próximo → ]</div>
+      </div>
+    </div>
+  </div>
+
+</div>

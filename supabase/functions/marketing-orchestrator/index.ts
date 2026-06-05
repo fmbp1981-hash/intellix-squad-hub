@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { adminClient } from "../_shared/auth.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const RequestSchema = z.object({
@@ -18,9 +19,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  // Auth is handled by Supabase JWT (verify_jwt = true in config.toml)
-  // MARKETING_API_KEY is used only for internal function-to-function calls below
-
+  // Auth via Supabase JWT (verify_jwt = true)
   const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
 
@@ -33,61 +32,68 @@ Deno.serve(async (req) => {
   const internalHeaders = { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` };
 
   const dayOfWeek = new Date().getDay();
-  const researchQuery = MARKETING_TOPICS[dayOfWeek % MARKETING_TOPICS.length];
+  const researchQuery = theme_prompt ?? MARKETING_TOPICS[dayOfWeek % MARKETING_TOPICS.length];
 
-  console.log(`[marketing-orchestrator] mode=${trigger_mode} query="${researchQuery}" theme="${theme_prompt ?? "none"}"`);
+  console.log(`[orchestrator] mode=${trigger_mode} query="${researchQuery}"`);
 
   // Step 1: Research
   let snippets: unknown[] = [];
   try {
-    const researchRes = await fetch(`${fnBase}/marketing-researcher`, {
+    const res = await fetch(`${fnBase}/marketing-researcher`, {
       method: "POST",
       headers: internalHeaders,
       body: JSON.stringify({ query: researchQuery, theme_prompt }),
     });
-    const researchData = await researchRes.json() as { snippets?: unknown[] };
-    snippets = researchData.snippets ?? [];
-    console.log(`[marketing-orchestrator] ${snippets.length} snippets collected`);
+    const data = await res.json() as { snippets?: unknown[] };
+    snippets = data.snippets ?? [];
   } catch (e) {
-    console.error("[marketing-orchestrator] researcher error:", e);
+    console.error("[orchestrator] researcher error:", e);
   }
 
-  // Step 2: Ideate
+  // Step 2: Ideate — generates 3 ideas
   let ideas: Array<{ title: string; pilar: string; angle: string; platform: string }> = [];
   try {
-    const ideaRes = await fetch(`${fnBase}/marketing-ideator`, {
+    const res = await fetch(`${fnBase}/marketing-ideator`, {
       method: "POST",
       headers: internalHeaders,
       body: JSON.stringify({ snippets, theme_prompt, platform }),
     });
-    const ideaData = await ideaRes.json() as { ideas?: typeof ideas };
-    ideas = ideaData.ideas ?? [];
-    console.log(`[marketing-orchestrator] ${ideas.length} ideas generated`);
+    const data = await res.json() as { ideas?: typeof ideas };
+    ideas = data.ideas ?? [];
   } catch (e) {
-    console.error("[marketing-orchestrator] ideator error:", e);
+    console.error("[orchestrator] ideator error:", e);
   }
 
-  if (ideas.length === 0) {
-    return jsonResponse({ error: "no_ideas_generated" }, 500);
+  if (ideas.length === 0) return jsonResponse({ error: "no_ideas_generated" }, 500);
+
+  // Step 3: Save ideas as idea_pending — user approves before content is generated
+  const db = adminClient();
+  const topSnippets = (snippets as Array<{ source: string; url: string; title: string; snippet: string }>)
+    .slice(0, 3)
+    .map((s) => ({ source: s.source, url: s.url, title: s.title }));
+
+  const rows = ideas.map((idea) => ({
+    title: idea.title,
+    angle: idea.angle,
+    pilar: idea.pilar,
+    platform: idea.platform,
+    status: "idea_pending" as const,
+    theme_prompt: theme_prompt ?? null,
+    research_snippets: topSnippets,
+    trigger_mode,
+    content: "",
+  }));
+
+  const { data: saved, error } = await db
+    .from("marketing_drafts")
+    .insert(rows)
+    .select("id");
+
+  if (error) {
+    console.error("[orchestrator] DB insert error", error);
+    return jsonResponse({ error: "db_insert_failed" }, 500);
   }
 
-  // Step 3: Write each idea (sequential to avoid OpenAI rate limit)
-  const draftIds: string[] = [];
-  for (const idea of ideas) {
-    try {
-      const writeRes = await fetch(`${fnBase}/marketing-writer`, {
-        method: "POST",
-        headers: internalHeaders,
-        body: JSON.stringify({ idea, snippets, theme_prompt, trigger_mode }),
-      });
-      const writeData = await writeRes.json() as { draft_id?: string };
-      if (writeData.draft_id) draftIds.push(writeData.draft_id);
-      await new Promise((r) => setTimeout(r, 1500));
-    } catch (e) {
-      console.error("[marketing-orchestrator] writer error:", e);
-    }
-  }
-
-  console.log(`[marketing-orchestrator] done — ${draftIds.length} drafts saved`);
-  return jsonResponse({ success: true, drafts_created: draftIds.length, draft_ids: draftIds });
+  console.log(`[orchestrator] ${saved?.length ?? 0} ideas saved as idea_pending`);
+  return jsonResponse({ success: true, ideas_created: saved?.length ?? 0, idea_ids: saved?.map((r: { id: string }) => r.id) ?? [] });
 });

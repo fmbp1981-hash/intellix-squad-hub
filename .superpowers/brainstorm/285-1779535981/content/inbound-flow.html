@@ -1,0 +1,82 @@
+<h2>Fluxo Inbound WhatsApp — Fase D</h2>
+<p class="subtitle">Valide se esse é o fluxo correto antes de prosseguirmos com o design</p>
+
+<div class="section" style="margin-top: 24px;">
+  <div style="display: flex; flex-direction: column; gap: 0; align-items: center; max-width: 680px; margin: 0 auto;">
+
+    <!-- Step 1 -->
+    <div style="background: #1e293b; border: 1.5px solid #334155; border-radius: 12px; padding: 18px 24px; width: 100%; display: flex; align-items: center; gap: 16px;">
+      <div style="background: #7c3aed; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">💬</div>
+      <div>
+        <div style="font-weight: 700; color: #f1f5f9; font-size: 15px;">Lead envia mensagem no WhatsApp</div>
+        <div style="color: #94a3b8; font-size: 13px; margin-top: 2px;">Qualquer número configurado (Evolution API ou WhatsApp Business)</div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="color: #475569; font-size: 22px; line-height: 1; padding: 4px 0;">↓</div>
+
+    <!-- Step 2 -->
+    <div style="background: #1e293b; border: 1.5px solid #00897B; border-radius: 12px; padding: 18px 24px; width: 100%; display: flex; align-items: center; gap: 16px;">
+      <div style="background: #00897B; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">🤖</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 700; color: #f1f5f9; font-size: 15px;">Bia — SDR (qualificação BANT)</div>
+        <div style="color: #94a3b8; font-size: 13px; margin-top: 2px;">Responde automaticamente, faz perguntas de qualificação, identifica Budget · Authority · Need · Timeline</div>
+        <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="background: #134e4a; color: #6ee7b7; border-radius: 4px; padding: 2px 8px; font-size: 11px;">Lead não qualificado → Bia continua</span>
+          <span style="background: #134e4a; color: #6ee7b7; border-radius: 4px; padding: 2px 8px; font-size: 11px;">Lead qualificado → passa para Carlos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="color: #475569; font-size: 22px; line-height: 1; padding: 4px 0;">↓</div>
+
+    <!-- Step 3 -->
+    <div style="background: #1e293b; border: 1.5px solid #10b981; border-radius: 12px; padding: 18px 24px; width: 100%; display: flex; align-items: center; gap: 16px;">
+      <div style="background: #10b981; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">🧠</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 700; color: #f1f5f9; font-size: 15px;">Carlos — Estrategista Pre-Sales</div>
+        <div style="color: #94a3b8; font-size: 13px; margin-top: 2px;">Aprofunda contexto, monta proposta pré-liminar, faz follow-up e <strong style="color: #f1f5f9;">agenda reunião com Felipe</strong></div>
+        <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="background: #064e3b; color: #6ee7b7; border-radius: 4px; padding: 2px 8px; font-size: 11px;">Reunião agendada → notifica Felipe</span>
+          <span style="background: #064e3b; color: #6ee7b7; border-radius: 4px; padding: 2px 8px; font-size: 11px;">Sem resposta D+10 → "Proposta em espera"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="color: #475569; font-size: 22px; line-height: 1; padding: 4px 0;">↓</div>
+
+    <!-- Step 4 -->
+    <div style="background: #1e293b; border: 1.5px solid #fbbf24; border-radius: 12px; padding: 18px 24px; width: 100%; display: flex; align-items: center; gap: 16px;">
+      <div style="background: #fbbf24; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">👤</div>
+      <div>
+        <div style="font-weight: 700; color: #f1f5f9; font-size: 15px;">Felipe — Sócio</div>
+        <div style="color: #94a3b8; font-size: 13px; margin-top: 2px;">Recebe notificação no sistema com resumo do lead + proposta pré-liminar do Carlos. Conduz a reunião e fecha o negócio.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>Esse fluxo está correto?</h3>
+  <p class="subtitle">Clique para confirmar ou sinalizar o que precisa mudar</p>
+  <div class="options">
+    <div class="option" data-choice="correct" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content">
+        <h3>Correto — pode prosseguir</h3>
+        <p>Bia qualifica → Carlos aquece e agenda → Felipe fecha</p>
+      </div>
+    </div>
+    <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+      <div class="letter">~</div>
+      <div class="content">
+        <h3>Quase — precisa de ajuste</h3>
+        <p>Falarei no terminal o que precisa mudar</p>
+      </div>
+    </div>
+  </div>
+</div>
