@@ -16,6 +16,7 @@ export interface MarketingDraft {
   theme_prompt: string | null;
   research_snippets: Array<{ source: string; url: string; title: string }> | null;
   trigger_mode: string;
+  image_url: string | null;
   approved_at: string | null;
   published_at: string | null;
   created_at: string;

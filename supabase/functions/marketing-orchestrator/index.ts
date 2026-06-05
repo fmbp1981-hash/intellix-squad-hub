@@ -18,11 +18,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  const apiKey = Deno.env.get("MARKETING_API_KEY") ?? "";
-  const auth = req.headers.get("Authorization") ?? "";
-  if (!apiKey || auth !== `Bearer ${apiKey}`) {
-    return jsonResponse({ error: "unauthorized" }, 401);
-  }
+  // Auth is handled by Supabase JWT (verify_jwt = true in config.toml)
+  // MARKETING_API_KEY is used only for internal function-to-function calls below
 
   const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
@@ -31,8 +28,9 @@ Deno.serve(async (req) => {
   const trigger_mode = theme_prompt ? "manual" : "scheduled";
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const apiKey = Deno.env.get("MARKETING_API_KEY") ?? "";
   const fnBase = `${supabaseUrl}/functions/v1`;
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` };
+  const internalHeaders = { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` };
 
   const dayOfWeek = new Date().getDay();
   const researchQuery = MARKETING_TOPICS[dayOfWeek % MARKETING_TOPICS.length];
@@ -44,7 +42,7 @@ Deno.serve(async (req) => {
   try {
     const researchRes = await fetch(`${fnBase}/marketing-researcher`, {
       method: "POST",
-      headers,
+      headers: internalHeaders,
       body: JSON.stringify({ query: researchQuery, theme_prompt }),
     });
     const researchData = await researchRes.json() as { snippets?: unknown[] };
@@ -59,7 +57,7 @@ Deno.serve(async (req) => {
   try {
     const ideaRes = await fetch(`${fnBase}/marketing-ideator`, {
       method: "POST",
-      headers,
+      headers: internalHeaders,
       body: JSON.stringify({ snippets, theme_prompt, platform }),
     });
     const ideaData = await ideaRes.json() as { ideas?: typeof ideas };
@@ -79,7 +77,7 @@ Deno.serve(async (req) => {
     try {
       const writeRes = await fetch(`${fnBase}/marketing-writer`, {
         method: "POST",
-        headers,
+        headers: internalHeaders,
         body: JSON.stringify({ idea, snippets, theme_prompt, trigger_mode }),
       });
       const writeData = await writeRes.json() as { draft_id?: string };

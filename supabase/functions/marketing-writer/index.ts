@@ -37,6 +37,51 @@ const pilarContext: Record<string, string> = {
   comercial: "Apresente produto/Virada de forma honesta. Benefício > feature. CTA direto.",
 };
 
+async function generateImage(openaiKey: string, title: string, pilar: string): Promise<string | null> {
+  const styleByPilar: Record<string, string> = {
+    resultado_ia: "clean data visualization aesthetic, modern dashboard, teal and dark blue tones",
+    educacao_pratica: "minimalist educational infographic style, clean typography, soft purple gradient",
+    bastidores: "authentic behind-the-scenes tech workspace, dark moody lighting, developer aesthetic",
+    posicionamento: "bold typographic poster, high contrast black and white, strong geometric shapes",
+    comercial: "modern SaaS product visual, gradient purple to blue, professional and sleek",
+  };
+
+  const style = styleByPilar[pilar] ?? "modern tech business illustration, dark theme, purple accents";
+  const prompt = `Professional social media cover image for a B2B AI consulting company post about: "${title}". Style: ${style}. No text overlay. Aspect ratio 1:1. Clean, minimal, modern.`;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: "dall-e-3",
+        prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json",
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("[marketing-writer] DALL-E error", res.status, await res.text());
+      return null;
+    }
+
+    const data = await res.json() as { data: Array<{ b64_json: string }> };
+    return data.data?.[0]?.b64_json ?? null;
+  } catch (e) {
+    console.error("[marketing-writer] image generation error:", e);
+    return null;
+  }
+}
+
+function b64ToUint8Array(b64: string): Uint8Array {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
@@ -112,6 +157,7 @@ Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
     title: s.title,
   }));
 
+  // Insert draft first to get the ID
   const { data: draft, error } = await db
     .from("marketing_drafts")
     .insert({
@@ -132,6 +178,30 @@ Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
     return jsonResponse({ error: "db_insert_failed" }, 500);
   }
 
-  console.log(`[marketing-writer] draft saved id=${draft.id} pilar=${idea.pilar} platform=${idea.platform}`);
-  return jsonResponse({ success: true, draft_id: draft.id });
+  // Generate image async — don't block draft creation
+  let imageUrl: string | null = null;
+  try {
+    const b64 = await generateImage(openaiKey, idea.title, idea.pilar);
+    if (b64) {
+      const imageBytes = b64ToUint8Array(b64);
+      const path = `marketing/${draft.id}.png`;
+      const { error: uploadError } = await db.storage
+        .from("assets")
+        .upload(path, imageBytes, { contentType: "image/png", upsert: true });
+
+      if (!uploadError) {
+        const { data: urlData } = db.storage.from("assets").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+        await db.from("marketing_drafts").update({ image_url: imageUrl }).eq("id", draft.id);
+        console.log(`[marketing-writer] image uploaded → ${imageUrl}`);
+      } else {
+        console.error("[marketing-writer] storage upload error:", uploadError);
+      }
+    }
+  } catch (e) {
+    console.error("[marketing-writer] image pipeline error (non-fatal):", e);
+  }
+
+  console.log(`[marketing-writer] draft saved id=${draft.id} pilar=${idea.pilar} platform=${idea.platform} image=${imageUrl ? "yes" : "no"}`);
+  return jsonResponse({ success: true, draft_id: draft.id, image_url: imageUrl });
 });

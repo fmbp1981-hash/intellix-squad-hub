@@ -72,6 +72,15 @@ export function MarketingDraftCard({ draft }: Props) {
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {draft.image_url && (
+          <img
+            src={draft.image_url}
+            alt={draft.title}
+            className="w-full rounded-md object-cover"
+            style={{ maxHeight: 220 }}
+          />
+        )}
+
         <div className="rounded-md bg-muted/40 p-3">
           <p className="whitespace-pre-wrap text-sm leading-relaxed">
             {expanded ? draft.content : previewText}
