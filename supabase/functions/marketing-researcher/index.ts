@@ -31,11 +31,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const apiKey = Deno.env.get("MARKETING_API_KEY") ?? "";
   const auth = req.headers.get("Authorization") ?? "";
-  if (!serviceKey || auth !== `Bearer ${serviceKey}`) {
+  if (!apiKey || auth !== `Bearer ${apiKey}`) {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
+
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
   const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
