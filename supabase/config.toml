@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.marketing-researcher]
 verify_jwt = false
+
+[functions.sdr-responder]
+verify_jwt = false

@@ -31,6 +31,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!serviceKey || auth !== `Bearer ${serviceKey}`) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+
   const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
 
@@ -38,7 +44,7 @@ Deno.serve(async (req) => {
   const searchQuery = theme_prompt ? `${theme_prompt} ${query}` : query;
 
   const [knowledgeSnippets, perplexitySnippets, linkedinSnippets] = await Promise.allSettled([
-    searchKnowledge(searchQuery),
+    searchKnowledge(searchQuery, serviceKey),
     searchPerplexity(searchQuery),
     searchLinkedin(searchQuery),
   ]);
@@ -54,9 +60,8 @@ Deno.serve(async (req) => {
   return jsonResponse({ success: true, snippets, total: snippets.length });
 });
 
-async function searchKnowledge(query: string): Promise<ResearchSnippet[]> {
+async function searchKnowledge(query: string, serviceKey: string): Promise<ResearchSnippet[]> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const res = await fetch(`${supabaseUrl}/functions/v1/knowledge-search`, {
     method: "POST",
     headers: {
