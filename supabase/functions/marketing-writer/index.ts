@@ -188,6 +188,13 @@ Palavras-gatilho sugeridas: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
 ${formatGuidance}
 ${idea.platform !== "whatsapp" ? `\n${platformGuidance[idea.platform]}` : ""}`;
 
+  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7 };
+  const isCarousel = idea.platform === "instagram";
+  const slideInstruction = isCarousel
+    ? `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).
+Cada slide: máximo 4 linhas de texto. Slide 1 = gancho. Slides 2-${SLIDE_COUNT[format] - 2} = desenvolvimento. Slide ${SLIDE_COUNT[format] - 1} = virada/síntese. Slide ${SLIDE_COUNT[format]} = CTA com palavra-gatilho em MAIÚSCULAS.`
+    : "Escreva APENAS o post final, sem comentários ou explicações adicionais.";
+
   const userPrompt = `Escreva um post completo para ${idea.platform} sobre:
 Título: ${idea.title}
 Ângulo: ${idea.angle}
@@ -197,7 +204,7 @@ Tipo de conteúdo: ${idea.content_type}
 ${contextText ? `Contexto de pesquisa:\n${contextText}` : ""}
 ${theme_prompt ? `\nTema solicitado: "${theme_prompt}"` : ""}
 
-Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
+${slideInstruction}`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

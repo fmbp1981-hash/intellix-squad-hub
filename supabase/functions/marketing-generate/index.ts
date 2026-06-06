@@ -174,6 +174,13 @@ Palavras-gatilho sugeridas: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
 ${formatGuidance}
 ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` : ""}`;
 
+  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7 };
+  const isCarousel = draft.platform === "instagram";
+  const slideInstruction = isCarousel
+    ? `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).
+Cada slide: máximo 4 linhas de texto. Slide 1 = gancho. Slides 2-${SLIDE_COUNT[format] - 2} = desenvolvimento. Slide ${SLIDE_COUNT[format] - 1} = virada/síntese. Slide ${SLIDE_COUNT[format]} = CTA com palavra-gatilho em MAIÚSCULAS.`
+    : "Escreva o post final em texto corrido.";
+
   const userPrompt = `Escreva o post:
 Título: ${draft.title}
 Ângulo: ${draft.angle ?? ""}
@@ -182,7 +189,7 @@ Tipo: ${draft.content_type ?? "informational"}
 ${contextText ? `\nContexto:\n${contextText}` : ""}
 ${draft.theme_prompt ? `\nTema: "${draft.theme_prompt}"` : ""}
 
-Escreva APENAS o post final.`;
+${slideInstruction}`;
 
   const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
