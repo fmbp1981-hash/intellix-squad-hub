@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
-import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, ContentFormat } from "../_shared/brand-context.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, CAPTION_STRATEGY, ContentFormat } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const IdeaSchema = z.object({
@@ -151,13 +151,37 @@ Deno.serve(async (req) => {
   const format = pickFormat(idea.pilar, idea.platform);
   const formatGuidance = buildFormatGuidance(format, idea.platform);
 
+  const pilarCtx = PILAR_CONTEXT[idea.pilar];
+  const formatDef = CONTENT_FORMATS[format];
+  const captionGuide = idea.platform === "linkedin"
+    ? CAPTION_STRATEGY.b2b.slice(0, 3).join(" | ")
+    : CAPTION_STRATEGY.b2c.slice(0, 3).join(" | ");
+
   const systemPrompt = `Você é o redator de conteúdo da IntelliX.AI.
 
 ${buildBrandSystemBlock()}
 
+## Técnicas de copy obrigatórias para este post (Formato ${format} — ${formatDef.name})
+${formatDef.copyTechniques.slice(0, 4).map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+## Estrutura slide a slide
+${formatDef.structure.map((s) => `• ${s}`).join("\n")}
+
+## Exemplos de hook adaptados para IntelliX
+${pilarCtx.hooks.map((h) => `→ "${h}"`).join("\n")}
+
+## Identidade visual do formato
+${formatDef.visualStyle}
+
+## Estratégia de legenda (${idea.platform})
+${captionGuide}
+Palavras-gatilho sugeridas: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
+
 ## Diretrizes de escrita
-- Tom: ${buildBrandSystemBlock().split("\n")[4]}
-- Nunca use adjetivos vagos — prefira números e fatos verificáveis.
+- Voz coloquial brasileira inteligente: use "pra", "tá", "ninguém te conta" quando soar natural.
+- Frases curtas — máximo 2 linhas por parágrafo.
+- Nunca comece com "Olá" ou introdução — vá direto ao gancho.
+- Prefira números reais a adjetivos vagos.
 - Sentence case em PT-BR sempre.
 
 ## Formato e plataforma

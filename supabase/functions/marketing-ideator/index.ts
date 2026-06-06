@@ -1,5 +1,5 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { buildBrandSystemBlock, HOOK_TEMPLATES, PILAR_CONTEXT, CONTENT_MIX } from "../_shared/brand-context.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_MIX, CONTENT_FORMATS, CAPTION_STRATEGY } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const SnippetSchema = z.object({
@@ -61,33 +61,31 @@ Deno.serve(async (req) => {
     .map((s, i) => `[${i + 1}] ${s.title}\n${s.snippet}`)
     .join("\n\n");
 
-  const hookSamples = Object.entries(HOOK_TEMPLATES)
-    .map(([pilar, hooks]) => `${pilar}:\n  - ${hooks[0]}`)
+  const hookSamples = Object.entries(PILAR_CONTEXT)
+    .map(([pilar, ctx]) => `${pilar}: ${ctx.hooks[0]}`)
     .join("\n");
 
   const systemPrompt = `Você é o estrategista de conteúdo da IntelliX.AI.
 
 ${buildBrandSystemBlock()}
 
-## Pilares e distribuição obrigatória
-- resultado_ia: 30% — ${PILAR_CONTEXT.resultado_ia}
-- educacao_pratica: 25% — ${PILAR_CONTEXT.educacao_pratica}
-- bastidores: 20% — ${PILAR_CONTEXT.bastidores}
-- posicionamento: 15% — ${PILAR_CONTEXT.posicionamento}
-- comercial: 10% — ${PILAR_CONTEXT.comercial}
+## Pilares, distribuição e formato recomendado
+- resultado_ia (40%): ${PILAR_CONTEXT.resultado_ia.description} → Formato ${PILAR_CONTEXT.resultado_ia.format}
+- bastidores (incluído nos 40%): ${PILAR_CONTEXT.bastidores.description} → Formato ${PILAR_CONTEXT.bastidores.format}
+- posicionamento (20%): ${PILAR_CONTEXT.posicionamento.description} → Formato ${PILAR_CONTEXT.posicionamento.format}
+- educacao_pratica (10%): ${PILAR_CONTEXT.educacao_pratica.description} → Formato ${PILAR_CONTEXT.educacao_pratica.format}
+- comercial (20%): ${PILAR_CONTEXT.comercial.description} → Formato ${PILAR_CONTEXT.comercial.format}
 
-## Mix de conteúdo
-- ${CONTENT_MIX.informational.range} dos posts = informacional (sem imagem obrigatória)
-- ${CONTENT_MIX.withImage.range} = com imagem (promoção, Virada, brand)
-
-## Tipos de conteúdo
-- informational: educação, bastidores, posicionamento — needs_image: false
-- product_promotion: cases com marca cliente, produtos IntelliX — needs_image: true
+## Tipos de conteúdo e imagem
+- informational: educação, bastidores, posicionamento, notícias — needs_image: false (75-85% do total)
+- product_promotion: promoção de produto/case IntelliX com identidade visual — needs_image: true
 - virada_inteligente: Virada Inteligente exclusivamente — needs_image: true
-- news_data: baseado em dados de mercado/pesquisa — needs_image: false
+- news_data: dado/notícia de mercado de IA, sem marca — needs_image: false
 
 ## Exemplos de hooks por pilar
 ${hookSamples}
+
+## Palavras-gatilho para CTA: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
 
 Plataforma alvo: ${platform}`;
 

@@ -1,7 +1,7 @@
 // Called when user approves an idea — generates content + optional DALL-E 3 image
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
-import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, ContentFormat } from "../_shared/brand-context.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, CAPTION_STRATEGY, ContentFormat } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const RequestSchema = z.object({
@@ -139,14 +139,37 @@ Deno.serve(async (req) => {
     ? platformGuidance.whatsapp
     : `Formato ${format} — ${formatDef.name} (${formatDef.slides ?? "post único"}): ${formatDef.structure}`;
 
+  const pilarCtx = PILAR_CONTEXT[draft.pilar as keyof typeof PILAR_CONTEXT];
+  const formatDef = CONTENT_FORMATS[format];
+  const captionGuide = draft.platform === "linkedin"
+    ? CAPTION_STRATEGY.b2b.slice(0, 3).join(" | ")
+    : CAPTION_STRATEGY.b2c.slice(0, 3).join(" | ");
+
   const systemPrompt = `Você é o redator da IntelliX.AI.
 
 ${buildBrandSystemBlock()}
 
+## Técnicas de copy obrigatórias para este post (Formato ${format} — ${formatDef.name})
+${formatDef.copyTechniques.slice(0, 4).map((t: string, i: number) => `${i + 1}. ${t}`).join("\n")}
+
+## Estrutura slide a slide
+${formatDef.structure.map((s: string) => `• ${s}`).join("\n")}
+
+${pilarCtx ? `## Exemplos de hook para este pilar\n${pilarCtx.hooks.map((h: string) => `→ "${h}"`).join("\n")}` : ""}
+
+## Identidade visual do formato
+${formatDef.visualStyle}
+
+## Estratégia de legenda (${draft.platform})
+${captionGuide}
+Palavras-gatilho sugeridas: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
+
 ## Diretrizes de escrita
-- Prefira números e fatos verificáveis a adjetivos vagos.
+- Voz coloquial brasileira inteligente: use "pra", "tá", "ninguém te conta" quando soar natural.
+- Frases curtas — máximo 2 linhas por parágrafo.
+- Nunca comece com "Olá" ou introdução — vá direto ao gancho.
+- Prefira números reais a adjetivos vagos.
 - Sentence case em PT-BR sempre.
-- Nunca improvisar frases novas — use as âncoras oficiais da marca.
 
 ## Formato e plataforma
 ${formatGuidance}
