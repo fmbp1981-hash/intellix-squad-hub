@@ -137,10 +137,9 @@ Deno.serve(async (req) => {
   const formatDef = CONTENT_FORMATS[format];
   const formatGuidance = draft.platform === "whatsapp"
     ? platformGuidance.whatsapp
-    : `Formato ${format} — ${formatDef.name} (${formatDef.slides ?? "post único"}): ${formatDef.structure}`;
+    : `Formato ${format} — ${formatDef.name} (${formatDef.slides ?? "post único"})`;
 
   const pilarCtx = PILAR_CONTEXT[draft.pilar as keyof typeof PILAR_CONTEXT];
-  const formatDef = CONTENT_FORMATS[format];
   const captionGuide = draft.platform === "linkedin"
     ? CAPTION_STRATEGY.b2b.slice(0, 3).join(" | ")
     : CAPTION_STRATEGY.b2c.slice(0, 3).join(" | ");
@@ -178,7 +177,7 @@ ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` 
   const userPrompt = `Escreva o post:
 Título: ${draft.title}
 Ângulo: ${draft.angle ?? ""}
-Pilar: ${PILAR_CONTEXT[draft.pilar as keyof typeof PILAR_CONTEXT] ?? ""}
+Pilar: ${pilarCtx?.description ?? draft.pilar}
 Tipo: ${draft.content_type ?? "informational"}
 ${contextText ? `\nContexto:\n${contextText}` : ""}
 ${draft.theme_prompt ? `\nTema: "${draft.theme_prompt}"` : ""}

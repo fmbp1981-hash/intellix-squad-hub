@@ -191,7 +191,7 @@ ${idea.platform !== "whatsapp" ? `\n${platformGuidance[idea.platform]}` : ""}`;
   const userPrompt = `Escreva um post completo para ${idea.platform} sobre:
 Título: ${idea.title}
 Ângulo: ${idea.angle}
-Pilar: ${PILAR_CONTEXT[idea.pilar]}
+Pilar: ${pilarCtx?.description ?? idea.pilar}
 Tipo de conteúdo: ${idea.content_type}
 
 ${contextText ? `Contexto de pesquisa:\n${contextText}` : ""}
