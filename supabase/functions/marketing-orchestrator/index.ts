@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   }
 
   // Step 2: Ideate — generates 3 ideas
-  let ideas: Array<{ title: string; pilar: string; angle: string; platform: string }> = [];
+  let ideas: Array<{ title: string; pilar: string; angle: string; platform: string; content_type: string; needs_image: boolean }> = [];
   try {
     const res = await fetch(`${fnBase}/marketing-ideator`, {
       method: "POST",
@@ -77,6 +77,8 @@ Deno.serve(async (req) => {
     angle: idea.angle,
     pilar: idea.pilar,
     platform: idea.platform,
+    content_type: idea.content_type ?? "informational",
+    needs_image: idea.needs_image ?? false,
     status: "idea_pending" as const,
     theme_prompt: theme_prompt ?? null,
     research_snippets: topSnippets,

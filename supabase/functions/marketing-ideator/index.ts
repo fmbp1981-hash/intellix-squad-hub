@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { buildBrandSystemBlock, HOOK_TEMPLATES, PILAR_CONTEXT, CONTENT_MIX } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const SnippetSchema = z.object({
@@ -19,6 +20,8 @@ export interface PostIdea {
   pilar: "resultado_ia" | "educacao_pratica" | "bastidores" | "posicionamento" | "comercial";
   angle: string;
   platform: "linkedin" | "instagram" | "whatsapp";
+  content_type: "informational" | "product_promotion" | "virada_inteligente" | "news_data";
+  needs_image: boolean;
 }
 
 const PILAR_DISTRIBUTION: PostIdea["pilar"][] = [
@@ -27,6 +30,13 @@ const PILAR_DISTRIBUTION: PostIdea["pilar"][] = [
   "bastidores",
   "posicionamento",
   "comercial",
+];
+
+const CONTENT_TYPE_VALUES: PostIdea["content_type"][] = [
+  "informational",
+  "product_promotion",
+  "virada_inteligente",
+  "news_data",
 ];
 
 Deno.serve(async (req) => {
@@ -51,29 +61,52 @@ Deno.serve(async (req) => {
     .map((s, i) => `[${i + 1}] ${s.title}\n${s.snippet}`)
     .join("\n\n");
 
-  const systemPrompt = `Você é o estrategista de conteúdo da IntelliX.AI.
-Empresa: IntelliX.AI — "Resultado Visível. Tecnologia Invisível."
-Pilares de conteúdo (% de distribuição obrigatória):
-- resultado_ia: 30% — cases reais, métricas, antes/depois
-- educacao_pratica: 25% — tutoriais, desmistificação de IA
-- bastidores: 20% — build in public, decisões técnicas
-- posicionamento: 15% — hot takes, contrarianismo saudável
-- comercial: 10% — lançamentos, Virada Inteligente, CTAs
+  const hookSamples = Object.entries(HOOK_TEMPLATES)
+    .map(([pilar, hooks]) => `${pilar}:\n  - ${hooks[0]}`)
+    .join("\n");
 
-Tom: direto, sem hype, orientado a resultado. Nunca use: "revolucionário", "disruptivo", "incrível".
+  const systemPrompt = `Você é o estrategista de conteúdo da IntelliX.AI.
+
+${buildBrandSystemBlock()}
+
+## Pilares e distribuição obrigatória
+- resultado_ia: 30% — ${PILAR_CONTEXT.resultado_ia}
+- educacao_pratica: 25% — ${PILAR_CONTEXT.educacao_pratica}
+- bastidores: 20% — ${PILAR_CONTEXT.bastidores}
+- posicionamento: 15% — ${PILAR_CONTEXT.posicionamento}
+- comercial: 10% — ${PILAR_CONTEXT.comercial}
+
+## Mix de conteúdo
+- ${CONTENT_MIX.informational.range} dos posts = informacional (sem imagem obrigatória)
+- ${CONTENT_MIX.withImage.range} = com imagem (promoção, Virada, brand)
+
+## Tipos de conteúdo
+- informational: educação, bastidores, posicionamento — needs_image: false
+- product_promotion: cases com marca cliente, produtos IntelliX — needs_image: true
+- virada_inteligente: Virada Inteligente exclusivamente — needs_image: true
+- news_data: baseado em dados de mercado/pesquisa — needs_image: false
+
+## Exemplos de hooks por pilar
+${hookSamples}
+
 Plataforma alvo: ${platform}`;
 
   const userPrompt = `Com base nos trechos de pesquisa abaixo${theme_prompt ? ` e no tema: "${theme_prompt}"` : ""}, gere EXATAMENTE 3 ideias de post.
 Distribua os pilares de forma variada (evite repetir o mesmo pilar).
+Siga o mix: prefira 2 informacionais + 1 com imagem (ou 3 informacionais se não houver gancho comercial relevante).
 
 Contexto pesquisado:
 ${contextText || "Sem contexto externo — use conhecimento geral sobre IA em negócios B2B."}
 
 Responda SOMENTE em JSON válido, sem markdown:
 [
-  {"title": "...", "pilar": "resultado_ia|educacao_pratica|bastidores|posicionamento|comercial", "angle": "..."},
-  {"title": "...", "pilar": "...", "angle": "..."},
-  {"title": "...", "pilar": "...", "angle": "..."}
+  {
+    "title": "...",
+    "pilar": "resultado_ia|educacao_pratica|bastidores|posicionamento|comercial",
+    "angle": "...",
+    "content_type": "informational|product_promotion|virada_inteligente|news_data",
+    "needs_image": true|false
+  }
 ]`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -101,7 +134,13 @@ Responda SOMENTE em JSON válido, sem markdown:
   try {
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("no json array");
-    const raw = JSON.parse(jsonMatch[0]) as Array<{ title: string; pilar: string; angle: string }>;
+    const raw = JSON.parse(jsonMatch[0]) as Array<{
+      title: string;
+      pilar: string;
+      angle: string;
+      content_type: string;
+      needs_image: boolean;
+    }>;
     ideas = raw.slice(0, 3).map((r) => ({
       title: r.title,
       pilar: (PILAR_DISTRIBUTION.includes(r.pilar as PostIdea["pilar"])
@@ -109,6 +148,10 @@ Responda SOMENTE em JSON válido, sem markdown:
         : "educacao_pratica") as PostIdea["pilar"],
       angle: r.angle,
       platform,
+      content_type: (CONTENT_TYPE_VALUES.includes(r.content_type as PostIdea["content_type"])
+        ? r.content_type
+        : "informational") as PostIdea["content_type"],
+      needs_image: Boolean(r.needs_image),
     }));
   } catch (e) {
     console.error("[marketing-ideator] parse error", e, content.slice(0, 200));

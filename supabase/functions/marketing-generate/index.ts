@@ -1,6 +1,7 @@
-// Called when user approves an idea — generates content + DALL-E 3 image
+// Called when user approves an idea — generates content + optional DALL-E 3 image
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, ContentFormat } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const RequestSchema = z.object({
@@ -13,38 +14,86 @@ const platformGuidance: Record<string, string> = {
   whatsapp: "Mensagem WhatsApp: informal, direta, até 300 chars, sem hashtags.",
 };
 
-const pilarContext: Record<string, string> = {
-  resultado_ia: "Foque em case real, métricas concretas, antes/depois.",
-  educacao_pratica: "Ensine algo prático. Passos concretos. Termine com insight acionável.",
-  bastidores: "Build in public. Mostre a decisão real, o aprendizado.",
-  posicionamento: "Hot take. Uma opinião clara sobre o mercado de IA.",
-  comercial: "Benefício > feature. CTA direto. Honesto.",
-};
-
 const styleByPilar: Record<string, string> = {
-  resultado_ia: "clean data visualization, modern dark dashboard, teal and indigo tones, abstract graph patterns",
-  educacao_pratica: "minimalist educational style, soft purple gradient background, clean geometric shapes",
-  bastidores: "authentic developer workspace aesthetic, dark moody lighting, code and terminal elements",
+  resultado_ia: "clean data visualization, modern dark dashboard, teal and indigo tones, infographic layout with clear labels",
+  educacao_pratica: "minimalist educational illustration, soft purple gradient background, clean geometric shapes",
+  bastidores: "authentic developer workspace, dark moody lighting, code editor aesthetic",
   posicionamento: "bold geometric composition, deep purple to midnight blue, strong typographic layout",
-  comercial: "modern SaaS product visual, gradient from indigo to violet, professional and confident",
+  comercial: "modern SaaS product visual, gradient indigo to violet, professional and confident",
 };
 
-async function generateImage(openaiKey: string, title: string, pilar: string): Promise<string | null> {
-  const style = styleByPilar[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
-  const prompt = `Professional social media image for B2B AI consulting post: "${title}". Style: ${style}. No text overlay. Aspect ratio 1:1. Clean, minimal, modern.`;
+const TEXT_CRITICAL_PILARS = new Set(["resultado_ia", "comercial"]);
 
+async function generateImageGptImage2(openaiKey: string, prompt: string): Promise<string | null> {
   try {
     const res = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({ model: "dall-e-3", prompt, n: 1, size: "1024x1024", response_format: "b64_json" }),
+      body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "medium" }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[marketing-generate] gpt-image-2 error", res.status, await res.text());
+      return null;
+    }
     const data = await res.json() as { data: Array<{ b64_json: string }> };
     return data.data?.[0]?.b64_json ?? null;
-  } catch {
+  } catch (e) {
+    console.error("[marketing-generate] gpt-image-2 exception:", e);
     return null;
   }
+}
+
+async function generateImageGemini(geminiKey: string, prompt: string, openaiKey: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+      {
+        method: "POST",
+        headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ["IMAGE"] },
+        }),
+      },
+    );
+    if (res.status === 429) {
+      console.warn("[marketing-generate] gemini quota exhausted — fallback to gpt-image-2");
+      return generateImageGptImage2(openaiKey, prompt);
+    }
+    if (!res.ok) {
+      console.error("[marketing-generate] gemini-image error", res.status, await res.text());
+      return null;
+    }
+    const data = await res.json() as {
+      candidates: Array<{ content: { parts: Array<{ inlineData?: { data: string } }> } }>;
+    };
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    return parts.find((p) => p.inlineData)?.inlineData?.data ?? null;
+  } catch (e) {
+    console.error("[marketing-generate] gemini-image exception:", e);
+    return null;
+  }
+}
+
+function pickFormat(pilar: string, platform: string): ContentFormat {
+  if (platform === "instagram") return "A";
+  if (pilar === "comercial") return "D";
+  if (pilar === "posicionamento" || pilar === "bastidores") return "C";
+  if (pilar === "educacao_pratica") return "B";
+  return "A";
+}
+
+function buildImagePrompt(title: string, pilar: string): string {
+  const style = styleByPilar[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
+  return `Professional social media image for B2B AI consulting post: "${title}". Style: ${style}. No text overlay. Aspect ratio 1:1. Clean, minimal, modern.`;
+}
+
+async function generateImage(openaiKey: string, geminiKey: string | undefined, title: string, pilar: string): Promise<string | null> {
+  const prompt = buildImagePrompt(title, pilar);
+  if (TEXT_CRITICAL_PILARS.has(pilar) || !geminiKey) {
+    return generateImageGptImage2(openaiKey, prompt);
+  }
+  return generateImageGemini(geminiKey, prompt, openaiKey);
 }
 
 function b64ToUint8Array(b64: string): Uint8Array {
@@ -58,17 +107,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  // Auth via Supabase JWT (verify_jwt = true)
   const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
 
   const { draft_id } = parsed.data;
   const db = adminClient();
 
-  // Load the idea
   const { data: draft, error: fetchErr } = await db
     .from("marketing_drafts")
-    .select("id, title, angle, pilar, platform, theme_prompt, research_snippets, trigger_mode")
+    .select("id, title, angle, pilar, platform, content_type, needs_image, theme_prompt, research_snippets, trigger_mode")
     .eq("id", draft_id)
     .eq("status", "idea_pending")
     .single();
@@ -80,24 +127,36 @@ Deno.serve(async (req) => {
   const openaiKey = Deno.env.get("OPENAI_API_KEY");
   if (!openaiKey) return jsonResponse({ error: "openai_api_key_missing" }, 503);
 
-  // Mark as generating to prevent double-clicks
   await db.from("marketing_drafts").update({ status: "generated" }).eq("id", draft_id);
 
   const contextText = ((draft.research_snippets ?? []) as Array<{ title: string }>)
     .map((s: { title: string }, i: number) => `[${i + 1}] ${s.title}`)
     .join("\n");
 
-  const systemPrompt = `Você é o redator da IntelliX.AI.
-Brand voice: especialista confiante, claro e direto. NUNCA: "revolucionário", "disruptivo", "incrível".
-SEMPRE inclua: "Resultado Visível. Tecnologia Invisível." ou "Sem hype. Com método."
-Prefira números e fatos. PT-BR, sentence case.
+  const format = pickFormat(draft.pilar, draft.platform);
+  const formatDef = CONTENT_FORMATS[format];
+  const formatGuidance = draft.platform === "whatsapp"
+    ? platformGuidance.whatsapp
+    : `Formato ${format} — ${formatDef.name} (${formatDef.slides ?? "post único"}): ${formatDef.structure}`;
 
-${platformGuidance[draft.platform]}`;
+  const systemPrompt = `Você é o redator da IntelliX.AI.
+
+${buildBrandSystemBlock()}
+
+## Diretrizes de escrita
+- Prefira números e fatos verificáveis a adjetivos vagos.
+- Sentence case em PT-BR sempre.
+- Nunca improvisar frases novas — use as âncoras oficiais da marca.
+
+## Formato e plataforma
+${formatGuidance}
+${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` : ""}`;
 
   const userPrompt = `Escreva o post:
 Título: ${draft.title}
-Ângulo: ${draft.angle}
-Pilar: ${pilarContext[draft.pilar] ?? ""}
+Ângulo: ${draft.angle ?? ""}
+Pilar: ${PILAR_CONTEXT[draft.pilar as keyof typeof PILAR_CONTEXT] ?? ""}
+Tipo: ${draft.content_type ?? "informational"}
 ${contextText ? `\nContexto:\n${contextText}` : ""}
 ${draft.theme_prompt ? `\nTema: "${draft.theme_prompt}"` : ""}
 
@@ -119,31 +178,33 @@ Escreva APENAS o post final.`;
   const content = chatData.choices?.[0]?.message?.content ?? "";
   if (!content.trim()) return jsonResponse({ error: "empty_content" }, 500);
 
-  // Generate image
+  const geminiKey = Deno.env.get("GEMINI_API_KEY");
+
   let imageUrl: string | null = null;
-  try {
-    const b64 = await generateImage(openaiKey, draft.title, draft.pilar);
-    if (b64) {
-      const bytes = b64ToUint8Array(b64);
-      const { error: uploadErr } = await db.storage
-        .from("assets")
-        .upload(`marketing/${draft_id}.png`, bytes, { contentType: "image/png", upsert: true });
-      if (!uploadErr) {
-        const { data: urlData } = db.storage.from("assets").getPublicUrl(`marketing/${draft_id}.png`);
-        imageUrl = urlData.publicUrl;
+  if (draft.needs_image) {
+    try {
+      const b64 = await generateImage(openaiKey, geminiKey, draft.title, draft.pilar);
+      if (b64) {
+        const bytes = b64ToUint8Array(b64);
+        const { error: uploadErr } = await db.storage
+          .from("assets")
+          .upload(`marketing/${draft_id}.png`, bytes, { contentType: "image/png", upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = db.storage.from("assets").getPublicUrl(`marketing/${draft_id}.png`);
+          imageUrl = urlData.publicUrl;
+        }
       }
+    } catch (e) {
+      console.error("[marketing-generate] image error (non-fatal):", e);
     }
-  } catch (e) {
-    console.error("[marketing-generate] image error (non-fatal):", e);
   }
 
-  // Update draft with generated content
   await db.from("marketing_drafts").update({
     content,
     image_url: imageUrl,
     status: "generated",
   }).eq("id", draft_id);
 
-  console.log(`[marketing-generate] draft=${draft_id} image=${imageUrl ? "yes" : "no"}`);
+  console.log(`[marketing-generate] draft=${draft_id} type=${draft.content_type} image=${imageUrl ? "yes" : "no"}`);
   return jsonResponse({ success: true, draft_id, image_url: imageUrl });
 });

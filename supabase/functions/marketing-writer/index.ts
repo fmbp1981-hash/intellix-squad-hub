@@ -1,5 +1,6 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, ContentFormat } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const IdeaSchema = z.object({
@@ -7,6 +8,8 @@ const IdeaSchema = z.object({
   pilar: z.enum(["resultado_ia", "educacao_pratica", "bastidores", "posicionamento", "comercial"]),
   angle: z.string(),
   platform: z.enum(["linkedin", "instagram", "whatsapp"]),
+  content_type: z.enum(["informational", "product_promotion", "virada_inteligente", "news_data"]).default("informational"),
+  needs_image: z.boolean().default(false),
 });
 
 const SnippetSchema = z.object({
@@ -29,50 +32,91 @@ const platformGuidance: Record<string, string> = {
   whatsapp: "Mensagem WhatsApp: informal, direta, até 300 chars, sem hashtags.",
 };
 
-const pilarContext: Record<string, string> = {
-  resultado_ia: "Foque em case real, métricas concretas, antes/depois. Se não houver case específico, use dado do mercado.",
-  educacao_pratica: "Ensine algo prático. Passos concretos. Desmistifique. Termine com insight acionável.",
-  bastidores: "Build in public. Mostre a decisão real, o aprendizado, o que deu errado ou certo.",
-  posicionamento: "Hot take. Contrarianismo saudável. Uma opinião clara sobre o mercado de IA.",
-  comercial: "Apresente produto/Virada de forma honesta. Benefício > feature. CTA direto.",
+function pickFormat(pilar: string, platform: string): ContentFormat {
+  if (platform === "instagram") return "A";
+  if (pilar === "comercial") return "D";
+  if (pilar === "posicionamento" || pilar === "bastidores") return "C";
+  if (pilar === "educacao_pratica") return "B";
+  return "A";
+}
+
+function buildFormatGuidance(format: ContentFormat, platform: string): string {
+  const f = CONTENT_FORMATS[format];
+  if (platform === "whatsapp") return platformGuidance.whatsapp;
+  return `Formato ${format} — ${f.name} (${f.slides ?? "post único"}): ${f.structure}`;
+}
+
+const styleByPilar: Record<string, string> = {
+  resultado_ia: "clean data visualization, modern dark dashboard, teal and indigo tones, infographic layout with clear labels",
+  educacao_pratica: "minimalist educational illustration, soft purple gradient background, clean geometric shapes",
+  bastidores: "authentic developer workspace, dark moody lighting, code editor aesthetic",
+  posicionamento: "bold geometric composition, deep purple to midnight blue, strong typographic layout",
+  comercial: "modern SaaS product visual, gradient indigo to violet, professional and confident",
 };
 
-async function generateImage(openaiKey: string, title: string, pilar: string): Promise<string | null> {
-  const styleByPilar: Record<string, string> = {
-    resultado_ia: "clean data visualization aesthetic, modern dashboard, teal and dark blue tones",
-    educacao_pratica: "minimalist educational infographic style, clean typography, soft purple gradient",
-    bastidores: "authentic behind-the-scenes tech workspace, dark moody lighting, developer aesthetic",
-    posicionamento: "bold typographic poster, high contrast black and white, strong geometric shapes",
-    comercial: "modern SaaS product visual, gradient purple to blue, professional and sleek",
-  };
+// resultado_ia e comercial usam gpt-image-2 (melhor para texto/dados/infográficos)
+// demais pilares usam gemini-3.1-flash-image (ilustrações gerais, mais barato)
+const TEXT_CRITICAL_PILARS = new Set(["resultado_ia", "comercial"]);
 
-  const style = styleByPilar[pilar] ?? "modern tech business illustration, dark theme, purple accents";
-  const prompt = `Professional social media cover image for a B2B AI consulting company post about: "${title}". Style: ${style}. No text overlay. Aspect ratio 1:1. Clean, minimal, modern.`;
-
+async function generateImageGptImage2(openaiKey: string, prompt: string): Promise<string | null> {
   try {
     const res = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-        response_format: "b64_json",
-      }),
+      body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "medium" }),
     });
-
     if (!res.ok) {
-      console.error("[marketing-writer] DALL-E error", res.status, await res.text());
+      console.error("[marketing-writer] gpt-image-2 error", res.status, await res.text());
       return null;
     }
-
     const data = await res.json() as { data: Array<{ b64_json: string }> };
     return data.data?.[0]?.b64_json ?? null;
   } catch (e) {
-    console.error("[marketing-writer] image generation error:", e);
+    console.error("[marketing-writer] gpt-image-2 exception:", e);
     return null;
   }
+}
+
+async function generateImageGemini(geminiKey: string, prompt: string, openaiKey: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+      {
+        method: "POST",
+        headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ["IMAGE"] },
+        }),
+      },
+    );
+    if (res.status === 429) {
+      console.warn("[marketing-writer] gemini quota exhausted — fallback to gpt-image-2");
+      return generateImageGptImage2(openaiKey, prompt);
+    }
+    if (!res.ok) {
+      console.error("[marketing-writer] gemini-image error", res.status, await res.text());
+      return null;
+    }
+    const data = await res.json() as {
+      candidates: Array<{ content: { parts: Array<{ inlineData?: { data: string } }> } }>;
+    };
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    return parts.find((p) => p.inlineData)?.inlineData?.data ?? null;
+  } catch (e) {
+    console.error("[marketing-writer] gemini-image exception:", e);
+    return null;
+  }
+}
+
+async function generateImage(openaiKey: string, geminiKey: string | undefined, title: string, pilar: string): Promise<string | null> {
+  const style = styleByPilar[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
+  const prompt = `Professional social media cover image for a B2B AI consulting company post about: "${title}". Style: ${style}. No text overlay. Aspect ratio 1:1. Clean, minimal, modern.`;
+
+  if (TEXT_CRITICAL_PILARS.has(pilar) || !geminiKey) {
+    return generateImageGptImage2(openaiKey, prompt);
+  }
+  return generateImageGemini(geminiKey, prompt, openaiKey);
 }
 
 function b64ToUint8Array(b64: string): Uint8Array {
@@ -104,24 +148,30 @@ Deno.serve(async (req) => {
     .map((s) => `Fonte (${s.source}): ${s.title}\n${s.snippet}`)
     .join("\n\n");
 
-  const systemPrompt = `Você é o redator de conteúdo da IntelliX.AI.
-Regras absolutas de brand voice:
-- Tom: especialista confiante, não arrogante. Claro e direto.
-- NUNCA use: "revolucionário", "disruptivo", "incrível", "top demais", clichês de IA.
-- SEMPRE inclua ao menos uma: "Resultado Visível. Tecnologia Invisível." OU "Sem hype. Com método."
-- Prefira números e fatos a adjetivos vagos.
-- PT-BR, sentence case.
+  const format = pickFormat(idea.pilar, idea.platform);
+  const formatGuidance = buildFormatGuidance(format, idea.platform);
 
-${platformGuidance[idea.platform]}`;
+  const systemPrompt = `Você é o redator de conteúdo da IntelliX.AI.
+
+${buildBrandSystemBlock()}
+
+## Diretrizes de escrita
+- Tom: ${buildBrandSystemBlock().split("\n")[4]}
+- Nunca use adjetivos vagos — prefira números e fatos verificáveis.
+- Sentence case em PT-BR sempre.
+
+## Formato e plataforma
+${formatGuidance}
+${idea.platform !== "whatsapp" ? `\n${platformGuidance[idea.platform]}` : ""}`;
 
   const userPrompt = `Escreva um post completo para ${idea.platform} sobre:
 Título: ${idea.title}
 Ângulo: ${idea.angle}
-Pilar: ${pilarContext[idea.pilar]}
+Pilar: ${PILAR_CONTEXT[idea.pilar]}
+Tipo de conteúdo: ${idea.content_type}
 
 ${contextText ? `Contexto de pesquisa:\n${contextText}` : ""}
-
-${theme_prompt ? `Tema solicitado: "${theme_prompt}"` : ""}
+${theme_prompt ? `\nTema solicitado: "${theme_prompt}"` : ""}
 
 Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
 
@@ -157,7 +207,6 @@ Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
     title: s.title,
   }));
 
-  // Insert draft first to get the ID
   const { data: draft, error } = await db
     .from("marketing_drafts")
     .insert({
@@ -165,6 +214,8 @@ Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
       content,
       pilar: idea.pilar,
       platform: idea.platform,
+      content_type: idea.content_type,
+      needs_image: idea.needs_image,
       status: "generated",
       theme_prompt: theme_prompt ?? null,
       research_snippets: topSnippets,
@@ -178,30 +229,33 @@ Escreva APENAS o post final, sem comentários ou explicações adicionais.`;
     return jsonResponse({ error: "db_insert_failed" }, 500);
   }
 
-  // Generate image async — don't block draft creation
-  let imageUrl: string | null = null;
-  try {
-    const b64 = await generateImage(openaiKey, idea.title, idea.pilar);
-    if (b64) {
-      const imageBytes = b64ToUint8Array(b64);
-      const path = `marketing/${draft.id}.png`;
-      const { error: uploadError } = await db.storage
-        .from("assets")
-        .upload(path, imageBytes, { contentType: "image/png", upsert: true });
+  const geminiKey = Deno.env.get("GEMINI_API_KEY");
 
-      if (!uploadError) {
-        const { data: urlData } = db.storage.from("assets").getPublicUrl(path);
-        imageUrl = urlData.publicUrl;
-        await db.from("marketing_drafts").update({ image_url: imageUrl }).eq("id", draft.id);
-        console.log(`[marketing-writer] image uploaded → ${imageUrl}`);
-      } else {
-        console.error("[marketing-writer] storage upload error:", uploadError);
+  let imageUrl: string | null = null;
+  if (idea.needs_image) {
+    try {
+      const b64 = await generateImage(openaiKey, geminiKey, idea.title, idea.pilar);
+      if (b64) {
+        const imageBytes = b64ToUint8Array(b64);
+        const path = `marketing/${draft.id}.png`;
+        const { error: uploadError } = await db.storage
+          .from("assets")
+          .upload(path, imageBytes, { contentType: "image/png", upsert: true });
+
+        if (!uploadError) {
+          const { data: urlData } = db.storage.from("assets").getPublicUrl(path);
+          imageUrl = urlData.publicUrl;
+          await db.from("marketing_drafts").update({ image_url: imageUrl }).eq("id", draft.id);
+          console.log(`[marketing-writer] image uploaded → ${imageUrl}`);
+        } else {
+          console.error("[marketing-writer] storage upload error:", uploadError);
+        }
       }
+    } catch (e) {
+      console.error("[marketing-writer] image pipeline error (non-fatal):", e);
     }
-  } catch (e) {
-    console.error("[marketing-writer] image pipeline error (non-fatal):", e);
   }
 
-  console.log(`[marketing-writer] draft saved id=${draft.id} pilar=${idea.pilar} platform=${idea.platform} image=${imageUrl ? "yes" : "no"}`);
+  console.log(`[marketing-writer] draft=${draft.id} pilar=${idea.pilar} type=${idea.content_type} image=${imageUrl ? "yes" : "no"}`);
   return jsonResponse({ success: true, draft_id: draft.id, image_url: imageUrl });
 });
