@@ -178,7 +178,7 @@ ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` 
   const isCarousel = draft.platform === "instagram";
   const slideInstruction = isCarousel
     ? `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).
-Cada slide: máximo 4 linhas de texto. Slide 1 = gancho. Slides 2-${SLIDE_COUNT[format] - 2} = desenvolvimento. Slide ${SLIDE_COUNT[format] - 1} = virada/síntese. Slide ${SLIDE_COUNT[format]} = CTA com palavra-gatilho em MAIÚSCULAS.`
+Cada slide: máximo 4 linhas de texto. Slide 1 = gancho. Slides 2-${SLIDE_COUNT[format] - 2} = desenvolvimento. Slide ${SLIDE_COUNT[format] - 1} = virada/síntese. Slide ${SLIDE_COUNT[format]} = CTA — use "Link na bio", "Me chama no direct" ou "Acessa o link na bio". NUNCA "Comenta [PALAVRA]".`
     : "Escreva o post final em texto corrido.";
 
   const userPrompt = `Escreva o post:

@@ -144,7 +144,7 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
       "SLIDE 1 — GANCHO: 1-2 frases curtas e bold, sem introdução. Fórmulas: (a) situação-espelho: cenário que o público reconhece na própria vida; (b) objeção nomeada: dizer o que o público pensa mas não fala; (c) urgência calendárica: datas/eventos para urgência orgânica; (d) promessa específica: 'Como [resultado] em [tempo]'. Termina sem fechar — tensão imediata.",
       "SLIDES 2-4 — DOR E IDENTIFICAÇÃO: Personagem anônimo que vive a dor do público. Frases de 1-2 linhas por parágrafo. Tom empático, não julgamental. Cada slide termina com → ou ... Não resolva ainda.",
       "SLIDES 5-7 — VIRADA E SOLUÇÃO: Transição com 'Mas existe uma saída' ou 'Só que tem um detalhe...'. Contraste 'Antes X... Hoje com a IntelliX, Y'. Apresenta IntelliX como saída natural. Frase de suspense antes do CTA.",
-      "SLIDE FINAL — CTA: Nome do produto/serviço + benefício concreto em 1 linha + 'Comenta [PALAVRA] que eu te envio no direct'. Palavra em MAIÚSCULAS.",
+      "SLIDE FINAL — CTA: Nome do produto/serviço + benefício concreto em 1 linha. CTA: 'Link na bio' ou 'Me chama no direct' ou 'Acessa o link na bio'. NUNCA pedir para comentar palavra-gatilho — não há automação de DM ativa.",
     ],
     copyTechniques: [
       "Storytelling com personagem-espelho: alguém anônimo que vive a situação do público",
@@ -153,7 +153,7 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
       "Micro-suspense: cada slide termina com → ou ... que força o próximo",
       "Contraste passado vs. presente: 'Antes X era Y... Hoje X é Z'",
       "Urgência por contexto: datas, eventos e situações do calendário como âncoras",
-      "CTA por palavra-gatilho: comentários com mesma palavra = prova social + alcance",
+      "CTA simples e direto: 'link na bio', 'me chama no direct', 'acessa o link na bio' — sem automação necessária",
     ],
     intellixExamples: [
       "Sua empresa ainda funciona no improviso?",
@@ -161,7 +161,7 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
       "Ela contratou mais 3 pessoas. O problema continuou. Até que alguém disse: tenta a IA.",
       "IA não vai substituir sua empresa. Vai substituir quem não usa IA.",
     ],
-    ctaPattern: "Comenta [PALAVRA] que eu te envio no direct. Palavras sugeridas: INTELLIX | DIAGNÓSTICO | AGENTE | AUTOMAÇÃO | IA | VIRADA",
+    ctaPattern: "Link na bio | Me chama no direct | Acessa o link na bio. NUNCA usar 'Comenta [PALAVRA]' — não há automação de DM ativa.",
     visualStyle: "Fundo claro/bege (como template atual IntelliX) + texto bold preto + seta dourada → + logo IntelliX canto superior esquerdo. Pode usar foto editorial emocional nos slides de dor.",
     needsImage: false,
   },
@@ -192,7 +192,7 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
       "Funciona pra minha área? → Sim. Não é sobre setor. É sobre processo e decisão.",
       "Tem suporte depois? → Sim. Não entregamos e sumimos.",
     ],
-    ctaPattern: "CTA direto para link ou DM. B2B: 'Chama no direct' ou 'Link na bio'. B2C: 'Comenta [PALAVRA]'.",
+    ctaPattern: "Link na bio | Me chama no direct | Fala comigo no direct. NUNCA usar 'Comenta [PALAVRA]'.",
     visualStyle: "Fundo dark (#171723 IntelliX) + gradiente roxo/azul + texto branco bold + tag colorida por produto + logo IntelliX em todos os slides + numeração '01/10' no canto.",
     needsImage: true,
   },
@@ -257,7 +257,7 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
       "21 horas por semana — é a média de tempo operacional que nossos clientes recuperam.",
       "Se isso faz sentido pra você, o próximo passo é seu.",
     ],
-    ctaPattern: "CTA de baixa pressão para B2B. 'Chama no direct' ou 'Comenta [PALAVRA]'. Não empurre quem não está pronto.",
+    ctaPattern: "CTA de baixa pressão. 'Se isso faz sentido pra você, o próximo passo é seu.' + 'Link na bio' ou 'Me chama no direct'. NUNCA usar 'Comenta [PALAVRA]'.",
     visualStyle: "Fundo dark (#171723) + gradiente sutil + texto branco + screenshot real do produto + logo IntelliX + lista ✅ no slide de entregáveis.",
     needsImage: true,
   },
@@ -319,19 +319,35 @@ export const CAPTION_STRATEGY = {
   b2c: [
     "Linha 1: resumo do gancho — aparece antes do 'ver mais'",
     "Parágrafo 2: produto + benefício principal",
-    "Parágrafo 3: CTA com palavra-gatilho em MAIÚSCULAS",
+    "Parágrafo 3: CTA simples — 'Link na bio' ou 'Me chama no direct'",
     "Sem hashtags no corpo. Opcional: 3-5 hashtags no final.",
-    "Exemplo: 'Comenta DIAGNÓSTICO que eu te envio no direct.'",
+    "Exemplo: 'Acessa o link na bio pra saber mais.'",
   ],
   b2b: [
     "Parágrafo 1: contexto 'antes vs. agora' que cria urgência",
     "Parágrafo 2: método/solução IntelliX",
     "Parágrafo 3: CTA de baixa pressão",
     "Tom limpo, sem emoji excessivo. Máximo 4 parágrafos.",
-    "Exemplo: 'Se isso faz sentido pro seu momento, chama no direct.'",
+    "Exemplo: 'Se isso faz sentido pro seu momento, me chama no direct.'",
   ],
-  triggerWords: ["INTELLIX", "DIAGNÓSTICO", "AGENTE", "AUTOMAÇÃO", "IA", "VIRADA", "RADAR"],
-  whyTriggerWorks: "Comentários com a mesma palavra aumentam o alcance no algoritmo + criam prova social passiva + disparam automação de DM sem custo de equipe.",
+  // ATENÇÃO: NUNCA usar "Comenta [PALAVRA]" — não há automação de DM ativa.
+  // Usar apenas CTAs que não dependem de automação.
+  allowedCTAs: [
+    "Link na bio",
+    "Acessa o link na bio",
+    "Me chama no direct",
+    "Manda uma mensagem",
+    "Fala comigo no direct",
+    "Chama no WhatsApp",
+    "Se isso faz sentido pra você, o próximo passo é seu",
+    "Salva esse post pra não perder",
+  ],
+  forbiddenCTAs: [
+    "Comenta [PALAVRA] que eu te envio no direct",
+    "Digita [PALAVRA] nos comentários",
+    "Deixa [PALAVRA] aqui embaixo",
+    "Qualquer CTA que dependa de automação de DM ou ManyChat",
+  ],
 } as const;
 
 // ─── Identidade Visual por Formato ──────────────────────────────────────────
@@ -374,11 +390,13 @@ ${AUDIENCE_PAINS.slice(0, 4).map((p, i) => `${i + 1}. ${p}`).join("\n")}
 - Distribuição: 40% storytelling · 20% filosófico · 20% FAQ produto · 10% educativo · 10% prova social
 
 ### Formatos
-- Formato A (Storytelling 7-11 slides): personagem-espelho, micro-suspense →, CTA "Comenta [PALAVRA]"
-- Formato B (FAQ 8-10 slides): perguntas + Sim./Não., descredencia hype, resolve objeções
-- Formato C (Filosófico 5 slides): polarização → confirmação inesperada → síntese paradoxal
+- Formato A (Storytelling 7-11 slides): personagem-espelho, micro-suspense →, CTA "link na bio" ou "me chama no direct"
+- Formato B (FAQ 8-10 slides): perguntas + Sim./Não., descredencia hype, resolve objeções, CTA "link na bio"
+- Formato C (Filosófico 5 slides): polarização → confirmação inesperada → síntese paradoxal, sem CTA ou "salva esse post"
 - Formato D (Produto+Descredenciamento 6-8 slides): afasta lead errado, prova com número, CTA baixa pressão
 
-### Palavras-Gatilho para CTA
-${CAPTION_STRATEGY.triggerWords.join(" | ")}`;
+### REGRA CRÍTICA — CTAs
+NUNCA usar "Comenta [PALAVRA] que eu te envio no direct" ou qualquer variação.
+Não há automação de DM ativa. Lead que comenta e não recebe prejudica a credibilidade da IntelliX.
+CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}`;
 }
