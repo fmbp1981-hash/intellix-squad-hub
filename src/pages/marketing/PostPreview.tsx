@@ -117,96 +117,115 @@ const IX = {
 function InstagramCarouselSlide({ text, index, total }: { text: string; index: number; total: number }) {
   const isLast = index === total - 1;
 
-  // Separa título (1ª linha) do corpo (restante), remove markdown e seta final
   const clean = text.replace(/\*\*/g, "").replace(/→\s*$/, "").trim();
-  const lines  = clean.split("\n").map(l => l.trim()).filter(Boolean);
-  const title  = lines[0] ?? "";
-  const body   = lines.slice(1).join("\n");
+  const lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
+  const title = lines[0] ?? "";
+  const body  = lines.slice(1).join("  ");
 
-  // Tamanho do título: inversamente proporcional ao comprimento
-  const titleSize = title.length > 80 ? 20 : title.length > 50 ? 24 : title.length > 30 ? 28 : 32;
+  // Usa % do container (o slide é sempre quadrado)
+  // Referência: título ocupa ~8-10% da altura, escala com comprimento
+  const titleVw = title.length > 70 ? 5.5 : title.length > 45 ? 6.5 : title.length > 28 ? 7.5 : 9;
 
   return (
     <div
-      className="absolute inset-0 flex flex-col"
-      style={{ background: IX.bg, fontFamily: "'DM Sans', 'Inter', sans-serif" }}
+      className="absolute inset-0"
+      style={{
+        background: IX.bg,
+        fontFamily: "'DM Sans', 'Inter', sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        padding: "6% 7%",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      }}
     >
-      {/* Orb azul — canto superior direito */}
-      <div className="absolute pointer-events-none" style={{
-        width: 260, height: 260, borderRadius: "50%",
-        top: -80, right: -80,
-        background: `radial-gradient(circle, ${IX.primary}22 0%, transparent 65%)`,
-      }} />
-      {/* Orb dourado — canto inferior esquerdo */}
-      <div className="absolute pointer-events-none" style={{
-        width: 180, height: 180, borderRadius: "50%",
-        bottom: -50, left: -50,
-        background: `radial-gradient(circle, ${IX.accent}15 0%, transparent 65%)`,
-      }} />
+      {/* Orbs — posicionados em % para escalar com o slide */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+        <div style={{
+          position: "absolute", width: "55%", paddingBottom: "55%",
+          borderRadius: "50%", top: "-20%", right: "-18%",
+          background: `radial-gradient(circle, ${IX.primary}1A 0%, transparent 55%)`,
+        }} />
+        <div style={{
+          position: "absolute", width: "42%", paddingBottom: "42%",
+          borderRadius: "50%", bottom: "-15%", left: "-12%",
+          background: `radial-gradient(circle, ${IX.accent}12 0%, transparent 55%)`,
+        }} />
+      </div>
 
-      {/* ── HEADER: logo + handle + contador ── */}
-      <div className="flex items-start justify-between px-6 pt-5">
-        {/* Logo + wordmark */}
-        <div className="flex items-center gap-2.5">
+      {/* HEADER: logo + wordmark + contador */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "3%" }}>
           <img src={intellixLogo} alt="IntelliX.AI"
-            style={{ height: 36, width: 36, objectFit: "contain", flexShrink: 0 }} />
+            style={{ height: "11%", minHeight: 32, maxHeight: 44, width: "auto", objectFit: "contain" }} />
           <div>
-            <p className="text-[13px] font-bold leading-tight" style={{ color: IX.text }}>
+            <p style={{ fontSize: "3.8vw", fontWeight: 700, lineHeight: 1.15, color: IX.text, margin: 0 }}>
               IntelliX<span style={{ color: IX.accent }}>.AI</span>
             </p>
-            <p className="text-[10px] leading-tight" style={{ color: IX.muted }}>@ai_intellix</p>
+            <p style={{ fontSize: "2.8vw", color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
           </div>
         </div>
-        {/* Contador */}
-        <span className="text-[11px] font-semibold tabular-nums"
-          style={{ color: IX.muted, background: "rgba(255,255,255,0.06)", padding: "3px 8px", borderRadius: 99 }}>
+        <span style={{
+          fontSize: "2.8vw", fontWeight: 600, color: IX.muted,
+          background: "rgba(255,255,255,0.08)", padding: "2px 10px", borderRadius: 99,
+        }}>
           {index + 1}/{total}
         </span>
       </div>
 
-      {/* Linha separadora — azul primário */}
+      {/* Linha separadora azul — ancorada à esquerda como na referência */}
       <div style={{
-        height: 2, margin: "12px 24px 0",
+        height: 2, width: "42%", borderRadius: 2, flexShrink: 0,
+        marginTop: "5%",
         background: `linear-gradient(90deg, ${IX.primary}, ${IX.primary}00)`,
-        borderRadius: 2,
       }} />
 
-      {/* ── CONTEÚDO ── */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-4">
-        {/* Título — grande e bold */}
-        <p
-          className="font-bold leading-[1.25]"
-          style={{
-            fontSize: titleSize,
-            color: isLast ? IX.accent : IX.text,
-            letterSpacing: "-0.01em",
-          }}
-        >
+      {/* CONTEÚDO — ocupa o restante, texto alinhado ao meio-inferior */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        justifyContent: "center", paddingTop: "4%",
+      }}>
+        <p style={{
+          fontSize: `${titleVw}vw`,
+          fontWeight: 700,
+          lineHeight: 1.2,
+          letterSpacing: "-0.02em",
+          color: isLast ? IX.accent : IX.text,
+          margin: 0,
+        }}>
           {title}
         </p>
 
-        {/* Corpo — menor, muted */}
         {body && (
-          <p
-            className="mt-3 leading-[1.6] whitespace-pre-wrap"
-            style={{ fontSize: 14, color: IX.muted, fontWeight: 400 }}
-          >
+          <p style={{
+            fontSize: `${titleVw * 0.5}vw`,
+            fontWeight: 400,
+            lineHeight: 1.6,
+            color: IX.muted,
+            marginTop: "4%",
+          }}>
             {body}
           </p>
         )}
       </div>
 
-      {/* ── FOOTER ── */}
-      <div className="px-6 pb-5 flex items-end justify-between">
-        <p className="text-[9px] font-semibold tracking-[0.14em] uppercase"
-          style={{ color: `${IX.muted}55` }}>
+      {/* FOOTER */}
+      <div style={{
+        display: "flex", alignItems: "flex-end",
+        justifyContent: "space-between", flexShrink: 0,
+        paddingTop: "3%",
+      }}>
+        <p style={{
+          fontSize: "2.2vw", fontWeight: 600,
+          letterSpacing: "0.1em", textTransform: "uppercase",
+          color: `${IX.muted}55`, margin: 0,
+        }}>
           Resultado Visível · Tecnologia Invisível
         </p>
-        {/* Seta dourada — só se não for o último slide */}
         {!isLast && (
-          <div className="flex items-center gap-1.5">
-            <div style={{ width: 24, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
-            <span style={{ fontSize: 22, color: IX.accent, lineHeight: 1 }}>›</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 22, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
+            <span style={{ fontSize: "6vw", color: IX.accent, lineHeight: 1, fontWeight: 300 }}>›</span>
           </div>
         )}
       </div>
