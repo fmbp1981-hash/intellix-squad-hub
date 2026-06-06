@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { MarketingDraft } from "@/hooks/useMarketingDrafts";
 
@@ -101,13 +102,70 @@ function LinkedInPreview({ draft }: Props) {
 
 // ─── Instagram ───────────────────────────────────────────────────────────────
 
+function InstagramCarouselSlide({ text, index, total }: { text: string; index: number; total: number }) {
+  const isLast = index === total - 1;
+  const isCTA = isLast;
+
+  return (
+    <div
+      className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8"
+      style={{
+        background: isCTA
+          ? "linear-gradient(135deg, oklch(0.22 0.06 262), oklch(0.18 0.08 290))"
+          : index === 0
+          ? "linear-gradient(160deg, oklch(0.13 0.02 250), oklch(0.17 0.04 270))"
+          : "oklch(0.14 0.02 255)",
+      }}
+    >
+      {/* Slide number badge */}
+      <div
+        className="absolute top-3 left-3 text-[10px] font-medium px-2 py-0.5 rounded-full"
+        style={{ background: "oklch(1 0 0 / 0.12)", color: "oklch(0.75 0.01 250)" }}
+      >
+        {index + 1} / {total}
+      </div>
+
+      {/* Logo */}
+      <div className="absolute top-3 right-3 text-[9px] font-bold tracking-wide"
+        style={{ color: "oklch(0.65 0.12 262)" }}>
+        IntelliX.AI
+      </div>
+
+      {/* Slide text */}
+      <p
+        className="text-center font-semibold leading-[1.55] whitespace-pre-wrap"
+        style={{
+          fontSize: text.length > 120 ? "12px" : text.length > 60 ? "14px" : "17px",
+          color: isCTA ? "oklch(0.97 0.01 250)" : "oklch(0.92 0.01 250)",
+        }}
+      >
+        {text.replace(/\*\*/g, "")}
+      </p>
+
+      {/* Arrow hint (not on last slide) */}
+      {!isLast && (
+        <div className="absolute bottom-4 right-4 text-[18px]"
+          style={{ color: "oklch(0.55 0.08 262)" }}>
+          →
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InstagramPreview({ draft }: Props) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   const slides = draft.content.includes("---SLIDE---")
     ? draft.content.split("---SLIDE---").map((s) => s.trim()).filter(Boolean)
     : null;
 
-  const caption = slides ? slides[slides.length - 1] : draft.content;
-  const parts = caption.split(/(#\w+)/g);
+  const isCarousel = slides && slides.length > 1;
+  const captionText = slides ? slides[slides.length - 1] : draft.content;
+  const captionParts = captionText.split(/(#\w+)/g);
+
+  const goNext = () => setCurrentSlide((p) => Math.min(p + 1, (slides?.length ?? 1) - 1));
+  const goPrev = () => setCurrentSlide((p) => Math.max(p - 1, 0));
 
   return (
     <div
@@ -126,42 +184,69 @@ function InstagramPreview({ draft }: Props) {
         <span className="ml-auto text-[11px]" style={{ color: "oklch(0.55 0.02 250)" }}>•••</span>
       </div>
 
-      {/* Image / Carousel */}
-      {draft.image_url ? (
-        <div className="relative w-full" style={{ paddingTop: "100%" }}>
+      {/* Slide area */}
+      <div className="relative w-full select-none" style={{ paddingTop: "100%" }}>
+        {/* Slide content */}
+        {isCarousel ? (
+          <InstagramCarouselSlide
+            text={slides[currentSlide]}
+            index={currentSlide}
+            total={slides.length}
+          />
+        ) : draft.image_url ? (
           <img
             src={draft.image_url}
             alt={draft.title}
             className="absolute inset-0 w-full h-full object-cover"
           />
-          {slides && slides.length > 1 && (
-            <>
-              {/* Carousel indicator */}
-              <div className="absolute top-3 right-3 rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                style={{ background: "oklch(0.08 0.01 250 / 0.7)" }}>
-                1 / {slides.length}
-              </div>
-              {/* Slide dots */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {slides.map((_, i) => (
-                  <div key={i} className="h-1.5 rounded-full transition-all"
-                    style={{
-                      width: i === 0 ? "16px" : "6px",
-                      background: i === 0 ? "white" : "oklch(1 0 0 / 0.4)",
-                    }} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="w-full flex items-center justify-center"
-          style={{ paddingTop: "100%", position: "relative", background: "oklch(0.15 0.02 270)" }}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-[11px]" style={{ color: "oklch(0.45 0.02 250)" }}>Imagem sendo gerada...</p>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "oklch(0.15 0.02 270)" }}>
+            <p className="text-[11px]" style={{ color: "oklch(0.45 0.02 250)" }}>
+              Sem imagem
+            </p>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Navigation arrows */}
+        {isCarousel && (
+          <>
+            {currentSlide > 0 && (
+              <button
+                onClick={goPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-white text-xs transition-opacity hover:opacity-100 opacity-70"
+                style={{ background: "oklch(0.08 0.01 250 / 0.75)" }}
+              >
+                ‹
+              </button>
+            )}
+            {currentSlide < slides.length - 1 && (
+              <button
+                onClick={goNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-white text-xs transition-opacity hover:opacity-100 opacity-70"
+                style={{ background: "oklch(0.08 0.01 250 / 0.75)" }}
+              >
+                ›
+              </button>
+            )}
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className="h-1.5 rounded-full transition-all"
+                  style={{
+                    width: i === currentSlide ? "16px" : "6px",
+                    background: i === currentSlide ? "white" : "oklch(1 0 0 / 0.35)",
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Actions */}
       <div className="flex items-center px-3 py-2">
@@ -172,10 +257,10 @@ function InstagramPreview({ draft }: Props) {
       </div>
 
       {/* Caption */}
-      <div className="px-3 pb-3 space-y-1">
+      <div className="px-3 pb-3">
         <p className="text-[12px] leading-[1.5]" style={{ color: "oklch(0.88 0.01 250)" }}>
           <span className="font-semibold mr-1">intellixai</span>
-          {parts.map((part, i) =>
+          {captionParts.map((part, i) =>
             part.startsWith("#") ? (
               <span key={i} style={{ color: "oklch(0.65 0.15 240)" }}>{part} </span>
             ) : (
@@ -183,19 +268,10 @@ function InstagramPreview({ draft }: Props) {
             )
           )}
         </p>
-        {slides && slides.length > 1 && (
-          <div className="space-y-1.5 pt-1">
-            {slides.slice(0, -1).map((slide, i) => (
-              <div key={i}
-                className="rounded-lg p-2.5 text-[11px] leading-[1.5]"
-                style={{ background: "oklch(0.16 0.01 250)", color: "oklch(0.75 0.01 250)" }}>
-                <span className="font-semibold mr-1" style={{ color: "oklch(0.65 0.12 262)" }}>
-                  Slide {i + 1}
-                </span>
-                {slide}
-              </div>
-            ))}
-          </div>
+        {isCarousel && (
+          <p className="text-[11px] mt-1" style={{ color: "oklch(0.45 0.02 250)" }}>
+            {slides.length} slides · arraste para navegar
+          </p>
         )}
       </div>
     </div>
