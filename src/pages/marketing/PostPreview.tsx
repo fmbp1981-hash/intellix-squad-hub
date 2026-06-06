@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { MarketingDraft } from "@/hooks/useMarketingDrafts";
+import intellixLogo from "@/assets/intellix-logo-transparent.png";
 
 interface Props {
   draft: MarketingDraft;
@@ -102,53 +103,106 @@ function LinkedInPreview({ draft }: Props) {
 
 // ─── Instagram ───────────────────────────────────────────────────────────────
 
+// ─── Cores IntelliX ───────────────────────────────────────────────────────────
+const IX = {
+  bg:      "#171723",
+  bgCard:  "#1F1F2E",
+  primary: "#196FA8",
+  accent:  "#F2A82A",
+  gold2:   "#F6C97D",
+  text:    "#FAFAFA",
+  muted:   "#BDBDC3",
+};
+
 function InstagramCarouselSlide({ text, index, total }: { text: string; index: number; total: number }) {
-  const isLast = index === total - 1;
-  const isCTA = isLast;
+  const isFirst = index === 0;
+  const isLast  = index === total - 1;
+  const clean   = text.replace(/\*\*/g, "").replace(/→\s*$/, "").trim();
+
+  // Tamanho da fonte proporcional ao texto
+  const fontSize = clean.length > 160 ? 11 : clean.length > 100 ? 13 : clean.length > 60 ? 15 : 19;
 
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8"
-      style={{
-        background: isCTA
-          ? "linear-gradient(135deg, oklch(0.22 0.06 262), oklch(0.18 0.08 290))"
-          : index === 0
-          ? "linear-gradient(160deg, oklch(0.13 0.02 250), oklch(0.17 0.04 270))"
-          : "oklch(0.14 0.02 255)",
-      }}
+      className="absolute inset-0 flex flex-col"
+      style={{ background: IX.bg, fontFamily: "'DM Sans', 'Inter', sans-serif" }}
     >
-      {/* Slide number badge */}
+      {/* Orb de fundo — azul primário no canto superior direito */}
       <div
-        className="absolute top-3 left-3 text-[10px] font-medium px-2 py-0.5 rounded-full"
-        style={{ background: "oklch(1 0 0 / 0.12)", color: "oklch(0.75 0.01 250)" }}
-      >
-        {index + 1} / {total}
-      </div>
-
-      {/* Logo */}
-      <div className="absolute top-3 right-3 text-[9px] font-bold tracking-wide"
-        style={{ color: "oklch(0.65 0.12 262)" }}>
-        IntelliX.AI
-      </div>
-
-      {/* Slide text */}
-      <p
-        className="text-center font-semibold leading-[1.55] whitespace-pre-wrap"
+        className="absolute"
         style={{
-          fontSize: text.length > 120 ? "12px" : text.length > 60 ? "14px" : "17px",
-          color: isCTA ? "oklch(0.97 0.01 250)" : "oklch(0.92 0.01 250)",
+          width: 220, height: 220,
+          borderRadius: "50%",
+          top: -60, right: -60,
+          background: `radial-gradient(circle, ${IX.primary}28 0%, transparent 70%)`,
+          pointerEvents: "none",
         }}
-      >
-        {text.replace(/\*\*/g, "")}
-      </p>
+      />
+      {/* Orb dourado no canto inferior esquerdo */}
+      <div
+        className="absolute"
+        style={{
+          width: 160, height: 160,
+          borderRadius: "50%",
+          bottom: -40, left: -40,
+          background: `radial-gradient(circle, ${IX.accent}18 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }}
+      />
 
-      {/* Arrow hint (not on last slide) */}
-      {!isLast && (
-        <div className="absolute bottom-4 right-4 text-[18px]"
-          style={{ color: "oklch(0.55 0.08 262)" }}>
-          →
-        </div>
-      )}
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-0">
+        {/* Logo real */}
+        <img src={intellixLogo} alt="IntelliX.AI" style={{ height: 28, objectFit: "contain" }} />
+        {/* Contador */}
+        <span
+          className="text-[10px] font-semibold tracking-widest px-2 py-0.5 rounded-full"
+          style={{ background: "rgba(255,255,255,0.07)", color: IX.muted }}
+        >
+          {index + 1}/{total}
+        </span>
+      </div>
+
+      {/* Linha accent dourada */}
+      <div style={{ height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent}, transparent)`, margin: "10px 20px 0" }} />
+
+      {/* ── Conteúdo central ── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-2">
+        {isFirst && (
+          <span
+            className="text-[9px] font-bold tracking-[0.18em] uppercase mb-3 px-3 py-1 rounded-full"
+            style={{ background: `${IX.primary}22`, color: IX.primary, border: `1px solid ${IX.primary}44` }}
+          >
+            IntelliX.AI
+          </span>
+        )}
+
+        <p
+          className="text-center leading-[1.6] whitespace-pre-wrap font-semibold"
+          style={{ fontSize, color: isLast ? IX.accent : IX.text, maxWidth: "92%" }}
+        >
+          {clean}
+        </p>
+
+        {/* Seta de próximo slide */}
+        {!isLast && (
+          <div className="mt-4 flex items-center gap-1" style={{ color: `${IX.accent}99` }}>
+            <div style={{ width: 20, height: 1.5, background: `${IX.accent}55` }} />
+            <span style={{ fontSize: 14, color: IX.accent }}>›</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Footer ── */}
+      <div className="px-5 pb-4">
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 8 }} />
+        <p
+          className="text-center text-[8.5px] tracking-wider font-medium"
+          style={{ color: `${IX.muted}77`, letterSpacing: "0.12em" }}
+        >
+          RESULTADO VISÍVEL · TECNOLOGIA INVISÍVEL
+        </p>
+      </div>
     </div>
   );
 }
@@ -170,18 +224,28 @@ function InstagramPreview({ draft }: Props) {
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: "oklch(0.11 0.01 250)", border: "1px solid oklch(0.22 0.01 250)" }}
+      style={{
+        background: "#0E0E18",
+        border: `1px solid #196FA822`,
+        boxShadow: "0 0 0 1px rgba(25,111,168,0.08), 0 8px 32px rgba(0,0,0,0.4)",
+      }}
     >
-      {/* Header */}
+      {/* Header — Instagram style */}
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <div
-          className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+          className="h-9 w-9 rounded-full flex items-center justify-center p-0.5"
           style={{ background: "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)" }}
         >
-          IX
+          <div className="h-full w-full rounded-full overflow-hidden flex items-center justify-center"
+            style={{ background: "#171723" }}>
+            <img src={intellixLogo} alt="IX" style={{ height: 24, width: 24, objectFit: "contain" }} />
+          </div>
         </div>
-        <p className="text-[13px] font-semibold text-white">intellixai</p>
-        <span className="ml-auto text-[11px]" style={{ color: "oklch(0.55 0.02 250)" }}>•••</span>
+        <div>
+          <p className="text-[13px] font-semibold text-white leading-tight">intellixai</p>
+          <p className="text-[10px]" style={{ color: "oklch(0.50 0.02 250)" }}>IntelliX.AI</p>
+        </div>
+        <span className="ml-auto text-[15px]" style={{ color: "oklch(0.55 0.02 250)" }}>•••</span>
       </div>
 
       {/* Slide area */}
@@ -214,8 +278,8 @@ function InstagramPreview({ draft }: Props) {
             {currentSlide > 0 && (
               <button
                 onClick={goPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-white text-xs transition-opacity hover:opacity-100 opacity-70"
-                style={{ background: "oklch(0.08 0.01 250 / 0.75)" }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center text-white font-bold transition-all hover:scale-105"
+                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18 }}
               >
                 ‹
               </button>
@@ -223,8 +287,8 @@ function InstagramPreview({ draft }: Props) {
             {currentSlide < slides.length - 1 && (
               <button
                 onClick={goNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-white text-xs transition-opacity hover:opacity-100 opacity-70"
-                style={{ background: "oklch(0.08 0.01 250 / 0.75)" }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center text-white font-bold transition-all hover:scale-105"
+                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18 }}
               >
                 ›
               </button>
@@ -238,8 +302,8 @@ function InstagramPreview({ draft }: Props) {
                   onClick={() => setCurrentSlide(i)}
                   className="h-1.5 rounded-full transition-all"
                   style={{
-                    width: i === currentSlide ? "16px" : "6px",
-                    background: i === currentSlide ? "white" : "oklch(1 0 0 / 0.35)",
+                    width: i === currentSlide ? "18px" : "6px",
+                    background: i === currentSlide ? "#F2A82A" : "rgba(255,255,255,0.25)",
                   }}
                 />
               ))}
