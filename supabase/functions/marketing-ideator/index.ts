@@ -85,7 +85,8 @@ ${buildBrandSystemBlock()}
 ## Exemplos de hooks por pilar
 ${hookSamples}
 
-## Palavras-gatilho para CTA: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
+## CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}
+## PROIBIDO: Comenta [PALAVRA], Digita X nos comentários — não há automação de DM ativa.
 
 Plataforma alvo: ${platform}`;
 

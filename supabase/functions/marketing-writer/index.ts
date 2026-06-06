@@ -175,7 +175,8 @@ ${formatDef.visualStyle}
 
 ## Estratégia de legenda (${idea.platform})
 ${captionGuide}
-Palavras-gatilho sugeridas: ${CAPTION_STRATEGY.triggerWords.join(" | ")}
+CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}
+NUNCA usar: Comenta [PALAVRA] ou variações — sem automação de DM ativa.
 
 ## Diretrizes de escrita
 - Voz coloquial brasileira inteligente: use "pra", "tá", "ninguém te conta" quando soar natural.
