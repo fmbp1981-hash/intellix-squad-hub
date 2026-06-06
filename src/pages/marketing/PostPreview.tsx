@@ -115,93 +115,100 @@ const IX = {
 };
 
 function InstagramCarouselSlide({ text, index, total }: { text: string; index: number; total: number }) {
-  const isFirst = index === 0;
-  const isLast  = index === total - 1;
-  const clean   = text.replace(/\*\*/g, "").replace(/→\s*$/, "").trim();
+  const isLast = index === total - 1;
 
-  // Tamanho da fonte proporcional ao texto
-  const fontSize = clean.length > 160 ? 11 : clean.length > 100 ? 13 : clean.length > 60 ? 15 : 19;
+  // Separa título (1ª linha) do corpo (restante), remove markdown e seta final
+  const clean = text.replace(/\*\*/g, "").replace(/→\s*$/, "").trim();
+  const lines  = clean.split("\n").map(l => l.trim()).filter(Boolean);
+  const title  = lines[0] ?? "";
+  const body   = lines.slice(1).join("\n");
+
+  // Tamanho do título: inversamente proporcional ao comprimento
+  const titleSize = title.length > 80 ? 20 : title.length > 50 ? 24 : title.length > 30 ? 28 : 32;
 
   return (
     <div
       className="absolute inset-0 flex flex-col"
       style={{ background: IX.bg, fontFamily: "'DM Sans', 'Inter', sans-serif" }}
     >
-      {/* Orb de fundo — azul primário no canto superior direito */}
-      <div
-        className="absolute"
-        style={{
-          width: 220, height: 220,
-          borderRadius: "50%",
-          top: -60, right: -60,
-          background: `radial-gradient(circle, ${IX.primary}28 0%, transparent 70%)`,
-          pointerEvents: "none",
-        }}
-      />
-      {/* Orb dourado no canto inferior esquerdo */}
-      <div
-        className="absolute"
-        style={{
-          width: 160, height: 160,
-          borderRadius: "50%",
-          bottom: -40, left: -40,
-          background: `radial-gradient(circle, ${IX.accent}18 0%, transparent 70%)`,
-          pointerEvents: "none",
-        }}
-      />
+      {/* Orb azul — canto superior direito */}
+      <div className="absolute pointer-events-none" style={{
+        width: 260, height: 260, borderRadius: "50%",
+        top: -80, right: -80,
+        background: `radial-gradient(circle, ${IX.primary}22 0%, transparent 65%)`,
+      }} />
+      {/* Orb dourado — canto inferior esquerdo */}
+      <div className="absolute pointer-events-none" style={{
+        width: 180, height: 180, borderRadius: "50%",
+        bottom: -50, left: -50,
+        background: `radial-gradient(circle, ${IX.accent}15 0%, transparent 65%)`,
+      }} />
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-0">
-        {/* Logo real */}
-        <img src={intellixLogo} alt="IntelliX.AI" style={{ height: 28, objectFit: "contain" }} />
+      {/* ── HEADER: logo + handle + contador ── */}
+      <div className="flex items-start justify-between px-6 pt-5">
+        {/* Logo + wordmark */}
+        <div className="flex items-center gap-2.5">
+          <img src={intellixLogo} alt="IntelliX.AI"
+            style={{ height: 36, width: 36, objectFit: "contain", flexShrink: 0 }} />
+          <div>
+            <p className="text-[13px] font-bold leading-tight" style={{ color: IX.text }}>
+              IntelliX<span style={{ color: IX.accent }}>.AI</span>
+            </p>
+            <p className="text-[10px] leading-tight" style={{ color: IX.muted }}>@ai_intellix</p>
+          </div>
+        </div>
         {/* Contador */}
-        <span
-          className="text-[10px] font-semibold tracking-widest px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(255,255,255,0.07)", color: IX.muted }}
-        >
+        <span className="text-[11px] font-semibold tabular-nums"
+          style={{ color: IX.muted, background: "rgba(255,255,255,0.06)", padding: "3px 8px", borderRadius: 99 }}>
           {index + 1}/{total}
         </span>
       </div>
 
-      {/* Linha accent dourada */}
-      <div style={{ height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent}, transparent)`, margin: "10px 20px 0" }} />
+      {/* Linha separadora — azul primário */}
+      <div style={{
+        height: 2, margin: "12px 24px 0",
+        background: `linear-gradient(90deg, ${IX.primary}, ${IX.primary}00)`,
+        borderRadius: 2,
+      }} />
 
-      {/* ── Conteúdo central ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-2">
-        {isFirst && (
-          <span
-            className="text-[9px] font-bold tracking-[0.18em] uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ background: `${IX.primary}22`, color: IX.primary, border: `1px solid ${IX.primary}44` }}
-          >
-            IntelliX.AI
-          </span>
-        )}
-
+      {/* ── CONTEÚDO ── */}
+      <div className="flex-1 flex flex-col justify-center px-6 py-4">
+        {/* Título — grande e bold */}
         <p
-          className="text-center leading-[1.6] whitespace-pre-wrap font-semibold"
-          style={{ fontSize, color: isLast ? IX.accent : IX.text, maxWidth: "92%" }}
+          className="font-bold leading-[1.25]"
+          style={{
+            fontSize: titleSize,
+            color: isLast ? IX.accent : IX.text,
+            letterSpacing: "-0.01em",
+          }}
         >
-          {clean}
+          {title}
         </p>
 
-        {/* Seta de próximo slide */}
-        {!isLast && (
-          <div className="mt-4 flex items-center gap-1" style={{ color: `${IX.accent}99` }}>
-            <div style={{ width: 20, height: 1.5, background: `${IX.accent}55` }} />
-            <span style={{ fontSize: 14, color: IX.accent }}>›</span>
-          </div>
+        {/* Corpo — menor, muted */}
+        {body && (
+          <p
+            className="mt-3 leading-[1.6] whitespace-pre-wrap"
+            style={{ fontSize: 14, color: IX.muted, fontWeight: 400 }}
+          >
+            {body}
+          </p>
         )}
       </div>
 
-      {/* ── Footer ── */}
-      <div className="px-5 pb-4">
-        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 8 }} />
-        <p
-          className="text-center text-[8.5px] tracking-wider font-medium"
-          style={{ color: `${IX.muted}77`, letterSpacing: "0.12em" }}
-        >
-          RESULTADO VISÍVEL · TECNOLOGIA INVISÍVEL
+      {/* ── FOOTER ── */}
+      <div className="px-6 pb-5 flex items-end justify-between">
+        <p className="text-[9px] font-semibold tracking-[0.14em] uppercase"
+          style={{ color: `${IX.muted}55` }}>
+          Resultado Visível · Tecnologia Invisível
         </p>
+        {/* Seta dourada — só se não for o último slide */}
+        {!isLast && (
+          <div className="flex items-center gap-1.5">
+            <div style={{ width: 24, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
+            <span style={{ fontSize: 22, color: IX.accent, lineHeight: 1 }}>›</span>
+          </div>
+        )}
       </div>
     </div>
   );
