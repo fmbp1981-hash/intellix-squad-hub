@@ -1,7 +1,8 @@
-// Called when user approves an idea — generates content + optional DALL-E 3 image
+// Called when user approves an idea — generates content + optional image
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, CAPTION_STRATEGY, ContentFormat } from "../_shared/brand-context.ts";
+import { callLLM, loadAgentLLMConfig } from "../_shared/llm-client.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const RequestSchema = z.object({
@@ -124,9 +125,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "idea_not_found_or_not_pending" }, 404);
   }
 
-  const openaiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!openaiKey) return jsonResponse({ error: "openai_api_key_missing" }, 503);
-
   await db.from("marketing_drafts").update({ status: "generated" }).eq("id", draft_id);
 
   const contextText = ((draft.research_snippets ?? []) as Array<{ title: string }>)
@@ -192,22 +190,16 @@ ${draft.theme_prompt ? `\nTema: "${draft.theme_prompt}"` : ""}
 
 ${slideInstruction}`;
 
-  const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
-      temperature: 0.7,
-    }),
+  const llmConfig = await loadAgentLLMConfig(db, "marketing-generator", {
+    provider: "anthropic",
+    model: "claude-sonnet-4-6",
+    temperature: 0.7,
+    maxTokens: 4096,
   });
-
-  if (!chatRes.ok) return jsonResponse({ error: "openai_failed" }, 503);
-
-  const chatData = await chatRes.json() as { choices: Array<{ message: { content: string } }> };
-  const content = chatData.choices?.[0]?.message?.content ?? "";
+  const content = await callLLM(llmConfig, systemPrompt, userPrompt);
   if (!content.trim()) return jsonResponse({ error: "empty_content" }, 500);
 
+  const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
 
   let imageUrl: string | null = null;

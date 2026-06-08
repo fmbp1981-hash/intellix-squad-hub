@@ -1,5 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { adminClient } from "../_shared/auth.ts";
 import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_MIX, CONTENT_FORMATS, CAPTION_STRATEGY } from "../_shared/brand-context.ts";
+import { callLLM, loadAgentLLMConfig } from "../_shared/llm-client.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const SnippetSchema = z.object({
@@ -54,8 +56,13 @@ Deno.serve(async (req) => {
 
   const { snippets, theme_prompt, platform } = parsed.data;
 
-  const openaiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!openaiKey) return jsonResponse({ error: "openai_api_key_missing" }, 503);
+  const db = adminClient();
+  const llmConfig = await loadAgentLLMConfig(db, "marketing-ideator", {
+    provider: "openai",
+    model: "gpt-4o-mini",
+    temperature: 0.8,
+    maxTokens: 4096,
+  });
 
   const contextText = snippets
     .map((s, i) => `[${i + 1}] ${s.title}\n${s.snippet}`)
@@ -108,26 +115,13 @@ Responda SOMENTE em JSON válido, sem markdown:
   }
 ]`;
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.8,
-    }),
-  });
-
-  if (!res.ok) {
-    console.error("[marketing-ideator] OpenAI error", res.status);
-    return jsonResponse({ error: "openai_failed" }, 503);
+  let content: string;
+  try {
+    content = await callLLM(llmConfig, systemPrompt, userPrompt);
+  } catch (e) {
+    console.error("[marketing-ideator] LLM error", e);
+    return jsonResponse({ error: "llm_failed" }, 503);
   }
-
-  const data = await res.json() as { choices: Array<{ message: { content: string } }> };
-  const content = data.choices?.[0]?.message?.content ?? "[]";
 
   let ideas: PostIdea[];
   try {
