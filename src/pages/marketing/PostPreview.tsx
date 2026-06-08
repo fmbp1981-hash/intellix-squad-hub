@@ -164,8 +164,8 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
           <img src={intellixLogo} alt="IntelliX.AI"
             style={{ height: "11%", minHeight: 32, maxHeight: 44, width: "auto", objectFit: "contain" }} />
           <div>
-            <p style={{ fontSize: "clamp(11px, 1.8vw, 15px)", fontWeight: 700, lineHeight: 1.15, color: IX.text, margin: 0 }}>
-              IntelliX<span style={{ color: IX.accent }}>.AI</span>
+            <p style={{ fontSize: "clamp(11px, 1.8vw, 15px)", fontWeight: 700, lineHeight: 1.15, margin: 0 }}>
+              <span style={{ color: IX.accent }}>IntelliX</span><span style={{ color: IX.primary }}>.AI</span>
             </p>
             <p style={{ fontSize: "clamp(9px, 1.3vw, 12px)", color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
           </div>
