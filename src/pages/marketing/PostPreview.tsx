@@ -122,9 +122,14 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
   const title = lines[0] ?? "";
   const body  = lines.slice(1).join("  ");
 
-  // Usa % do container (o slide é sempre quadrado)
-  // Referência: título ocupa ~8-10% da altura, escala com comprimento
-  const titleVw = title.length > 70 ? 5.5 : title.length > 45 ? 6.5 : title.length > 28 ? 7.5 : 9;
+  // clamp(min, preferred-vw, max-px) — evita overflow em monitores largos
+  // O card tem max-w-2xl (~672px), o slide ocupa ~600px de largura
+  const titleSize =
+    title.length > 70 ? "clamp(13px, 2.2vw, 17px)" :
+    title.length > 45 ? "clamp(15px, 2.6vw, 20px)" :
+    title.length > 28 ? "clamp(18px, 3.0vw, 26px)" :
+                        "clamp(22px, 3.6vw, 32px)";
+  const bodySize = "clamp(12px, 1.6vw, 15px)";
 
   return (
     <div
@@ -159,14 +164,14 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
           <img src={intellixLogo} alt="IntelliX.AI"
             style={{ height: "11%", minHeight: 32, maxHeight: 44, width: "auto", objectFit: "contain" }} />
           <div>
-            <p style={{ fontSize: "3.8vw", fontWeight: 700, lineHeight: 1.15, color: IX.text, margin: 0 }}>
+            <p style={{ fontSize: "clamp(11px, 1.8vw, 15px)", fontWeight: 700, lineHeight: 1.15, color: IX.text, margin: 0 }}>
               IntelliX<span style={{ color: IX.accent }}>.AI</span>
             </p>
-            <p style={{ fontSize: "2.8vw", color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
+            <p style={{ fontSize: "clamp(9px, 1.3vw, 12px)", color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
           </div>
         </div>
         <span style={{
-          fontSize: "2.8vw", fontWeight: 600, color: IX.muted,
+          fontSize: "clamp(9px, 1.3vw, 12px)", fontWeight: 600, color: IX.muted,
           background: "rgba(255,255,255,0.08)", padding: "2px 10px", borderRadius: 99,
         }}>
           {index + 1}/{total}
@@ -186,9 +191,9 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
         justifyContent: "center", paddingTop: "4%",
       }}>
         <p style={{
-          fontSize: `${titleVw}vw`,
+          fontSize: titleSize,
           fontWeight: 700,
-          lineHeight: 1.2,
+          lineHeight: 1.25,
           letterSpacing: "-0.02em",
           color: isLast ? IX.accent : IX.text,
           margin: 0,
@@ -198,7 +203,7 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
 
         {body && (
           <p style={{
-            fontSize: `${titleVw * 0.5}vw`,
+            fontSize: bodySize,
             fontWeight: 400,
             lineHeight: 1.6,
             color: IX.muted,
@@ -216,7 +221,7 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
         paddingTop: "3%",
       }}>
         <p style={{
-          fontSize: "2.2vw", fontWeight: 600,
+          fontSize: "clamp(8px, 1.1vw, 10px)", fontWeight: 600,
           letterSpacing: "0.1em", textTransform: "uppercase",
           color: `${IX.muted}55`, margin: 0,
         }}>
@@ -225,7 +230,7 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
         {!isLast && (
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 22, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
-            <span style={{ fontSize: "6vw", color: IX.accent, lineHeight: 1, fontWeight: 300 }}>›</span>
+            <span style={{ fontSize: "clamp(20px, 3vw, 28px)", color: IX.accent, lineHeight: 1, fontWeight: 300 }}>›</span>
           </div>
         )}
       </div>
