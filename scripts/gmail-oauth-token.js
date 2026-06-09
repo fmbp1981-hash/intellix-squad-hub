@@ -1,26 +1,13 @@
 #!/usr/bin/env node
-/**
- * Obtém refresh token do Gmail via OAuth2 para uso nas edge functions.
- *
- * Pré-requisitos:
- *   1. Criar credencial OAuth2 no Google Cloud Console (tipo: Desktop App)
- *   2. Habilitar Gmail API no projeto
- *   3. Preencher GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET abaixo ou em .env.local
- *
- * Uso:
- *   node scripts/gmail-oauth-token.js
- *
- * Saída: refresh_token para setar em GMAIL_REFRESH_TOKEN nas env vars do Supabase
- */
+import http from "http";
+import https from "https";
+import { parse } from "url";
+import { exec } from "child_process";
 
-const https = require("https");
-const http = require("http");
-const url = require("url");
-
-// Lê do ambiente ou usa valores de exemplo
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
-const REDIRECT_URI = "http://localhost:3000/oauth2callback";
+const PORT = 8080;
+const REDIRECT_URI = `http://localhost:${PORT}`;
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
@@ -28,11 +15,7 @@ const SCOPES = [
 ].join(" ");
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error(
-    "ERRO: Defina GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET como variáveis de ambiente.\n" +
-    "Exemplo:\n" +
-    "  GOOGLE_CLIENT_ID=xxx GOOGLE_CLIENT_SECRET=yyy node scripts/gmail-oauth-token.js"
-  );
+  console.error("ERRO: Defina GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET.");
   process.exit(1);
 }
 
@@ -47,73 +30,63 @@ const authUrl =
     prompt: "consent",
   });
 
-console.log("\n1. Abra esta URL no navegador:\n");
-console.log(authUrl);
-console.log("\n2. Authorize e aguarde o redirect para localhost:3000...\n");
+console.log("\nAbrindo navegador automaticamente...\n");
+console.log("URL:", authUrl, "\n");
+exec(`start "" "${authUrl}"`);
 
-// Servidor local para capturar o código de autorização
-const server = http.createServer(async (req, res) => {
-  const parsed = url.parse(req.url, true);
-  if (parsed.pathname !== "/oauth2callback") {
-    res.end("Not found");
-    return;
-  }
+const server = http.createServer((req, res) => {
+  const { query } = parse(req.url, true);
 
-  const code = parsed.query.code;
-  if (!code) {
-    res.end("Erro: código não encontrado na query string.");
-    server.close();
+  if (!query.code) {
+    res.end("Aguardando...");
     return;
   }
 
   res.end("<html><body><h2>Autorizado! Pode fechar esta aba.</h2></body></html>");
   server.close();
 
-  // Troca o code por tokens
   const body = new URLSearchParams({
-    code,
+    code: query.code,
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
     redirect_uri: REDIRECT_URI,
     grant_type: "authorization_code",
   }).toString();
 
-  const options = {
-    hostname: "oauth2.googleapis.com",
-    path: "/token",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Content-Length": Buffer.byteLength(body),
+  const req2 = https.request(
+    {
+      hostname: "oauth2.googleapis.com",
+      path: "/token",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Length": Buffer.byteLength(body),
+      },
     },
-  };
+    (res2) => {
+      let data = "";
+      res2.on("data", (c) => (data += c));
+      res2.on("end", () => {
+        const tokens = JSON.parse(data);
+        if (tokens.error) {
+          console.error("Erro:", tokens.error, "-", tokens.error_description);
+          return;
+        }
+        console.log("✅ REFRESH_TOKEN obtido:\n");
+        console.log(tokens.refresh_token);
+        console.log(
+          "\nRode para salvar no Supabase:\n" +
+          `  supabase secrets set GMAIL_REFRESH_TOKEN="${tokens.refresh_token}" --project-ref hynadwlwrscvjubryqlg\n`
+        );
+      });
+    }
+  );
 
-  const tokenReq = https.request(options, (tokenRes) => {
-    let data = "";
-    tokenRes.on("data", (chunk) => (data += chunk));
-    tokenRes.on("end", () => {
-      const tokens = JSON.parse(data);
-      if (tokens.error) {
-        console.error("Erro ao obter tokens:", tokens);
-        return;
-      }
-      console.log("\n✅ Tokens obtidos com sucesso!\n");
-      console.log("ACCESS_TOKEN (expira em 1h):", tokens.access_token);
-      console.log("\nREFRESH_TOKEN (permanente):", tokens.refresh_token);
-      console.log(
-        "\n📋 Adicione no Supabase Dashboard > Project Settings > Edge Functions > Secrets:\n" +
-        `  GMAIL_REFRESH_TOKEN = ${tokens.refresh_token}\n` +
-        `  GOOGLE_CLIENT_ID    = ${CLIENT_ID}\n` +
-        `  GOOGLE_CLIENT_SECRET = ${CLIENT_SECRET}\n`
-      );
-    });
-  });
-
-  tokenReq.on("error", (e) => console.error("Erro na requisição:", e));
-  tokenReq.write(body);
-  tokenReq.end();
+  req2.on("error", (e) => console.error("Erro:", e));
+  req2.write(body);
+  req2.end();
 });
 
-server.listen(3000, () => {
-  console.log("Servidor de callback rodando em http://localhost:3000...");
+server.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}...`);
 });
