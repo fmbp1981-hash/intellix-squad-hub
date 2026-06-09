@@ -1,30 +1,18 @@
 // supabase/functions/marketing-researcher/index.ts
-import { z } from "https://esm.sh/zod@3.23.8";
+import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { callLLM } from "../_shared/llm-client.ts";
+import { fetchGmailSnippets } from "../_shared/gmail-client.ts";
+import { fetchGoogleNews, fetchInstagramProfile, fetchLinkedInAnthropic } from "../_shared/serp-client.ts";
+import { adminClient } from "../_shared/auth.ts";
 
-// Inlined from _shared/cors.ts (Management API deploy workaround — no relative imports)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-const RequestSchema = z.object({
-  query: z.string().min(3).max(500),
-  theme_prompt: z.string().optional(),
-});
+const INSTAGRAM_PROFILES = ["gestaoai", "thaleslaray", "dumasolucoes", "inventormiguel"];
 
 export interface ResearchSnippet {
-  source: "knowledge" | "perplexity" | "linkedin";
-  url: string;
-  snippet: string;
   title: string;
+  snippet: string;
+  url: string;
+  source: "google_news" | "gmail" | "instagram" | "linkedin" | "kb";
+  relevance_score?: number;
 }
 
 Deno.serve(async (req) => {
@@ -37,131 +25,100 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
 
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  console.log("[marketing-researcher] starting research from 5 sources");
 
-  const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) return jsonResponse({ error: parsed.error.flatten() }, 400);
-
-  const { query, theme_prompt } = parsed.data;
-  const searchQuery = theme_prompt ? `${theme_prompt} ${query}` : query;
-
-  const [knowledgeSnippets, perplexitySnippets, linkedinSnippets] = await Promise.allSettled([
-    searchKnowledge(searchQuery, serviceKey),
-    searchPerplexity(searchQuery),
-    searchLinkedin(searchQuery),
+  const results = await Promise.allSettled([
+    fetchGoogleNews("inteligência artificial negócios Brasil automação", 12),
+    fetchGmailSnippets(),
+    fetchInstagramProfile("gestaoai", 4),
+    fetchInstagramProfile("thaleslaray", 4),
+    fetchInstagramProfile("dumasolucoes", 4),
+    fetchInstagramProfile("inventormiguel", 4),
+    fetchLinkedInAnthropic(6),
   ]);
 
-  const snippets: ResearchSnippet[] = [
-    ...(knowledgeSnippets.status === "fulfilled" ? knowledgeSnippets.value : []),
-    ...(perplexitySnippets.status === "fulfilled" ? perplexitySnippets.value : []),
-    ...(linkedinSnippets.status === "fulfilled" ? linkedinSnippets.value : []),
-  ];
+  const [newsR, gmailR, ig0, ig1, ig2, ig3, linkedinR] = results;
 
-  console.log(`[marketing-researcher] query="${searchQuery}" snippets=${snippets.length}`);
+  const allSnippets: ResearchSnippet[] = [];
 
-  return jsonResponse({ success: true, snippets, total: snippets.length });
-});
+  if (newsR.status === "fulfilled") {
+    allSnippets.push(...newsR.value.map((s) => ({ ...s, source: "google_news" as const })));
+  } else console.warn("[marketing-researcher] google_news failed:", newsR.reason);
 
-async function searchKnowledge(query: string, serviceKey: string): Promise<ResearchSnippet[]> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const res = await fetch(`${supabaseUrl}/functions/v1/knowledge-search`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({ query, top_k: 3 }),
-  });
+  if (gmailR.status === "fulfilled") {
+    allSnippets.push(
+      ...gmailR.value.map((s) => ({
+        title: s.subject,
+        snippet: s.snippet,
+        url: `gmail:${s.id}`,
+        source: "gmail" as const,
+      }))
+    );
+  } else console.warn("[marketing-researcher] gmail failed:", gmailR.reason);
 
-  if (!res.ok) {
-    console.error("[marketing-researcher] knowledge-search failed", res.status);
-    return [];
+  for (const [igR, handle] of [[ig0, "gestaoai"], [ig1, "thaleslaray"], [ig2, "dumasolucoes"], [ig3, "inventormiguel"]] as const) {
+    if (igR.status === "fulfilled") {
+      allSnippets.push(...igR.value.map((s) => ({ ...s, source: "instagram" as const })));
+    } else console.warn(`[marketing-researcher] instagram @${handle} failed:`, igR.reason);
   }
 
-  const data = await res.json() as { results: Array<{ document_title: string; content: string; section_title: string | null }> };
-  return (data.results ?? []).map((r) => ({
-    source: "knowledge" as const,
-    url: `internal://knowledge/${r.document_title}`,
-    title: r.document_title,
-    snippet: r.content.slice(0, 400),
-  }));
-}
+  if (linkedinR.status === "fulfilled") {
+    allSnippets.push(...linkedinR.value.map((s) => ({ ...s, source: "linkedin" as const })));
+  } else console.warn("[marketing-researcher] linkedin failed:", linkedinR.reason);
 
-async function searchPerplexity(query: string): Promise<ResearchSnippet[]> {
-  const apiKey = Deno.env.get("PERPLEXITY_API_KEY");
-  if (!apiKey) {
-    console.error("[marketing-researcher] PERPLEXITY_API_KEY not set");
-    return [];
+  // KB interna
+  const db = adminClient();
+  const { data: kbItems } = await db
+    .from("knowledge_base")
+    .select("title, content")
+    .eq("active", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (kbItems) {
+    allSnippets.push(
+      ...(kbItems as Array<{ title: string; content: string }>).map((k) => ({
+        title: k.title,
+        snippet: k.content.slice(0, 300),
+        url: "intellix-kb",
+        source: "kb" as const,
+      }))
+    );
   }
 
-  const res = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "sonar-pro",
-      messages: [
-        {
-          role: "user",
-          content: `Pesquise sobre: "${query}". Retorne 3 trechos relevantes sobre IA aplicada a negócios, com título e URL de fonte. Responda em JSON: [{"title":"...","url":"...","snippet":"..."}]`,
-        },
-      ],
-      return_citations: true,
-    }),
-  });
+  console.log(`[marketing-researcher] collected ${allSnippets.length} raw snippets`);
 
-  if (!res.ok) {
-    console.error("[marketing-researcher] Perplexity failed", res.status);
-    return [];
+  if (allSnippets.length === 0) {
+    return jsonResponse({ success: true, snippets: [], total_raw: 0 });
   }
 
-  const data = await res.json() as { choices: Array<{ message: { content: string } }> };
-  const content = data.choices?.[0]?.message?.content ?? "[]";
+  const snippetList = allSnippets
+    .map((s, i) => `[${i}] ${s.title}\n${s.snippet}`)
+    .join("\n\n");
+
+  let ranked: ResearchSnippet[] = allSnippets;
 
   try {
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
-    const parsed = JSON.parse(jsonMatch[0]) as Array<{ title: string; url: string; snippet: string }>;
-    return parsed.slice(0, 3).map((p) => ({
-      source: "perplexity" as const,
-      url: p.url ?? "https://perplexity.ai",
-      title: p.title ?? query,
-      snippet: (p.snippet ?? "").slice(0, 400),
-    }));
-  } catch {
-    return [];
-  }
-}
+    const rankResponse = await callLLM(
+      { provider: "anthropic", model: "claude-haiku-4-5-20251001", temperature: 0.1, maxTokens: 1024 },
+      "Você ranqueia snippets de pesquisa por relevância para marketing de IA.",
+      `Avalie cada snippet (0-10) por relevância para criar posts sobre automação com IA em negócios brasileiros para a IntelliX.AI. Responda SOMENTE em JSON: [{"index": 0, "score": 8}, ...]\n\n${snippetList}`
+    );
 
-async function searchLinkedin(query: string): Promise<ResearchSnippet[]> {
-  const apiKey = Deno.env.get("SERPAPI_KEY");
-  if (!apiKey) {
-    console.error("[marketing-researcher] SERPAPI_KEY not set");
-    return [];
-  }
-
-  const params = new URLSearchParams({
-    api_key: apiKey,
-    engine: "google",
-    q: `site:linkedin.com/posts ${query} IA negócios`,
-    num: "5",
-    hl: "pt",
-    gl: "br",
-  });
-
-  const res = await fetch(`https://serpapi.com/search.json?${params}`);
-  if (!res.ok) {
-    console.error("[marketing-researcher] SerpAPI failed", res.status);
-    return [];
+    const jsonMatch = rankResponse.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const scores = JSON.parse(jsonMatch[0]) as Array<{ index: number; score: number }>;
+      const scoreMap = new Map(scores.map((s) => [s.index, s.score]));
+      ranked = allSnippets
+        .map((s, i) => ({ ...s, relevance_score: scoreMap.get(i) ?? 5 }))
+        .filter((s) => (s.relevance_score ?? 0) >= 5)
+        .sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0))
+        .slice(0, 20);
+    }
+  } catch (e) {
+    console.warn("[marketing-researcher] ranking failed, returning unranked:", e);
   }
 
-  const data = await res.json() as { organic_results?: Array<{ title: string; link: string; snippet: string }> };
-  return (data.organic_results ?? []).slice(0, 3).map((r) => ({
-    source: "linkedin" as const,
-    url: r.link,
-    title: r.title,
-    snippet: (r.snippet ?? "").slice(0, 400),
-  }));
-}
+  console.log(`[marketing-researcher] returning ${ranked.length} ranked snippets`);
+  return jsonResponse({ success: true, snippets: ranked, total_raw: allSnippets.length });
+});
