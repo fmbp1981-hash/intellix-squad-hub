@@ -3,6 +3,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, CAPTION_STRATEGY, ContentFormat } from "../_shared/brand-context.ts";
 import { callLLM, loadAgentLLMConfig } from "../_shared/llm-client.ts";
+import { extractOgImages } from "../_shared/og-extractor.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const RequestSchema = z.object({
@@ -104,6 +105,97 @@ function b64ToUint8Array(b64: string): Uint8Array {
   return bytes;
 }
 
+interface NewsSnippet {
+  title: string;
+  snippet: string;
+  url: string;
+  source: string;
+}
+
+interface SlideImage {
+  slide: number;
+  title: string;
+  image_url: string | null;
+  copy: string;
+  practical_tip: string;
+}
+
+// Generates the full Monday news digest: per-slide copy + OG images + CTA slide.
+// LLM copy and OG extraction run in parallel. No per-slide AI image fallback (too slow).
+async function generateNewsDigest(
+  snippets: NewsSnippet[],
+  llmConfig: Awaited<ReturnType<typeof loadAgentLLMConfig>>,
+): Promise<{ content: string; slideImages: SlideImage[] }> {
+  const topSnippets = snippets.slice(0, 7);
+
+  const systemPrompt = `Você é o redator da IntelliX.AI. Escreve conteúdo para Instagram no estilo curador de IA para líderes e empreendedores brasileiros.
+
+Voz: informal, direta, orientada ao benefício. Use "pra", "tá", "hoje mesmo".
+Nunca use jargão técnico sem explicar. Prefira ações concretas a conceitos abstratos.`;
+
+  const newsLines = topSnippets
+    .map((s, i) => `[${i + 1}] ${s.title}\nContexto: ${s.snippet}`)
+    .join("\n\n");
+
+  const userPrompt = `Para cada notícia abaixo, escreva o texto de UM slide de carrossel Instagram com:
+- "headline": manchete curta e impactante (máx 8 palavras, destaque palavras-chave em MAIÚSCULAS)
+- "context": o que isso significa pra negócios (1-2 frases curtas)
+- "practical_tip": começa obrigatoriamente com "Como usar HOJE:" + 1 ação concreta e aplicável imediatamente por líderes/empreendedores (1-2 linhas)
+
+Notícias:
+${newsLines}
+
+Responda SOMENTE em JSON válido, array de ${topSnippets.length} objetos:
+[{"index":0,"headline":"...","context":"...","practical_tip":"Como usar HOJE: ..."}]`;
+
+  // LLM copy + OG extraction run in parallel
+  const [copyRaw, ogResults] = await Promise.all([
+    callLLM(llmConfig, systemPrompt, userPrompt).catch(() => ""),
+    extractOgImages(topSnippets),
+  ]);
+
+  let slidesCopy: Array<{ index: number; headline: string; context: string; practical_tip: string }> = [];
+  try {
+    const match = copyRaw.match(/\[[\s\S]*\]/);
+    if (match) slidesCopy = JSON.parse(match[0]);
+  } catch {
+    // fallback copy from raw snippets
+  }
+
+  const slideImages: SlideImage[] = topSnippets.map((s, i) => {
+    const copy = slidesCopy[i] ?? {
+      index: i,
+      headline: s.title,
+      context: s.snippet,
+      practical_tip: "Como usar HOJE: avalie como essa novidade impacta sua operação e compartilhe com seu time.",
+    };
+    const fullCopy = `${copy.headline}\n\n${copy.context}\n\n${copy.practical_tip}`;
+    return {
+      slide: i + 2,
+      title: copy.headline,
+      image_url: ogResults[i]?.ogImage ?? null,  // OG only — no AI fallback (latency)
+      copy: fullCopy,
+      practical_tip: copy.practical_tip,
+    };
+  });
+
+  const manchetes = slidesCopy.length > 0
+    ? slidesCopy.map((s) => `— ${s.headline}`).join("\n")
+    : topSnippets.map((s) => `— ${s.title}`).join("\n");
+
+  const content = `Separei tudo que rolou em IA essa semana pra você não precisar garimpar. 👇
+
+${manchetes}
+
+Salva esse post pra consultar durante a semana.
+
+Quer implementar IA na sua empresa com resultado real? A IntelliX.AI faz isso por você — da estratégia ao deploy. Link na bio.
+
+#InteligenciaArtificial #IAnegócios #LiderancaDigital #TransformacaoDigital #IntelliXAI #AutomacaoInteligente #IAparaNegócios #GestaoComIA #EmpreendedorDigital`;
+
+  return { content, slideImages };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
@@ -202,6 +294,37 @@ ${slideInstruction}`;
   const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
 
+  // News digest carrossel — special path: per-slide copy + OG images + CTA
+  if (draft.content_type === "news_data" && draft.platform === "instagram") {
+    const snippets = (draft.research_snippets ?? []) as NewsSnippet[];
+    const { content: digestContent, slideImages } = await generateNewsDigest(snippets, llmConfig);
+
+    // CTA slide (last)
+    const ctaSlide: SlideImage = {
+      slide: slideImages.length + 2,
+      title: "IntelliX.AI — IA que gera resultado",
+      image_url: null,
+      copy: "Quer implementar IA na sua empresa com resultado real?\n\nA IntelliX.AI cuida de tudo: estratégia, automação e deploy.\n\nLink na bio 👆",
+      practical_tip: "",
+    };
+
+    const allSlides = [
+      { slide: 1, title: "Capa", image_url: null, copy: "Tudo que rolou de IA nessa semana 🤖\nResumo para Líderes e Empreendedores", practical_tip: "" },
+      ...slideImages,
+      ctaSlide,
+    ];
+
+    await db.from("marketing_drafts").update({
+      content: digestContent,
+      slide_images: allSlides,
+      status: "generated",
+    }).eq("id", draft_id);
+
+    console.log(`[marketing-generate] news_digest draft=${draft_id} slides=${allSlides.length}`);
+    return jsonResponse({ success: true, draft_id, slide_count: allSlides.length });
+  }
+
+  // Standard path — single image + text content
   let imageUrl: string | null = null;
   if (draft.needs_image) {
     try {
