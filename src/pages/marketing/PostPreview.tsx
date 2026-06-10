@@ -120,16 +120,22 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
   const clean = text.replace(/\*\*/g, "").replace(/→\s*$/, "").trim();
   const lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
   const title = lines[0] ?? "";
-  const body  = lines.slice(1).join("  ");
+  const bodyLines = lines.slice(1);
 
-  // clamp(min, preferred-vw, max-px) — evita overflow em monitores largos
-  // O card tem max-w-2xl (~672px), o slide ocupa ~600px de largura
-  const titleSize =
-    title.length > 70 ? "clamp(13px, 2.2vw, 17px)" :
-    title.length > 45 ? "clamp(15px, 2.6vw, 20px)" :
-    title.length > 28 ? "clamp(18px, 3.0vw, 26px)" :
-                        "clamp(22px, 3.6vw, 32px)";
-  const bodySize = "clamp(12px, 1.6vw, 15px)";
+  // Slide âncora numérica: título muito curto (≤10 chars) e poucas linhas de body
+  // Ex: "46%" — número deve dominar visualmente
+  const isNumberAnchor = title.length <= 10 && bodyLines.length <= 2;
+
+  // Tamanhos calibrados para slide ~600×600px (escala Instagram 1080px)
+  // Padrão: headline 35-45px, body 17-20px
+  const titleSize = isNumberAnchor
+    ? "72px"  // número âncora: dominante, ~60% do slide
+    : title.length > 70 ? "15px"
+    : title.length > 45 ? "18px"
+    : title.length > 28 ? "22px"
+    : "32px";
+
+  const bodySize = "17px";
 
   return (
     <div
@@ -144,7 +150,7 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
         overflow: "hidden",
       }}
     >
-      {/* Orbs — posicionados em % para escalar com o slide */}
+      {/* Orbs */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
         <div style={{
           position: "absolute", width: "55%", paddingBottom: "55%",
@@ -162,75 +168,72 @@ function InstagramCarouselSlide({ text, index, total }: { text: string; index: n
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "3%" }}>
           <img src={intellixLogo} alt="IntelliX.AI"
-            style={{ height: "11%", minHeight: 32, maxHeight: 44, width: "auto", objectFit: "contain" }} />
+            style={{ height: "11%", minHeight: 28, maxHeight: 38, width: "auto", objectFit: "contain" }} />
           <div>
-            <p style={{ fontSize: "clamp(11px, 1.8vw, 15px)", fontWeight: 700, lineHeight: 1.15, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.15, margin: 0 }}>
               <span style={{ color: IX.accent }}>IntelliX</span><span style={{ color: IX.primary }}>.AI</span>
             </p>
-            <p style={{ fontSize: "clamp(9px, 1.3vw, 12px)", color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
+            <p style={{ fontSize: 11, color: IX.muted, lineHeight: 1.2, margin: 0 }}>@ai_intellix</p>
           </div>
         </div>
-        <span style={{
-          fontSize: "clamp(9px, 1.3vw, 12px)", fontWeight: 600, color: IX.muted,
-          background: "rgba(255,255,255,0.08)", padding: "2px 10px", borderRadius: 99,
-        }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: IX.muted, background: "rgba(255,255,255,0.08)", padding: "2px 10px", borderRadius: 99 }}>
           {index + 1}/{total}
         </span>
       </div>
 
-      {/* Linha separadora azul — ancorada à esquerda como na referência */}
+      {/* Linha separadora */}
       <div style={{
-        height: 2, width: "42%", borderRadius: 2, flexShrink: 0,
-        marginTop: "5%",
+        height: 2, width: "42%", borderRadius: 2, flexShrink: 0, marginTop: "4%",
         background: `linear-gradient(90deg, ${IX.primary}, ${IX.primary}00)`,
       }} />
 
-      {/* CONTEÚDO — ocupa o restante, texto alinhado ao meio-inferior */}
+      {/* CONTEÚDO */}
       <div style={{
         flex: 1, display: "flex", flexDirection: "column",
-        justifyContent: "center", paddingTop: "4%",
+        justifyContent: isNumberAnchor ? "center" : "flex-start",
+        paddingTop: isNumberAnchor ? "0" : "6%",
+        gap: isNumberAnchor ? "4%" : "0",
       }}>
+        {/* Título */}
         <p style={{
           fontSize: titleSize,
-          fontWeight: 700,
-          lineHeight: 1.25,
-          letterSpacing: "-0.02em",
-          color: isLast ? IX.accent : IX.text,
+          fontWeight: 800,
+          lineHeight: isNumberAnchor ? 1 : 1.2,
+          letterSpacing: isNumberAnchor ? "-0.04em" : "-0.02em",
+          color: isNumberAnchor ? IX.accent : (isLast ? IX.accent : IX.text),
           margin: 0,
         }}>
           {title}
         </p>
 
-        {body && (
-          <p style={{
-            fontSize: bodySize,
-            fontWeight: 400,
-            lineHeight: 1.6,
-            color: IX.muted,
-            marginTop: "4%",
-          }}>
-            {body}
-          </p>
+        {/* Body — preserva parágrafos */}
+        {bodyLines.length > 0 && (
+          <div style={{ marginTop: isNumberAnchor ? "2%" : "5%" }}>
+            {bodyLines.map((line, i) => (
+              <p key={i} style={{
+                fontSize: bodySize,
+                fontWeight: isNumberAnchor && i === 0 ? 500 : 400,
+                lineHeight: 1.55,
+                color: isNumberAnchor && i === 0 ? IX.text : IX.muted,
+                margin: 0,
+                marginBottom: i < bodyLines.length - 1 ? "3%" : 0,
+              }}>
+                {line}
+              </p>
+            ))}
+          </div>
         )}
       </div>
 
       {/* FOOTER */}
-      <div style={{
-        display: "flex", alignItems: "flex-end",
-        justifyContent: "space-between", flexShrink: 0,
-        paddingTop: "3%",
-      }}>
-        <p style={{
-          fontSize: "clamp(8px, 1.1vw, 10px)", fontWeight: 600,
-          letterSpacing: "0.1em", textTransform: "uppercase",
-          color: `${IX.muted}55`, margin: 0,
-        }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexShrink: 0, paddingTop: "3%" }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: `${IX.muted}55`, margin: 0 }}>
           Resultado Visível · Tecnologia Invisível
         </p>
         {!isLast && (
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 22, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
-            <span style={{ fontSize: "clamp(20px, 3vw, 28px)", color: IX.accent, lineHeight: 1, fontWeight: 300 }}>›</span>
+            <div style={{ width: 20, height: 1.5, background: `linear-gradient(90deg, transparent, ${IX.accent})` }} />
+            <span style={{ fontSize: 26, color: IX.accent, lineHeight: 1, fontWeight: 300 }}>›</span>
           </div>
         )}
       </div>
