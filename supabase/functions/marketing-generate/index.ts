@@ -325,8 +325,9 @@ ${slideInstruction}`;
   }
 
   // Standard path — single image + text content
-  let imageUrl: string | null = null;
-  if (draft.needs_image) {
+  // If image_url is already set (e.g. Virada Inteligente brand image), preserve it — skip AI generation
+  let imageUrl: string | null = (draft.image_url as string | null) ?? null;
+  if (draft.needs_image && !imageUrl) {
     try {
       const b64 = await generateImage(openaiKey, geminiKey, draft.title, draft.pilar);
       if (b64) {
