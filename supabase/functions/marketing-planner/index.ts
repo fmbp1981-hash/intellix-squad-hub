@@ -26,6 +26,39 @@ function nextMonday(): string {
   return d.toISOString().split("T")[0];
 }
 
+// Builds the fixed Monday news digest from research snippets.
+// Format: @gestaoai-style carrossel — gancho → manchetes → SEO block.
+function buildMondayNewsDigest(snippets: Array<{ title: string; snippet: string; source: string }>, weekOf: string): {
+  title: string; angle: string; theme_prompt: string; caption_hint: string;
+} {
+  const topNews = snippets
+    .filter((s) => s.source === "google_news" || s.source === "linkedin")
+    .slice(0, 7);
+
+  const headlines = topNews.length > 0
+    ? topNews.map((s) => `— ${s.title}`).join("\n")
+    : "— IA está redefinindo como empresas crescem\n— Ferramentas de automação batem recordes de adoção\n— Líderes que ignoram IA estão ficando para trás";
+
+  const newsCount = topNews.length || 5;
+
+  return {
+    title: `Resumão da Semana: ${newsCount} notícias de IA que todo líder precisa ver`,
+    angle: `Digest semanal das principais notícias de IA com relevância para negócios — posicionamento de curador confiável para líderes e empreendedores que não têm tempo de garimpar fontes`,
+    theme_prompt: `Carrossel de ${newsCount + 1} slides estilo resumão semanal de IA para líderes.
+CAPA (slide 1): Fundo escuro com gradiente, título em destaque "Tudo que rolou de IA nessa semana 🤖", subtítulo "Resumão para Líderes e Empreendedores", branding IntelliX.AI no topo. Visual impactante, sem poluição.
+SLIDES 2 a ${newsCount + 1}: Um por notícia — título curto da notícia em destaque, 1-2 linhas de contexto de impacto para negócios, ícone/imagem de apoio minimalista. Design limpo, fonte grande legível no mobile.
+LEGENDA SUGERIDA:
+"Separei tudo que rolou em IA essa semana pra você não precisar garimpar. 👇
+
+${headlines}
+
+Salva esse post pra consultar durante a semana.
+
+#InteligenciaArtificial #IAnegócios #LiderancaDigital #TransformacaoDigital #IntelliXAI #AutomacaoInteligente #IAparaNegócios #GestaoComIA #EmpreendedorDigital"`,
+    caption_hint: `gancho_servico + manchetes_travessao + salva_post + seo_block`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
@@ -59,7 +92,8 @@ Deno.serve(async (req) => {
 
 ${buildBrandSystemBlock()}
 
-Crie um calendário de 7 posts (um por dia, segunda a domingo) com base nas pesquisas da semana.
+Crie um calendário de 6 posts (terça a domingo, day_offset 1-6) com base nas pesquisas da semana.
+A SEGUNDA-FEIRA (day_offset 0) já está reservada para o Resumão Semanal de IA — NÃO gere post para ela.
 Regras:
 - Pelo menos 2 posts devem promover diretamente produtos/serviços IntelliX
 - Varie pilares: não repita o mesmo pilar em dias consecutivos
@@ -67,15 +101,15 @@ Regras:
 - CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}
 - NUNCA: "Comenta [PALAVRA]", DM automático`;
 
-  const userPrompt = `Com base nas pesquisas abaixo, gere EXATAMENTE 7 ideias de post para a semana de ${weekOf}.
+  const userPrompt = `Com base nas pesquisas abaixo, gere EXATAMENTE 6 ideias de post para terça a domingo da semana de ${weekOf}.
 
 Pesquisas da semana:
 ${contextText || "Sem pesquisas externas — use conhecimento geral sobre IA em negócios B2B brasileiros."}
 
-Responda SOMENTE em JSON válido, array de 7 objetos:
+Responda SOMENTE em JSON válido, array de 6 objetos (day_offset de 1 a 6, nunca 0):
 [
   {
-    "day_offset": 0,
+    "day_offset": 1,
     "title": "...",
     "pilar": "resultado_ia|educacao_pratica|bastidores|posicionamento|comercial",
     "angle": "...",
@@ -86,7 +120,7 @@ Responda SOMENTE em JSON válido, array de 7 objetos:
   }
 ]
 
-day_offset: 0=segunda, 1=terça, ..., 6=domingo`;
+day_offset: 1=terça, 2=quarta, 3=quinta, 4=sexta, 5=sábado, 6=domingo`;
 
   let ideas: Array<{
     day_offset: number; title: string; pilar: string; angle: string;
@@ -99,15 +133,36 @@ day_offset: 0=segunda, 1=terça, ..., 6=domingo`;
     if (!jsonMatch) throw new Error("no json array");
     ideas = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(ideas) || ideas.length === 0) throw new Error("empty array");
+    // Safety: remove any day_offset=0 the LLM might have included
+    ideas = ideas.filter((i) => i.day_offset !== 0).slice(0, 6);
   } catch (e) {
     console.error("[marketing-planner] LLM/parse error:", e);
     return jsonResponse({ error: "llm_failed" }, 503);
   }
 
+  // Monday post — always a news digest carrossel
+  const mondayDigest = buildMondayNewsDigest(snippets, weekOf);
   const weekStart = new Date(weekOf + "T12:00:00Z");
-  const drafts = ideas.slice(0, 7).map((idea) => {
+
+  const mondayDraft = {
+    title: mondayDigest.title,
+    content: "",
+    pilar: "educacao_pratica",
+    angle: mondayDigest.angle,
+    platform: "instagram",
+    content_type: "news_data",
+    needs_image: true,
+    theme_prompt: mondayDigest.theme_prompt,
+    research_snippets: snippets.slice(0, 10),
+    status: "idea_pending",
+    trigger_mode: "cron_weekly",
+    scheduled_for: weekOf,
+    week_of: weekOf,
+  };
+
+  const restDrafts = ideas.map((idea) => {
     const scheduledDate = new Date(weekStart);
-    scheduledDate.setDate(scheduledDate.getDate() + (idea.day_offset ?? 0));
+    scheduledDate.setDate(scheduledDate.getDate() + (idea.day_offset ?? 1));
 
     return {
       title: idea.title,
@@ -125,6 +180,8 @@ day_offset: 0=segunda, 1=terça, ..., 6=domingo`;
       week_of: weekOf,
     };
   });
+
+  const drafts = [mondayDraft, ...restDrafts];
 
   const { data: inserted, error } = await db
     .from("marketing_drafts")
