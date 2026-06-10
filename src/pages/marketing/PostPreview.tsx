@@ -350,7 +350,10 @@ function InstagramPreview({ draft }: Props) {
 
   const isNewsDigest = draft.content_type === "news_data" && parsedSlideImages && parsedSlideImages.length > 0;
 
-  const slides = !isNewsDigest && draft.content.includes("---SLIDE---")
+  // virada_inteligente com image_url → sempre imagem única, nunca carrossel
+  const isVirada = draft.content_type === "virada_inteligente" && Boolean(draft.image_url);
+
+  const slides = !isNewsDigest && !isVirada && draft.content.includes("---SLIDE---")
     ? draft.content.split("---SLIDE---").map((s) => s.trim()).filter(Boolean)
     : null;
 
@@ -397,6 +400,14 @@ function InstagramPreview({ draft }: Props) {
             slide={parsedSlideImages![currentSlide]}
             index={currentSlide}
             total={parsedSlideImages!.length}
+          />
+        ) : isVirada ? (
+          // Virada Inteligente: imagem full-cover, sem slides
+          <img
+            src={draft.image_url!}
+            alt={draft.title}
+            className="absolute inset-0 w-full h-full object-contain"
+            style={{ background: "#0a0a1a" }}
           />
         ) : isCarousel && slides ? (
           <InstagramCarouselSlide
