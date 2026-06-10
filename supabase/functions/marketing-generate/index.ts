@@ -271,15 +271,24 @@ ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` 
   const isCarousel = draft.platform === "instagram";
 
   // Formato E: instrução específica por slide (Anatomia Carla Feder)
+  // IMPORTANTE: os papéis de cada slide são INSTRUÇÃO INTERNA — NÃO aparecem no texto.
+  // A narrativa flui naturalmente sem anunciar sua estrutura.
   const slideInstructionE = `Gere EXATAMENTE 7 slides separados por ---SLIDE--- (sem texto antes do primeiro nem depois do último).
-Máximo 4 linhas por slide. Siga ESTA estrutura obrigatória:
-SLIDE 1 — DADO ÂNCORA: Um número/estatística em destaque máximo. Fonte o maior possível. Subtítulo mínimo. Zero contexto — gera tensão.
-SLIDE 2 — CONTEXTO: De onde vem esse dado. Cenário de mercado. Máx 3 linhas. Termina sem resolver.
-SLIDE 3 — INSIGHT: Por que isso está acontecendo. Causa raiz em linguagem de líder de negócios. Label: "Por que isso acontece:"
-SLIDE 4 — IMPLICAÇÃO: O que esse dado muda para o negócio do leitor agora. Direto. Label: "O que isso significa pra você:"
-SLIDE 5 — RECOMENDAÇÃO: O que fazer. Verbo imperativo + ação concreta + contexto de tempo. Label: "O que fazer agora:" — este é o slide mais importante.
-SLIDE 6 — COMO A INTELLIX CONECTA: Uma frase mostrando (sem vender) como IntelliX resolve isso. Use produto específico se cabível.
-SLIDE 7 — CTA: "Se esse dado faz sentido pra você, me chama no direct." ou "Link na bio." NUNCA "Comenta [PALAVRA]".`;
+Máximo 4 linhas por slide. NÃO use labels, títulos ou rótulos estruturais no texto — a narrativa flui naturalmente.
+
+SLIDE 1 [papel: DADO ÂNCORA]: Escreva APENAS o número/estatística em tamanho destaque + no máximo 1 linha de subtítulo mínimo. Nenhum contexto ainda. Ex: "46%" numa linha + "das equipes já usam IA na sua empresa — sem você saber." Sem mais nada.
+
+SLIDE 2 [papel: CONTEXTO]: Escreva de onde vem esse dado e o cenário de mercado. Tom factual. Máx 3 linhas. Termine sem resolver — deixe o leitor querendo mais.
+
+SLIDE 3 [papel: INSIGHT]: Explique por que isso está acontecendo — a causa raiz em linguagem de gestor de negócios, não técnica. Direto. Sem anunciar "por que isso acontece:".
+
+SLIDE 4 [papel: IMPLICAÇÃO]: Mostre o que esse dado muda para o negócio do leitor agora. Consequência concreta, inescapável. Sem anunciar "o que isso significa:".
+
+SLIDE 5 [papel: RECOMENDAÇÃO — o mais importante]: Diga o que fazer. Verbo imperativo + ação específica + contexto de tempo ("hoje", "esta semana"). Sem anunciar "o que fazer:". Este slide precisa fazer o leitor querer salvar o post.
+
+SLIDE 6 [papel: INTELLIX]: Uma ou duas frases mostrando naturalmente como a IntelliX ou um produto específico (RadarAI, ForjaAI, Virada) conecta com isso — sem vender explicitamente.
+
+SLIDE 7 [papel: CTA]: CTA de baixa pressão. Ex: "Se esse dado faz sentido pra você, me chama no direct." NUNCA "Comenta [PALAVRA]".`;
 
   const slideInstruction = isCarousel
     ? format === "E"
