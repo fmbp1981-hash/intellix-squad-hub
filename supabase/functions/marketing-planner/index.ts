@@ -111,6 +111,7 @@ day_offset: 0=segunda, 1=terça, ..., 6=domingo`;
 
     return {
       title: idea.title,
+      content: "",
       pilar: idea.pilar,
       angle: idea.angle,
       platform: idea.platform,
