@@ -9,19 +9,28 @@ interface Props {
 
 // ─── LinkedIn ────────────────────────────────────────────────────────────────
 
+// LinkedIn renderiza parágrafos com espaçamento explícito (duplo \n = parágrafo).
+// Padrão LinkedIn: linhas vazias = quebra de parágrafo com espaçamento visual.
 function formatLinkedIn(text: string) {
-  return text.split("\n").map((line, i) => {
-    const parts = line.split(/(#\w+)/g);
+  const paragraphs = text.split(/\n\n+/);
+  return paragraphs.map((para, pi) => {
+    const lines = para.split("\n");
     return (
-      <span key={i}>
-        {parts.map((part, j) =>
-          part.startsWith("#") ? (
-            <span key={j} className="text-[oklch(0.65_0.15_240)]">{part}</span>
-          ) : (
-            <span key={j}>{part}</span>
-          )
-        )}
-        {"\n"}
+      <span key={pi} style={{ display: "block", marginBottom: pi < paragraphs.length - 1 ? "10px" : 0 }}>
+        {lines.map((line, li) => {
+          const parts = line.split(/(#\w+)/g);
+          return (
+            <span key={li} style={{ display: "block" }}>
+              {parts.map((part, j) =>
+                part.startsWith("#") ? (
+                  <span key={j} style={{ color: "oklch(0.65 0.15 240)" }}>{part}</span>
+                ) : (
+                  <span key={j}>{part}</span>
+                )
+              )}
+            </span>
+          );
+        })}
       </span>
     );
   });
@@ -55,14 +64,13 @@ function LinkedInPreview({ draft }: Props) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — LinkedIn: 15px, line-height 1.65, parágrafos espaçados */}
       <div className="px-4 pb-3">
-        <p
-          className="whitespace-pre-wrap text-[13px] leading-[1.6]"
-          style={{ color: "oklch(0.88 0.01 250)" }}
+        <div
+          style={{ fontSize: 15, lineHeight: 1.65, color: "oklch(0.88 0.01 250)" }}
         >
           {formatLinkedIn(draft.content)}
-        </p>
+        </div>
       </div>
 
       {/* Image */}
@@ -271,15 +279,15 @@ function NewsDigestSlide({ slide, index, total }: { slide: SlideImage; index: nu
       {isCapa && (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 relative z-10">
           <img src={intellixLogo} alt="IntelliX.AI" style={{ height: 36, objectFit: "contain", marginBottom: 16 }} />
-          <p style={{ fontSize: "clamp(18px, 3.5vw, 28px)", fontWeight: 800, color: IX.text, lineHeight: 1.2, margin: 0 }}>
+          <p style={{ fontSize: 26, fontWeight: 800, color: IX.text, lineHeight: 1.2, margin: 0 }}>
             Tudo que rolou de IA<br />
             <span style={{ color: IX.accent }}>nessa semana 🤖</span>
           </p>
-          <p style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: IX.muted, marginTop: 10 }}>
+          <p style={{ fontSize: 14, color: IX.muted, marginTop: 10 }}>
             Resumo para Líderes e Empreendedores
           </p>
           <div style={{ marginTop: 16, padding: "4px 14px", borderRadius: 99, background: `${IX.primary}22`, border: `1px solid ${IX.primary}44` }}>
-            <span style={{ fontSize: "clamp(10px, 1.4vw, 12px)", color: IX.primary, fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: IX.primary, fontWeight: 600 }}>
               {total - 2} notícias · arraste →
             </span>
           </div>
@@ -290,13 +298,13 @@ function NewsDigestSlide({ slide, index, total }: { slide: SlideImage; index: nu
       {isCta && (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 relative z-10 gap-3">
           <img src={intellixLogo} alt="IntelliX.AI" style={{ height: 32, objectFit: "contain" }} />
-          <p style={{ fontSize: "clamp(16px, 3vw, 24px)", fontWeight: 800, color: IX.accent, lineHeight: 1.2, margin: 0 }}>
+          <p style={{ fontSize: 22, fontWeight: 800, color: IX.accent, lineHeight: 1.2, margin: 0 }}>
             Quer resultado real com IA?
           </p>
-          <p style={{ fontSize: "clamp(12px, 1.8vw, 14px)", color: IX.muted, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 15, color: IX.muted, lineHeight: 1.5 }}>
             A IntelliX.AI cuida de tudo:<br />estratégia, automação e deploy.
           </p>
-          <div style={{ marginTop: 8, padding: "8px 20px", borderRadius: 99, background: IX.primary, color: "#fff", fontWeight: 700, fontSize: "clamp(12px, 1.8vw, 14px)" }}>
+          <div style={{ marginTop: 8, padding: "8px 20px", borderRadius: 99, background: IX.primary, color: "#fff", fontWeight: 700, fontSize: 14 }}>
             Link na bio 👆
           </div>
         </div>
@@ -306,17 +314,17 @@ function NewsDigestSlide({ slide, index, total }: { slide: SlideImage; index: nu
       {!isCapa && !isCta && (
         <div className="flex flex-col relative z-10" style={{ flex: 1, padding: slide.image_url ? "4% 6% 5%" : "6% 7%", justifyContent: "flex-end" }}>
           {!slide.image_url && <div style={{ flex: 1 }} />}
-          <p style={{ fontSize: "clamp(14px, 2.4vw, 19px)", fontWeight: 800, color: IX.text, lineHeight: 1.2, marginBottom: 6 }}>
+          <p style={{ fontSize: 20, fontWeight: 800, color: IX.text, lineHeight: 1.2, marginBottom: 8 }}>
             {headline}
           </p>
           {context && (
-            <p style={{ fontSize: "clamp(10px, 1.5vw, 13px)", color: IX.muted, lineHeight: 1.5, marginBottom: 8 }}>
+            <p style={{ fontSize: 15, color: IX.muted, lineHeight: 1.55, marginBottom: 10 }}>
               {context}
             </p>
           )}
           {tip && (
             <div style={{ borderLeft: `3px solid ${IX.accent}`, paddingLeft: 10, marginTop: 4 }}>
-              <p style={{ fontSize: "clamp(10px, 1.5vw, 13px)", color: IX.accent, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>
+              <p style={{ fontSize: 14, color: IX.accent, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>
                 {tip}
               </p>
             </div>
@@ -326,10 +334,10 @@ function NewsDigestSlide({ slide, index, total }: { slide: SlideImage; index: nu
 
       {/* Footer */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "3% 6%", flexShrink: 0, borderTop: `1px solid ${IX.primary}18`, zIndex: 10 }}>
-        <p style={{ fontSize: "clamp(8px, 1.1vw, 10px)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: `${IX.muted}55`, margin: 0 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: `${IX.muted}55`, margin: 0 }}>
           Resultado Visível · Tecnologia Invisível
         </p>
-        <span style={{ fontSize: "clamp(9px, 1.3vw, 11px)", fontWeight: 600, color: IX.muted, background: "rgba(255,255,255,0.08)", padding: "2px 8px", borderRadius: 99 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: IX.muted, background: "rgba(255,255,255,0.08)", padding: "2px 8px", borderRadius: 99 }}>
           {index + 1}/{total}
         </span>
       </div>
