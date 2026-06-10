@@ -338,14 +338,24 @@ function InstagramPreview({ draft }: Props) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // News digest: usa slide_images do banco
-  const isNewsDigest = draft.content_type === "news_data" && draft.slide_images && draft.slide_images.length > 0;
+  // JSONB pode vir como string — parse defensivo
+  const rawSlideImages = draft.slide_images;
+  const parsedSlideImages: SlideImage[] | null = (() => {
+    if (!rawSlideImages) return null;
+    if (typeof rawSlideImages === "string") {
+      try { return JSON.parse(rawSlideImages); } catch { return null; }
+    }
+    return Array.isArray(rawSlideImages) ? rawSlideImages : null;
+  })();
+
+  const isNewsDigest = draft.content_type === "news_data" && parsedSlideImages && parsedSlideImages.length > 0;
 
   const slides = !isNewsDigest && draft.content.includes("---SLIDE---")
     ? draft.content.split("---SLIDE---").map((s) => s.trim()).filter(Boolean)
     : null;
 
   const isCarousel = isNewsDigest || (slides && slides.length > 1);
-  const slideCount = isNewsDigest ? draft.slide_images!.length : (slides?.length ?? 1);
+  const slideCount = isNewsDigest ? parsedSlideImages!.length : (slides?.length ?? 1);
   const captionText = isNewsDigest ? draft.content : (slides ? slides[slides.length - 1] : draft.content);
   const captionParts = captionText.split(/(#\w+)/g);
 
@@ -384,9 +394,9 @@ function InstagramPreview({ draft }: Props) {
         {/* Slide content */}
         {isNewsDigest ? (
           <NewsDigestSlide
-            slide={draft.slide_images![currentSlide]}
+            slide={parsedSlideImages![currentSlide]}
             index={currentSlide}
-            total={draft.slide_images!.length}
+            total={parsedSlideImages!.length}
           />
         ) : isCarousel && slides ? (
           <InstagramCarouselSlide
@@ -416,7 +426,7 @@ function InstagramPreview({ draft }: Props) {
               <button
                 onClick={goPrev}
                 className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center text-white font-bold transition-all hover:scale-105"
-                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18 }}
+                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18, zIndex: 50 }}
               >
                 ‹
               </button>
@@ -425,14 +435,14 @@ function InstagramPreview({ draft }: Props) {
               <button
                 onClick={goNext}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center text-white font-bold transition-all hover:scale-105"
-                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18 }}
+                style={{ background: "rgba(25,111,168,0.55)", backdropFilter: "blur(8px)", fontSize: 18, zIndex: 50 }}
               >
                 ›
               </button>
             )}
 
             {/* Dot indicators */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 50 }}>
               {Array.from({ length: slideCount }).map((_, i) => (
                 <button
                   key={i}
