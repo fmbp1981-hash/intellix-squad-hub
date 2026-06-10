@@ -126,7 +126,7 @@ export const CONTENT_MIX = {
 // ─── Tipos de Conteúdo ────────────────────────────────────────────────────────
 
 export type ContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data";
-export type ContentFormat = "A" | "B" | "C" | "D";
+export type ContentFormat = "A" | "B" | "C" | "D" | "E";
 
 // ─── Formatos de Conteúdo (Templates) ────────────────────────────────────────
 
@@ -269,27 +269,64 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
     visualStyle: "Fundo dark (#171723) + gradiente sutil + texto branco + screenshot real do produto + logo IntelliX + lista ✅ no slide de entregáveis.",
     needsImage: true,
   },
+
+  // ─── Formato E — Data Story (Narrativa Prescritiva) ──────────────────────────
+  // Baseado na anatomia de Carla Feder (Agile Trends 2026):
+  // Dado → Insight → Implicação → Recomendação
+  // Aplicado exclusivamente aos pilares resultado_ia e educacao_pratica.
+  E: {
+    name: "Data Story — Narrativa Prescritiva",
+    reference: "Carla Feder / Vértice Studio — Agile Trends 2026",
+    slides: "6–8 slides",
+    goal: "Autoridade + salvamentos + decisão de compra",
+    structure: [
+      "SLIDE 1 — DADO ÂNCORA (Narrativa Descritiva): Um número ou estatística em destaque máximo — fonte gigante, sem contexto ainda. Gera tensão imediata: 'o que significa isso?' O dado é o protagonista. Exemplo: '46%' em grande + subtítulo mínimo abaixo. Regra de hierarquia visual: tamanho e cor captam o olho antes da leitura.",
+      "SLIDE 2 — CONTEXTO DO DADO: De onde vem esse número. O cenário de mercado que gerou esse dado. Tom factual, sem julgamento. Máx 3 linhas. Termina com uma pergunta implícita não respondida → micro-suspense.",
+      "SLIDES 3-4 — INSIGHT + IMPLICAÇÃO (Narrativa Diagnóstica): Slide 3: 'Por que isso está acontecendo' — a causa raiz em linguagem de líder de negócios, não técnica. Slide 4: 'O que isso muda para o seu negócio agora' — implicação direta, concreta, inescapável. Use antes/depois se cabível.",
+      "SLIDE 5 — RECOMENDAÇÃO PRESCRITIVA (Narrativa Prescritiva): O que fazer. Uma ação concreta e acionável. Não 'considere' — 'faça X'. Formato: verbo de ação + objeto + contexto. Exemplo: 'Mapeie hoje os 3 processos que sua equipe repete toda semana — é por onde a IA entra.' Borda accent lateral para destaque visual.",
+      "SLIDES 6-7 (opcional) — COMO A INTELLIX CONECTA ISSO: Sem vender — mostrar. 'É exatamente isso que o [RadarAI/ForjaAI/Virada] mapeia/entrega/resolve.' Uma frase. Uma prova. Um resultado real de cliente se disponível.",
+      "SLIDE FINAL — CTA: 'Se esse número faz sentido pra você, o próximo passo é simples.' + CTA de baixa pressão. NUNCA 'Comenta [PALAVRA]'.",
+    ],
+    copyTechniques: [
+      "Dado como protagonista: o número para o scroll antes da palavra (hierarquia de Gutenberg — tamanho detectado instantaneamente)",
+      "Estrutura prescritiva em 4 camadas: Dado (o que) → Insight (por que) → Implicação (e daí?) → Recomendação (o que fazer)",
+      "Pergunta implícita por slide: cada slide responde UMA pergunta e abre a próxima — micro-suspense sem usar '...'",
+      "Linguagem de líder, não de técnico: métricas de negócio (horas, custo, risco, competidor), não de TI",
+      "Dado verificável > adjetivo vago: '46% das equipes usam IA sem a empresa saber' > 'muitas empresas têm Shadow AI'",
+      "Recomendação direta e acionável: verbo imperativo + objeto concreto + contexto de tempo ('hoje', 'esta semana')",
+      "CTA de baixa pressão: transfere a decisão ao leitor — funciona melhor para perfil executivo B2B",
+    ],
+    intellixExamples: [
+      "46% — depois: é quantas equipes já usam IA sem a empresa saber. Esse número tem nome: Shadow AI.",
+      "65% das PMEs brasileiras já usam alguma IA. O dado não é sobre adoção — é sobre quem vai crescer mais rápido.",
+      "R$ 670 mil. É o custo médio de uma violação de dados causada por Shadow AI (IBM 2025). Agora mapeia quantas ferramentas de IA sua equipe usa sem política clara.",
+      "IA não substitui sua equipe. Amplifica o que ela já faz. Se o processo é ruim, a IA vai ser ruim mais rápido.",
+    ],
+    ctaPattern: "CTA de baixa pressão. 'Se esse dado faz sentido pra você, me chama no direct.' ou 'Link na bio se quiser entender como isso aplica ao seu negócio.' NUNCA 'Comenta [PALAVRA]'.",
+    visualStyle: "Slide 1: fundo dark #171723 + número em fonte MÁXIMA com accent #F2A82A ou #196FA8 — hierarquia extrema, zero ruído. Slides 2-4: labels em accent ('DADO:', 'INSIGHT:', 'IMPLICAÇÃO:') + texto branco. Slide 5: borda lateral accent + fundo ligeiramente diferente (#1F1F2E) para destacar a recomendação. Logo IntelliX em todos os slides.",
+    needsImage: false,
+  },
 };
 
 // ─── Pilar Context (para redação) ────────────────────────────────────────────
 
 export const PILAR_CONTEXT: Record<string, { description: string; format: ContentFormat; hooks: string[] }> = {
   resultado_ia: {
-    description: "Case real, métricas concretas, antes/depois. Se não houver case específico, use dado verificável de mercado. Número específico supera adjetivo vago sempre.",
-    format: "A",
+    description: "Narrativa Prescritiva (Formato E): comece com um dado/número de mercado impactante no slide 1, evolua para insight (por que acontece), implicação (o que muda para o negócio) e recomendação concreta (o que fazer hoje). Número específico supera adjetivo vago sempre. Se houver case real de cliente, use — é a prova mais poderosa.",
+    format: "E",
     hooks: [
-      "Em [X semanas], [cliente] saiu de [situação antes] para [situação depois]. Sem mágica — com processo.",
-      "[Número] horas de trabalho manual por semana. É o que um dos nossos clientes economizou depois de automatizar [processo].",
-      "Esse número vai parecer exagerado. Mas é real: [métrica concreta].",
+      "46% — é quantas equipes já usam IA sem a empresa saber. Depois: o que fazer com isso.",
+      "[Número] horas por semana. É o que [processo manual] consome da sua equipe. O dado → por que isso acontece → como sair disso.",
+      "Esse número muda tudo sobre como você vai escalar sua empresa em 2026: [métrica concreta de mercado].",
     ],
   },
   educacao_pratica: {
-    description: "Ensine algo prático. Passos concretos. Desmistifique. Termine com insight acionável. Salvar > curtir — o objetivo é ser referência.",
-    format: "B",
+    description: "Narrativa Prescritiva (Formato E): pegue um dado educacional relevante, explique por que ele existe (insight diagnóstico), mostre a implicação para líderes e entregue uma recomendação prescritiva e acionável. O objetivo é ser salvo como referência — dado + contexto + ação concreta.",
+    format: "E",
     hooks: [
-      "A maioria das empresas usa IA de forma errada. Aqui está o padrão que funciona:",
-      "Três coisas que todo gestor precisa saber sobre IA em 2026 — e quase ninguém fala:",
-      "Você não precisa saber programar para usar IA. Mas precisa saber isso:",
+      "65% das PMEs brasileiras já usam IA. Agora: o que os outros 35% estão perdendo — e o que fazer.",
+      "Três dados que mudaram como a gente pensa sobre implementar IA em empresas — e o que aprendemos com isso.",
+      "O número que ninguém fala quando discute IA nos negócios: [dado específico] → insight → o que fazer agora.",
     ],
   },
   bastidores: {
@@ -365,6 +402,7 @@ export const VISUAL_IDENTITY = {
   formatB_faq: "Fundo dark #171723 + gradiente roxo/azul + texto branco bold + tag colorida por produto + numeração '01/10' + logo IntelliX em todos os slides.",
   formatC_philosophical: "Fundo dark sólido #171723 + APENAS texto bold branco + zero elementos gráficos + logo IntelliX discreto. Ultra minimalista. Zero imagem.",
   formatD_product: "Fundo dark #171723 + gradiente sutil + screenshot real do produto + texto branco + ✅ no slide de entregáveis + logo IntelliX.",
+  formatE_datastory: "Slide 1: fundo dark #171723 + dado em fonte MÁXIMA accent (#F2A82A) — hierarquia extrema. Slides 2-4: labels em accent ('DADO / INSIGHT / IMPLICAÇÃO') + texto branco estruturado. Slide 5: borda lateral accent + fundo #1F1F2E destacando a recomendação. Sem imagem — o dado é o visual.",
   always: "Logo IntelliX.AI em todos os slides. Sentence case. Nunca title case. Nunca emoji decorativo.",
 } as const;
 

@@ -78,6 +78,8 @@ async function generateImageGemini(geminiKey: string, prompt: string, openaiKey:
 }
 
 function pickFormat(pilar: string, platform: string): ContentFormat {
+  // Instagram: resultado_ia e educacao_pratica usam Formato E (Data Story — Narrativa Prescritiva)
+  if (platform === "instagram" && (pilar === "resultado_ia" || pilar === "educacao_pratica")) return "E";
   if (platform === "instagram") return "A";
   if (pilar === "comercial") return "D";
   if (pilar === "posicionamento" || pilar === "bastidores") return "C";
@@ -265,10 +267,24 @@ NUNCA usar: Comenta [PALAVRA] ou variações — sem automação de DM ativa.
 ${formatGuidance}
 ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` : ""}`;
 
-  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7 };
+  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7, E: 7 };
   const isCarousel = draft.platform === "instagram";
+
+  // Formato E: instrução específica por slide (Anatomia Carla Feder)
+  const slideInstructionE = `Gere EXATAMENTE 7 slides separados por ---SLIDE--- (sem texto antes do primeiro nem depois do último).
+Máximo 4 linhas por slide. Siga ESTA estrutura obrigatória:
+SLIDE 1 — DADO ÂNCORA: Um número/estatística em destaque máximo. Fonte o maior possível. Subtítulo mínimo. Zero contexto — gera tensão.
+SLIDE 2 — CONTEXTO: De onde vem esse dado. Cenário de mercado. Máx 3 linhas. Termina sem resolver.
+SLIDE 3 — INSIGHT: Por que isso está acontecendo. Causa raiz em linguagem de líder de negócios. Label: "Por que isso acontece:"
+SLIDE 4 — IMPLICAÇÃO: O que esse dado muda para o negócio do leitor agora. Direto. Label: "O que isso significa pra você:"
+SLIDE 5 — RECOMENDAÇÃO: O que fazer. Verbo imperativo + ação concreta + contexto de tempo. Label: "O que fazer agora:" — este é o slide mais importante.
+SLIDE 6 — COMO A INTELLIX CONECTA: Uma frase mostrando (sem vender) como IntelliX resolve isso. Use produto específico se cabível.
+SLIDE 7 — CTA: "Se esse dado faz sentido pra você, me chama no direct." ou "Link na bio." NUNCA "Comenta [PALAVRA]".`;
+
   const slideInstruction = isCarousel
-    ? `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).
+    ? format === "E"
+      ? slideInstructionE
+      : `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).
 Cada slide: máximo 4 linhas de texto. Slide 1 = gancho. Slides 2-${SLIDE_COUNT[format] - 2} = desenvolvimento. Slide ${SLIDE_COUNT[format] - 1} = virada/síntese. Slide ${SLIDE_COUNT[format]} = CTA — use "Link na bio", "Me chama no direct" ou "Acessa o link na bio". NUNCA "Comenta [PALAVRA]".`
     : "Escreva o post final em texto corrido.";
 
