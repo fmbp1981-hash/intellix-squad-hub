@@ -2,7 +2,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 import { callLLM, loadAgentLLMConfig } from "../_shared/llm-client.ts";
-import { buildBrandSystemBlock, PILAR_CONTEXT, CAPTION_STRATEGY } from "../_shared/brand-context.ts";
+import { buildBrandSystemBlock, PILAR_CONTEXT, CAPTION_STRATEGY, PORTFOLIO } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const SnippetSchema = z.object({
@@ -164,6 +164,10 @@ day_offset: 1=terça, 2=quarta, 3=quinta, 4=sexta, 5=sábado, 6=domingo`;
     const scheduledDate = new Date(weekStart);
     scheduledDate.setDate(scheduledDate.getDate() + (idea.day_offset ?? 1));
 
+    // Posts virada_inteligente sempre usam a imagem padrão da Virada
+    const isVirada = idea.content_type === "virada_inteligente";
+    const imageUrl = isVirada ? PORTFOLIO.viradaInteligente.images.default : null;
+
     return {
       title: idea.title,
       content: "",
@@ -171,7 +175,8 @@ day_offset: 1=terça, 2=quarta, 3=quinta, 4=sexta, 5=sábado, 6=domingo`;
       angle: idea.angle,
       platform: idea.platform,
       content_type: idea.content_type,
-      needs_image: Boolean(idea.needs_image),
+      needs_image: Boolean(idea.needs_image) || isVirada,
+      image_url: imageUrl,
       theme_prompt: idea.theme_prompt ?? "",
       research_snippets: snippets.slice(0, 10),
       status: "idea_pending",

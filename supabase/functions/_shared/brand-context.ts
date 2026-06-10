@@ -52,6 +52,14 @@ export const PORTFOLIO = {
   viradaInteligente: {
     name: "Virada Inteligente com IA",
     type: "Treinamento imersivo presencial · 4 horas",
+    images: {
+      // Imagem padrão para qualquer post que mencione a Virada Inteligente
+      default: "https://hynadwlwrscvjubryqlg.supabase.co/storage/v1/object/public/assets/marketing/virada-inteligente/virada-logo-brand.png",
+      // Formato stories vertical — CTA de chamada
+      stories: "https://hynadwlwrscvjubryqlg.supabase.co/storage/v1/object/public/assets/marketing/virada-inteligente/virada-stories-cta.png",
+      // Formato feed — post estático com legenda descritiva
+      feed: "https://hynadwlwrscvjubryqlg.supabase.co/storage/v1/object/public/assets/marketing/virada-inteligente/virada-feed-static.png",
+    },
     tagline: "Aprenda IA na prática e transforme seu dia a dia.",
     methodology: "Aprende · Vê · Faz · Leva pra casa",
     pricing: { regular: "R$ 1.097", earlyBird: "R$ 897 (early bird)" },
