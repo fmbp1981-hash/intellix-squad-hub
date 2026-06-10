@@ -6,6 +6,16 @@ export type MarketingStatus = "idea_pending" | "generated" | "approved" | "rejec
 export type MarketingPilar = "resultado_ia" | "educacao_pratica" | "bastidores" | "posicionamento" | "comercial";
 export type MarketingPlatform = "linkedin" | "instagram" | "whatsapp";
 
+export type MarketingContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data";
+
+export interface SlideImage {
+  slide: number;
+  title: string;
+  image_url: string | null;
+  copy: string;
+  practical_tip: string;
+}
+
 export interface MarketingDraft {
   id: string;
   title: string;
@@ -13,10 +23,12 @@ export interface MarketingDraft {
   content: string;
   pilar: MarketingPilar;
   platform: MarketingPlatform;
+  content_type: MarketingContentType | null;
   status: MarketingStatus;
   theme_prompt: string | null;
   research_snippets: Array<{ source: string; url: string; title: string }> | null;
   image_url: string | null;
+  slide_images: SlideImage[] | null;
   trigger_mode: string;
   approved_at: string | null;
   published_at: string | null;
