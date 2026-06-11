@@ -5,7 +5,7 @@ import { callLLM, loadAgentLLMConfig } from "../_shared/llm-client.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
 
 const SnippetSchema = z.object({
-  source: z.enum(["knowledge", "perplexity", "linkedin"]),
+  source: z.enum(["google_news", "gmail", "instagram", "linkedin", "kb", "knowledge", "perplexity"]),
   url: z.string(),
   title: z.string(),
   snippet: z.string(),

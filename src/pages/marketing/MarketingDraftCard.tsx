@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle, XCircle, Upload, Sparkles, Loader2,
-  Lightbulb, ChevronDown, ChevronUp, Instagram,
+  Lightbulb, ChevronDown, ChevronUp, Instagram, ImagePlus, Check,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +14,8 @@ import {
   usePublishToInstagram,
   useGenerateFromIdea,
   useRejectIdea,
+  useGenerateDraftImages,
+  useSelectDraftImage,
   type MarketingDraft,
 } from "@/hooks/useMarketingDrafts";
 import { PostPreview } from "./PostPreview";
@@ -152,6 +154,117 @@ export function IdeaCard({ draft }: Props) {
   );
 }
 
+// ─── Image generation section ─────────────────────────────────────────────────
+
+function ImageGenSection({ draft }: Props) {
+  const [count, setCount] = useState(1);
+  const generate = useGenerateDraftImages();
+  const selectImage = useSelectDraftImage();
+
+  const hasGenerated = draft.generated_images && draft.generated_images.length > 0;
+  const hasSelected = !!draft.image_url;
+
+  return (
+    <div
+      className="rounded-lg p-3 space-y-2.5"
+      style={{ background: "oklch(0.13 0.02 262 / 0.6)", border: "1px dashed oklch(0.32 0.06 262 / 0.6)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <ImagePlus className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.65 0.12 262)" }} />
+        <span className="text-[11px] font-medium" style={{ color: "oklch(0.72 0.08 262)" }}>
+          {hasSelected ? "Imagem selecionada" : hasGenerated ? "Escolha uma imagem" : "Gerar imagem para este post"}
+        </span>
+        {hasSelected && (
+          <Check className="ml-auto h-3.5 w-3.5" style={{ color: "oklch(0.72 0.14 160)" }} />
+        )}
+      </div>
+
+      {/* Generated thumbnails */}
+      {hasGenerated && (
+        <div className="flex gap-2 flex-wrap">
+          {draft.generated_images!.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: url })}
+              disabled={selectImage.isPending}
+              className="relative rounded-md overflow-hidden transition-all"
+              style={{
+                width: 72, height: 72,
+                border: draft.image_url === url
+                  ? "2px solid oklch(0.65 0.12 262)"
+                  : "2px solid oklch(0.24 0.02 250)",
+                opacity: selectImage.isPending ? 0.6 : 1,
+              }}
+              title="Clique para usar esta imagem"
+            >
+              <img src={url} alt={`Opção ${i + 1}`} className="w-full h-full object-cover" />
+              {draft.image_url === url && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{ background: "oklch(0.52 0.18 262 / 0.45)" }}
+                >
+                  <Check className="h-5 w-5 text-white" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Count selector + generate button */}
+      {!hasSelected && (
+        <div className="flex items-center gap-2">
+          <span className="text-[10px]" style={{ color: "oklch(0.50 0.02 250)" }}>Quantas imagens?</span>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4].map((n) => (
+              <button
+                key={n}
+                onClick={() => setCount(n)}
+                className="h-6 w-6 rounded text-[11px] font-medium transition-all"
+                style={{
+                  background: count === n ? "oklch(0.52 0.18 262)" : "oklch(0.20 0.02 250)",
+                  color: count === n ? "white" : "oklch(0.60 0.02 250)",
+                  border: "none",
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <Button
+            size="sm"
+            disabled={generate.isPending}
+            onClick={() => generate.mutate({ draftId: draft.id, count })}
+            className="ml-auto h-7 text-[11px] gap-1.5 px-3"
+            style={{
+              background: "oklch(0.42 0.14 262)",
+              color: "white",
+              border: "none",
+            }}
+          >
+            {generate.isPending ? (
+              <><Loader2 className="h-3 w-3 animate-spin" /> Gerando...</>
+            ) : (
+              <><Sparkles className="h-3 w-3" /> Gerar</>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {hasSelected && (
+        <button
+          onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: "" })}
+          className="text-[10px] transition-opacity hover:opacity-80"
+          style={{ color: "oklch(0.50 0.04 15)" }}
+        >
+          Remover seleção
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Draft card (generated / approved / published) ───────────────────────────
 
 export function MarketingDraftCard({ draft }: Props) {
@@ -219,6 +332,13 @@ export function MarketingDraftCard({ draft }: Props) {
           {expanded ? "Fechar prévia" : "Ver prévia completa"}
         </button>
       </div>
+
+      {/* Image generation — shown on generated posts without an image */}
+      {draft.status === "generated" && !draft.image_url && (
+        <div className="px-4 pb-3">
+          <ImageGenSection draft={draft} />
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-2 px-4 pb-3.5"

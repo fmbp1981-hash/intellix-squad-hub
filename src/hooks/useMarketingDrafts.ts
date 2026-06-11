@@ -29,6 +29,7 @@ export interface MarketingDraft {
   research_snippets: Array<{ source: string; url: string; title: string }> | null;
   image_url: string | null;
   slide_images: SlideImage[] | null;
+  generated_images: string[] | null;
   trigger_mode: string;
   approved_at: string | null;
   published_at: string | null;
@@ -173,6 +174,44 @@ export function useMarkPublished() {
       toast({ title: "Marcado como publicado" });
     },
     onError: (err) => toast({ title: "Erro", description: String(err), variant: "destructive" }),
+  });
+}
+
+export function useGenerateDraftImages() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ draftId, count }: { draftId: string; count: number }) => {
+      const res = await supabase.functions.invoke("marketing-image-gen", {
+        body: { draft_id: draftId, count },
+      });
+      if (res.error) throw res.error;
+      return res.data as { urls: string[]; total: number };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: [QK] });
+      toast({ title: `${data.urls.length} imagem(ns) gerada(s) com sucesso` });
+    },
+    onError: (err) => toast({ title: "Erro ao gerar imagens", description: String(err), variant: "destructive" }),
+  });
+}
+
+export function useSelectDraftImage() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ draftId, imageUrl }: { draftId: string; imageUrl: string }) => {
+      const { error } = await supabase
+        .from("marketing_drafts")
+        .update({ image_url: imageUrl })
+        .eq("id", draftId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK] });
+      toast({ title: "Imagem selecionada" });
+    },
+    onError: (err) => toast({ title: "Erro ao selecionar imagem", description: String(err), variant: "destructive" }),
   });
 }
 
