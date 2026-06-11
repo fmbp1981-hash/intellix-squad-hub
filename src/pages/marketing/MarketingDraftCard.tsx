@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle, XCircle, Upload, Sparkles, Loader2,
-  Lightbulb, ChevronDown, ChevronUp,
+  Lightbulb, ChevronDown, ChevronUp, Instagram,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,6 +11,7 @@ import {
   useApproveDraft,
   useRejectDraft,
   useMarkPublished,
+  usePublishToInstagram,
   useGenerateFromIdea,
   useRejectIdea,
   type MarketingDraft,
@@ -158,7 +159,8 @@ export function MarketingDraftCard({ draft }: Props) {
   const approve = useApproveDraft();
   const reject = useRejectDraft();
   const markPublished = useMarkPublished();
-  const isLoading = approve.isPending || reject.isPending || markPublished.isPending;
+  const publishToIg = usePublishToInstagram();
+  const isLoading = approve.isPending || reject.isPending || markPublished.isPending || publishToIg.isPending;
   const color = PILAR_COLORS[draft.pilar] ?? PILAR_COLORS.educacao_pratica;
 
   return (
@@ -252,16 +254,38 @@ export function MarketingDraftCard({ draft }: Props) {
         )}
 
         {draft.status === "approved" && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isLoading}
-            onClick={() => markPublished.mutate(draft.id)}
-            className="ml-auto h-8 text-[12px]"
-          >
-            <Upload className="mr-1.5 h-3.5 w-3.5" />
-            {markPublished.isPending ? "Salvando..." : "Marcar publicado"}
-          </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {draft.platform === "instagram" ? (
+              <Button
+                size="sm"
+                disabled={isLoading}
+                onClick={() => publishToIg.mutate(draft.id)}
+                className="h-8 text-[12px] gap-1.5"
+                style={{
+                  background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                {publishToIg.isPending ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publicando...</>
+                ) : (
+                  <><Instagram className="h-3.5 w-3.5" /> Publicar no Instagram</>
+                )}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isLoading}
+                onClick={() => markPublished.mutate(draft.id)}
+                className="h-8 text-[12px]"
+              >
+                <Upload className="mr-1.5 h-3.5 w-3.5" />
+                {markPublished.isPending ? "Salvando..." : "Marcar publicado"}
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>

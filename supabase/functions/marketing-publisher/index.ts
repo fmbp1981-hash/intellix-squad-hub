@@ -107,10 +107,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  // Auth via MARKETING_API_KEY (same as other marketing functions)
+  // Auth: MARKETING_API_KEY (cron/server) OR Supabase JWT (frontend user)
   const apiKey = Deno.env.get("MARKETING_API_KEY") ?? "";
   const auth = req.headers.get("Authorization") ?? "";
-  if (!apiKey || auth !== `Bearer ${apiKey}`) return jsonResponse({ error: "unauthorized" }, 401);
+  const isApiKeyAuth = apiKey && auth === `Bearer ${apiKey}`;
+  const isJwtAuth = auth.startsWith("Bearer ey");
+  if (!isApiKeyAuth && !isJwtAuth) return jsonResponse({ error: "unauthorized" }, 401);
 
   const igUserId = Deno.env.get("INSTAGRAM_USER_ID") ?? "";
   const igToken = Deno.env.get("INSTAGRAM_ACCESS_TOKEN") ?? "";
@@ -118,19 +120,28 @@ Deno.serve(async (req) => {
 
   if (!igUserId || !igToken) return jsonResponse({ error: "INSTAGRAM_USER_ID and INSTAGRAM_ACCESS_TOKEN not configured" }, 500);
 
+  const body = await req.json().catch(() => ({})) as { draft_id?: string };
   const db = adminClient();
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: drafts, error: fetchErr } = await db
+  let query = db
     .from("marketing_drafts")
     .select("id, title, content, platform, image_url, slide_images, content_type, scheduled_for, pilar")
     .eq("status", "approved")
-    .eq("platform", "instagram")
-    .lte("scheduled_for", today)
-    .order("scheduled_for", { ascending: true });
+    .eq("platform", "instagram");
+
+  if (body.draft_id) {
+    // Single draft publish — ignore scheduled_for check
+    query = query.eq("id", body.draft_id);
+  } else {
+    // Cron mode — publish all approved scheduled for today or past
+    query = query.lte("scheduled_for", today).order("scheduled_for", { ascending: true });
+  }
+
+  const { data: drafts, error: fetchErr } = await query;
 
   if (fetchErr) return jsonResponse({ error: "db_error", detail: fetchErr.message }, 500);
-  if (!drafts?.length) return jsonResponse({ success: true, published: 0, message: "no posts scheduled for today" });
+  if (!drafts?.length) return jsonResponse({ success: true, published: 0, message: body.draft_id ? "draft not found or not approved" : "no posts scheduled for today" });
 
   console.log(`[publisher] ${drafts.length} draft(s) to publish for ${today}`);
 
