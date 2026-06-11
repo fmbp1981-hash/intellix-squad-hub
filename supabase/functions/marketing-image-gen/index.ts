@@ -1,50 +1,71 @@
 // marketing-image-gen — generates 1-4 contextual images for a draft using GPT Image 2
-// Stores images in Storage under marketing/{draft_id}/gen_{i}.png
-// Saves public URLs to marketing_drafts.generated_images
+// Each image gets a unique variation angle to avoid identical outputs.
 
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 
 const STYLE_BY_PILAR: Record<string, string> = {
-  resultado_ia:     "clean data visualization, modern dark dashboard, teal and indigo tones, infographic layout",
-  educacao_pratica: "minimalist educational illustration, soft purple gradient, clean geometric shapes",
-  bastidores:       "authentic developer workspace, dark moody lighting, code editor aesthetic",
-  posicionamento:   "bold geometric composition, deep purple to midnight blue, strong typographic feel",
-  comercial:        "modern SaaS product visual, gradient indigo to violet, professional and confident",
+  resultado_ia:     "clean data visualization, modern dark dashboard, teal and indigo tones, network graph aesthetics",
+  educacao_pratica: "minimalist educational illustration, soft purple gradient, clean geometric shapes, step-by-step flow",
+  bastidores:       "authentic developer workspace, dark moody lighting, code editor aesthetic, terminal glow",
+  posicionamento:   "bold geometric composition, deep purple to midnight blue, strong angular shapes, leadership feel",
+  comercial:        "modern SaaS product visual, gradient indigo to violet, dashboard preview, professional confidence",
 };
 
-function buildImagePrompt(title: string, content: string, pilar: string, platform: string): string {
-  const style = STYLE_BY_PILAR[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
+// Each index gets a distinct compositional angle — forces GPT Image 2 to diverge visually
+const VARIATION_BY_INDEX: Record<number, string> = {
+  0: "Macro concept: abstract wide composition, central focal element, depth of field effect",
+  1: "Micro detail: close-up technical illustration, intricate geometric pattern, high contrast",
+  2: "Metaphorical: symbolic visual metaphor, organic shapes mixed with digital elements, layered depth",
+  3: "Structural: clean grid layout, modular components, architectural schematic feel, blueprint aesthetic",
+};
 
-  // Extract core concept from content — first 200 chars, strip markdown
+function buildImagePrompt(
+  title: string,
+  angle: string | null,
+  content: string,
+  pilar: string,
+  platform: string,
+  variationIndex: number,
+): string {
+  const style = STYLE_BY_PILAR[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
+  const variation = VARIATION_BY_INDEX[variationIndex] ?? VARIATION_BY_INDEX[0];
+
+  // Use title + angle as primary concept signal
+  const conceptLine = angle ? `"${title}" — angle: ${angle}` : `"${title}"`;
+
+  // Extract meaningful excerpt — strip markdown, use first 300 chars
   const excerpt = content
     .replace(/---SLIDE---/g, " ")
     .replace(/\*\*/g, "")
     .replace(/#+\s/g, "")
+    .replace(/\n+/g, " ")
     .trim()
-    .slice(0, 200);
+    .slice(0, 300);
 
-  const platformHint = platform === "instagram"
-    ? "Square 1:1 composition, bold visual hierarchy, optimized for social media feed"
-    : "Professional LinkedIn visual, clean corporate aesthetic";
+  const platformSpec = platform === "instagram"
+    ? "Square 1:1 crop (1024×1024), bold impactful composition for Instagram feed, thumb-stopping visual"
+    : "Landscape composition, professional tone for LinkedIn feed, clean corporate aesthetic";
 
-  return `Professional branded social media image for IntelliX.AI (Brazilian AI consulting company).
-Post theme: "${title}".
-Core concept: ${excerpt}
-Style: ${style}. ${platformHint}.
-Brand: dark background #171723, primary blue #196FA8, accent gold #F2A82A.
-Abstract/conceptual visual only — NO text overlay, NO people, NO faces.
-High-quality B2B design, premium feel, suitable for Instagram.`;
+  return `Professional branded B2B social media illustration for IntelliX.AI (Brazilian AI consulting).
+
+POST CONCEPT: ${conceptLine}
+CONTENT CONTEXT: ${excerpt}
+
+VISUAL STYLE: ${style}
+COMPOSITION APPROACH: ${variation}
+PLATFORM: ${platformSpec}
+
+BRAND RULES: Dark background (#171723), primary blue (#196FA8) accents, gold (#F2A82A) highlights.
+STRICT CONSTRAINTS: Abstract/conceptual only — NO text, NO letters, NO words, NO people, NO faces, NO logos.
+Quality: high-end B2B design, premium feel, suitable for a leading AI consulting brand.`;
 }
 
-async function generateImage(
-  openaiKey: string,
-  prompt: string,
-): Promise<string | null> {
+async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "low" }),
+    body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "medium" }),
   });
   if (!res.ok) {
     console.error(`[image-gen] OpenAI ${res.status}: ${await res.text()}`);
@@ -95,34 +116,38 @@ Deno.serve(async (req) => {
   const db = adminClient();
   const { data: draft, error: fetchErr } = await db
     .from("marketing_drafts")
-    .select("id, title, content, pilar, platform")
+    .select("id, title, angle, content, pilar, platform")
     .eq("id", draft_id)
     .single();
 
   if (fetchErr || !draft) return jsonResponse({ error: "draft_not_found" }, 404);
 
-  const { title, content, pilar, platform } = draft as {
-    id: string; title: string; content: string; pilar: string; platform: string;
+  const { title, angle, content, pilar, platform } = draft as {
+    id: string; title: string; angle: string | null;
+    content: string; pilar: string; platform: string;
   };
 
-  const prompt = buildImagePrompt(title, content, pilar, platform);
-  console.log(`[image-gen] generating ${imageCount} image(s) for draft ${draft_id} — pilar=${pilar}`);
+  console.log(`[image-gen] generating ${imageCount} varied image(s) for draft ${draft_id} — pilar=${pilar} platform=${platform}`);
 
-  // Generate all images in parallel
+  // Each image gets a unique variation prompt — sequential to ensure distinct variation indices
   const b64Results = await Promise.all(
-    Array.from({ length: imageCount }, (_, i) => generateImage(openaiKey, prompt).then(b => ({ b, i })))
+    Array.from({ length: imageCount }, (_, i) => {
+      const prompt = buildImagePrompt(title, angle, content, pilar, platform, i);
+      console.log(`[image-gen] variation ${i}: ${VARIATION_BY_INDEX[i]?.split(":")[0]}`);
+      return generateImage(openaiKey, prompt).then(b => ({ b, i }));
+    })
   );
 
   const urls: string[] = [];
   for (const { b, i } of b64Results) {
-    if (!b) { console.warn(`[image-gen] image ${i} failed`); continue; }
+    if (!b) { console.warn(`[image-gen] variation ${i} failed`); continue; }
     const url = await uploadToStorage(db, draft_id, i, b);
     if (url) urls.push(url);
   }
 
   if (urls.length === 0) return jsonResponse({ error: "all_images_failed" }, 500);
 
-  // Merge with any existing generated_images
+  // Merge with existing generated_images
   const { data: current } = await db
     .from("marketing_drafts")
     .select("generated_images")
@@ -137,6 +162,6 @@ Deno.serve(async (req) => {
     .update({ generated_images: merged })
     .eq("id", draft_id);
 
-  console.log(`[image-gen] ✅ ${urls.length}/${imageCount} images generated for ${draft_id}`);
+  console.log(`[image-gen] ✅ ${urls.length}/${imageCount} varied images for ${draft_id}`);
   return jsonResponse({ success: true, urls, total: merged.length });
 });
