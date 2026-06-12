@@ -84,7 +84,8 @@ Requisitos para cada prompt:
 3. Pode incluir silhuetas de pessoas em contextos profissionais (sem rostos visíveis)
 4. Pode incluir elementos de interface/dashboard RELEVANTES ao tema do post
 5. Cada variação deve ter um conceito visual DIFERENTE das outras
-6. Escreva o prompt em inglês, detalhado, 3-5 frases`;
+6. OBRIGATÓRIO: inclua no prompt uma instrução para inserir o título do post como headline bold tipográfico na imagem. Use as primeiras palavras mais impactantes do título (máximo 6-8 palavras em CAPS), posicionado na parte superior ou inferior da imagem, fonte sans-serif branca ou dourada com alto contraste sobre o fundo escuro
+7. Escreva o prompt em inglês, detalhado, 3-5 frases`;
 }
 
 async function callGPT4(openaiKey: string, system: string, user: string): Promise<string> {
@@ -111,15 +112,15 @@ async function callGPT4(openaiKey: string, system: string, user: string): Promis
 const BASE_STYLE_SUFFIX = `
 Dark background #171723, deep navy atmosphere. Blue #196FA8 and gold #F2A82A accent colors.
 Cinematic lighting, premium B2B aesthetic, high production value.
-NO text overlays, NO readable words, NO logos. Photorealistic or high-end 3D illustration.
-Square 1:1 format, bold composition.`;
+Photorealistic or high-end 3D illustration. Square 1:1 format, bold composition.
+Include bold typographic headline text as part of the image composition — white or gold sans-serif, strong contrast, top or bottom third of the image.`;
 
 async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
   const fullPrompt = `${prompt}\n\n${BASE_STYLE_SUFFIX}`.slice(0, 4000);
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({ model: "gpt-image-2", prompt: fullPrompt, size: "1024x1024", quality: "medium" }),
+    body: JSON.stringify({ model: "gpt-image-2", prompt: fullPrompt, size: "1024x1024", quality: "low" }),
   });
   if (!res.ok) {
     console.error(`[image-gen] OpenAI image ${res.status}: ${await res.text()}`);
