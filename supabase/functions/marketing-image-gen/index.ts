@@ -1,74 +1,128 @@
-// marketing-image-gen — generates 1-4 contextual images for a draft using GPT Image 2
-// Each image gets a unique variation angle to avoid identical outputs.
+// marketing-image-gen — LLM-first image generation
+// Step 1: GPT-4o interprets the post and writes N distinct, narrative-specific image prompts
+// Step 2: GPT Image 2 generates each image from its unique prompt
 
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 
-const STYLE_BY_PILAR: Record<string, string> = {
-  resultado_ia:     "clean data visualization, modern dark dashboard, teal and indigo tones, network graph aesthetics",
-  educacao_pratica: "minimalist educational illustration, soft purple gradient, clean geometric shapes, step-by-step flow",
-  bastidores:       "authentic developer workspace, dark moody lighting, code editor aesthetic, terminal glow",
-  posicionamento:   "bold geometric composition, deep purple to midnight blue, strong angular shapes, leadership feel",
-  comercial:        "modern SaaS product visual, gradient indigo to violet, dashboard preview, professional confidence",
-};
+// ─── LLM prompt builder ───────────────────────────────────────────────────────
 
-// Each index gets a distinct compositional angle — forces GPT Image 2 to diverge visually
-const VARIATION_BY_INDEX: Record<number, string> = {
-  0: "Macro concept: abstract wide composition, central focal element, depth of field effect",
-  1: "Micro detail: close-up technical illustration, intricate geometric pattern, high contrast",
-  2: "Metaphorical: symbolic visual metaphor, organic shapes mixed with digital elements, layered depth",
-  3: "Structural: clean grid layout, modular components, architectural schematic feel, blueprint aesthetic",
-};
+function buildDirectorSystemPrompt(): string {
+  return `Você é um diretor de criação sênior especializado em conteúdo visual para redes sociais B2B no Brasil.
 
-function buildImagePrompt(
+Sua tarefa: dado um post de marketing, criar prompts precisos e narrativos para geração de imagens com IA (GPT Image 2).
+
+## Estilo de referência obrigatório
+As imagens devem ter o mesmo nível de qualidade e estilo de publicações profissionais de marcas como:
+- Posts editoriais com fotografia profissional escura e cinematográfica
+- Silhuetas de executivos em reuniões, salas de comando, ambientes corporativos premium
+- Ou ilustrações 3D isométricas ALTAMENTE específicas ao tema (não genéricas)
+- Composição limpa, foco visual claro, identidade visual forte
+
+## O que NUNCA fazer
+- Sem padrões genéricos de "rede neural flutuando no espaço azul"
+- Sem cérebros digitais sem contexto
+- Sem nós de rede abstratos que poderiam ser de qualquer empresa de tecnologia
+- Cada imagem deve ser ÚNICA e reconhecidamente sobre o tema do post
+
+## Paleta e marca IntelliX.AI
+- Fundo escuro: #171723 (azul-noite profundo)
+- Primário: #196FA8 (azul corporativo)
+- Destaque: #F2A82A (dourado)
+- Estilo: premium, sóbrio, B2B brasileiro, consultoria de IA
+
+## Formato de resposta
+Retorne SOMENTE JSON válido, sem markdown:
+[
+  {
+    "prompt": "prompt completo em inglês para o GPT Image 2, com cena específica, iluminação, composição e detalhes",
+    "style_note": "descrição em 1 linha do que esta variação representa"
+  }
+]`;
+}
+
+function buildDirectorUserPrompt(
   title: string,
   angle: string | null,
   content: string,
   pilar: string,
   platform: string,
-  variationIndex: number,
+  count: number,
 ): string {
-  const style = STYLE_BY_PILAR[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
-  const variation = VARIATION_BY_INDEX[variationIndex] ?? VARIATION_BY_INDEX[0];
-
-  // Use title + angle as primary concept signal
-  const conceptLine = angle ? `"${title}" — angle: ${angle}` : `"${title}"`;
-
-  // Extract meaningful excerpt — strip markdown, use first 300 chars
   const excerpt = content
     .replace(/---SLIDE---/g, " ")
     .replace(/\*\*/g, "")
     .replace(/#+\s/g, "")
     .replace(/\n+/g, " ")
     .trim()
-    .slice(0, 300);
+    .slice(0, 500);
 
-  const platformSpec = platform === "instagram"
-    ? "Square 1:1 crop (1024×1024), bold impactful composition for Instagram feed, thumb-stopping visual"
-    : "Landscape composition, professional tone for LinkedIn feed, clean corporate aesthetic";
+  const pilarContext: Record<string, string> = {
+    resultado_ia: "cases e resultados reais de IA aplicada em negócios",
+    educacao_pratica: "educação e letramento em IA para líderes e equipes",
+    bastidores: "bastidores da IntelliX.AI, processo interno, como a IA é construída",
+    posicionamento: "posicionamento de mercado, liderança, visão estratégica sobre IA",
+    comercial: "proposta comercial, produto IntelliX.AI, captação de clientes",
+  };
 
-  return `Professional branded B2B social media illustration for IntelliX.AI (Brazilian AI consulting).
+  const platformNote = platform === "instagram"
+    ? "Instagram feed — formato 1:1 quadrado, impacto visual imediato, composição bold"
+    : "LinkedIn feed — formato mais sóbrio, executivo, profissional";
 
-POST CONCEPT: ${conceptLine}
-CONTENT CONTEXT: ${excerpt}
+  return `Crie ${count} prompt(s) de imagem DISTINTOS e ESPECÍFICOS para este post:
 
-VISUAL STYLE: ${style}
-COMPOSITION APPROACH: ${variation}
-PLATFORM: ${platformSpec}
+TÍTULO: ${title}
+${angle ? `ÂNGULO: ${angle}` : ""}
+PILAR: ${pilarContext[pilar] ?? pilar}
+PLATAFORMA: ${platformNote}
+CONTEÚDO:
+${excerpt}
 
-BRAND RULES: Dark background (#171723), primary blue (#196FA8) accents, gold (#F2A82A) highlights.
-STRICT CONSTRAINTS: Abstract/conceptual only — NO text, NO letters, NO words, NO people, NO faces, NO logos.
-Quality: high-end B2B design, premium feel, suitable for a leading AI consulting brand.`;
+Requisitos para cada prompt:
+1. Descreva uma CENA ESPECÍFICA que representa visualmente este post — não genérica
+2. Inclua: ambiente, iluminação, composição, elementos visuais específicos ao tema
+3. Pode incluir silhuetas de pessoas em contextos profissionais (sem rostos visíveis)
+4. Pode incluir elementos de interface/dashboard RELEVANTES ao tema do post
+5. Cada variação deve ter um conceito visual DIFERENTE das outras
+6. Escreva o prompt em inglês, detalhado, 3-5 frases`;
 }
 
+async function callGPT4(openaiKey: string, system: string, user: string): Promise<string> {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      temperature: 0.9,
+      max_tokens: 2048,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`GPT-4o-mini ${res.status}: ${await res.text()}`);
+  const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+  return data.choices[0]?.message?.content ?? "";
+}
+
+// ─── Image generation ─────────────────────────────────────────────────────────
+
+const BASE_STYLE_SUFFIX = `
+Dark background #171723, deep navy atmosphere. Blue #196FA8 and gold #F2A82A accent colors.
+Cinematic lighting, premium B2B aesthetic, high production value.
+NO text overlays, NO readable words, NO logos. Photorealistic or high-end 3D illustration.
+Square 1:1 format, bold composition.`;
+
 async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
+  const fullPrompt = `${prompt}\n\n${BASE_STYLE_SUFFIX}`.slice(0, 4000);
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "medium" }),
+    body: JSON.stringify({ model: "gpt-image-2", prompt: fullPrompt, size: "1024x1024", quality: "medium" }),
   });
   if (!res.ok) {
-    console.error(`[image-gen] OpenAI ${res.status}: ${await res.text()}`);
+    console.error(`[image-gen] OpenAI image ${res.status}: ${await res.text()}`);
     return null;
   }
   const data = await res.json() as { data: Array<{ b64_json: string }> };
@@ -95,6 +149,8 @@ async function uploadToStorage(
   const { data } = db.storage.from("assets").getPublicUrl(path);
   return data.publicUrl;
 }
+
+// ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -127,22 +183,40 @@ Deno.serve(async (req) => {
     content: string; pilar: string; platform: string;
   };
 
-  console.log(`[image-gen] generating ${imageCount} varied image(s) for draft ${draft_id} — pilar=${pilar} platform=${platform}`);
+  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} narrative prompt(s) for: "${title}"`);
 
-  // Each image gets a unique variation prompt — sequential to ensure distinct variation indices
+  // Step 1: LLM interprets the post and writes specific image prompts
+  let imagePrompts: Array<{ prompt: string; style_note: string }> = [];
+  try {
+    const raw = await callGPT4(
+      openaiKey,
+      buildDirectorSystemPrompt(),
+      buildDirectorUserPrompt(title, angle, content, pilar, platform, imageCount),
+    );
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error("no JSON array in response");
+    imagePrompts = JSON.parse(jsonMatch[0]);
+    console.log(`[image-gen] prompts generated: ${imagePrompts.map(p => p.style_note).join(" | ")}`);
+  } catch (e) {
+    console.error("[image-gen] prompt generation failed:", e);
+    return jsonResponse({ error: "prompt_generation_failed" }, 500);
+  }
+
+  if (imagePrompts.length === 0) return jsonResponse({ error: "no_prompts_generated" }, 500);
+
+  // Step 2: Generate images in parallel from unique prompts
+  console.log(`[image-gen] step 2 — generating ${imagePrompts.length} image(s) with GPT Image 2`);
   const b64Results = await Promise.all(
-    Array.from({ length: imageCount }, (_, i) => {
-      const prompt = buildImagePrompt(title, angle, content, pilar, platform, i);
-      console.log(`[image-gen] variation ${i}: ${VARIATION_BY_INDEX[i]?.split(":")[0]}`);
-      return generateImage(openaiKey, prompt).then(b => ({ b, i }));
-    })
+    imagePrompts.map((p, i) =>
+      generateImage(openaiKey, p.prompt).then(b => ({ b, i, style: p.style_note }))
+    )
   );
 
   const urls: string[] = [];
-  for (const { b, i } of b64Results) {
-    if (!b) { console.warn(`[image-gen] variation ${i} failed`); continue; }
+  for (const { b, i, style } of b64Results) {
+    if (!b) { console.warn(`[image-gen] image ${i} (${style}) failed`); continue; }
     const url = await uploadToStorage(db, draft_id, i, b);
-    if (url) urls.push(url);
+    if (url) { urls.push(url); console.log(`[image-gen] ✅ ${i} — ${style}`); }
   }
 
   if (urls.length === 0) return jsonResponse({ error: "all_images_failed" }, 500);
@@ -157,11 +231,8 @@ Deno.serve(async (req) => {
   const existing = (current as { generated_images: string[] | null } | null)?.generated_images ?? [];
   const merged = [...existing, ...urls];
 
-  await db
-    .from("marketing_drafts")
-    .update({ generated_images: merged })
-    .eq("id", draft_id);
+  await db.from("marketing_drafts").update({ generated_images: merged }).eq("id", draft_id);
 
-  console.log(`[image-gen] ✅ ${urls.length}/${imageCount} varied images for ${draft_id}`);
+  console.log(`[image-gen] ✅ ${urls.length}/${imageCount} images generated for draft ${draft_id}`);
   return jsonResponse({ success: true, urls, total: merged.length });
 });
