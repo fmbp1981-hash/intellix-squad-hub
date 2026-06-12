@@ -96,6 +96,47 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "db_insert_failed" }, 500);
   }
 
-  console.log(`[orchestrator] ${saved?.length ?? 0} ideas saved as idea_pending`);
-  return jsonResponse({ success: true, ideas_created: saved?.length ?? 0, idea_ids: saved?.map((r: { id: string }) => r.id) ?? [] });
+  const ideaIds: string[] = saved?.map((r: { id: string }) => r.id) ?? [];
+  console.log(`[orchestrator] ${ideaIds.length} ideas saved as idea_pending`);
+
+  // Background pipeline: generate content + image + notify for each idea
+  // Fire-and-forget — orchestrator returns immediately
+  const pipeline = async () => {
+    for (const id of ideaIds) {
+      try {
+        // 1. Generate content
+        const genRes = await fetch(`${fnBase}/marketing-generate`, {
+          method: "POST", headers: internalHeaders,
+          body: JSON.stringify({ draft_id: id }),
+        });
+        if (!genRes.ok) { console.error(`[orchestrator] generate failed for ${id}`); continue; }
+        console.log(`[orchestrator] content generated for ${id}`);
+
+        // 2. Generate 1 contextual image
+        await fetch(`${fnBase}/marketing-image-gen`, {
+          method: "POST", headers: internalHeaders,
+          body: JSON.stringify({ draft_id: id, count: 1 }),
+        }).catch((e) => console.warn(`[orchestrator] image-gen failed for ${id}:`, e));
+
+        // 3. Send WhatsApp approval notification
+        await fetch(`${fnBase}/marketing-notifier`, {
+          method: "POST", headers: internalHeaders,
+          body: JSON.stringify({ draft_id: id }),
+        }).catch((e) => console.warn(`[orchestrator] notifier failed for ${id}:`, e));
+
+      } catch (e) {
+        console.error(`[orchestrator] pipeline error for ${id}:`, e);
+      }
+    }
+    console.log(`[orchestrator] pipeline complete for ${ideaIds.length} ideas`);
+  };
+
+  // Keep function alive for background work
+  if (typeof (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } }).EdgeRuntime !== "undefined") {
+    (globalThis as { EdgeRuntime: { waitUntil: (p: Promise<unknown>) => void } }).EdgeRuntime.waitUntil(pipeline());
+  } else {
+    pipeline().catch(console.error);
+  }
+
+  return jsonResponse({ success: true, ideas_created: ideaIds.length, idea_ids: ideaIds });
 });
