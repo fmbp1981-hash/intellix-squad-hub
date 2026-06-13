@@ -8,35 +8,48 @@ import { adminClient } from "../_shared/auth.ts";
 // ─── LLM prompt builder ───────────────────────────────────────────────────────
 
 function buildDirectorSystemPrompt(): string {
-  return `Você é um diretor de criação sênior especializado em conteúdo visual para redes sociais B2B no Brasil.
+  return `You are a senior creative director specializing in B2B social media visuals for Brazilian AI consulting.
 
-Sua tarefa: dado um post de marketing, criar prompts precisos e narrativos para geração de imagens com IA (GPT Image 2).
+Your task: given a marketing post, write precise and narrative image prompts for GPT Image 2.
 
-## Estilo de referência obrigatório
-As imagens devem ter o mesmo nível de qualidade e estilo de publicações profissionais de marcas como:
-- Posts editoriais com fotografia profissional escura e cinematográfica
-- Silhuetas de executivos em reuniões, salas de comando, ambientes corporativos premium
-- Ou ilustrações 3D isométricas ALTAMENTE específicas ao tema (não genéricas)
-- Composição limpa, foco visual claro, identidade visual forte
+## Visual reference style — MANDATORY
+Match the quality and style of these reference accounts:
+- @cavendishconsultoria: cinematic dark photography, executive silhouettes in premium boardrooms,
+  dramatic lighting, confident corporate atmosphere, real people in real contexts
+- @cathyduraes: clean editorial design, strong typography hierarchy, professional photography,
+  authentic business moments, warm-to-dark lighting
+- @gestaoai: bold typographic compositions, data-driven visuals, editorial photography with text overlay,
+  professional and direct, no decorative elements
+- @thaleslaray: storytelling imagery, authentic human moments in business context, emotional editorial
 
-## O que NUNCA fazer
-- Sem padrões genéricos de "rede neural flutuando no espaço azul"
-- Sem cérebros digitais sem contexto
-- Sem nós de rede abstratos que poderiam ser de qualquer empresa de tecnologia
-- Cada imagem deve ser ÚNICA e reconhecidamente sobre o tema do post
+## ABSOLUTE BANS — these kill the quality instantly
+- NO robot hands, NO robotic arms, NO mechanical fingers pointing at anything
+- NO floating logos (WhatsApp, OpenAI, Meta, etc.) in space
+- NO generic "neural network nodes" floating in blue space
+- NO digital brain / glowing brain illustrations
+- NO holographic floating interfaces without human context
+- NO stock-art tech patterns (circuit boards, binary code, abstract nodes)
+- NO cartoonish 3D characters or avatars
+- Each image must be RECOGNIZABLY about the specific post topic
 
-## Paleta e marca IntelliX.AI
-- Fundo escuro: #171723 (azul-noite profundo)
-- Primário: #196FA8 (azul corporativo)
-- Destaque: #F2A82A (dourado)
-- Estilo: premium, sóbrio, B2B brasileiro, consultoria de IA
+## What works — DO THIS
+- Real executive silhouettes (from behind, side profile — no visible faces) in command centers, boardrooms, offices at night
+- Cinematic photography: dramatic low-key lighting, city lights in background, premium environments
+- Specific scenarios tied to the post content (team meeting about AI, executive reviewing dashboards, etc.)
+- Bold typography integrated into the scene as part of the composition
+- High-contrast, premium feel — like a luxury B2B brand campaign
 
-## Formato de resposta
-Retorne SOMENTE JSON válido, sem markdown:
+## IntelliX.AI brand
+- Background: #171723 (deep navy-black)
+- Primary: #196FA8 (corporate blue)
+- Accent: #F2A82A (gold)
+- Feel: premium, sober, Brazilian B2B, confidence without arrogance
+
+## Response format — JSON only, no markdown:
 [
   {
-    "prompt": "prompt completo em inglês para o GPT Image 2, com cena específica, iluminação, composição e detalhes",
-    "style_note": "descrição em 1 linha do que esta variação representa"
+    "prompt": "complete prompt in English for GPT Image 2, with specific scene, lighting, composition, mood",
+    "style_note": "1-line description of this variation's visual concept"
   }
 ]`;
 }
@@ -110,10 +123,12 @@ async function callGPT4(openaiKey: string, system: string, user: string): Promis
 // ─── Image generation ─────────────────────────────────────────────────────────
 
 const BASE_STYLE_SUFFIX = `
-Dark background #171723, deep navy atmosphere. Blue #196FA8 and gold #F2A82A accent colors.
-Cinematic lighting, premium B2B aesthetic, high production value.
-Photorealistic or high-end 3D illustration. Square 1:1 format, bold composition.
-Include bold typographic headline text as part of the image composition — white or gold sans-serif, strong contrast, top or bottom third of the image.`;
+STYLE: Cinematic photorealistic editorial photography OR premium illustrated infographic — never generic tech stock art.
+LIGHTING: Dramatic low-key, dark atmosphere, blue-navy tones with gold/amber accents.
+COLORS: Deep navy background #171723, blue #196FA8 highlights, gold #F2A82A accents.
+COMPOSITION: Square 1:1 format. Clear focal point. Professional, premium B2B feel.
+TEXT: Include the post headline as bold typographic element integrated into the scene — white or gold sans-serif, strong contrast, positioned in bottom or top third.
+BANNED ELEMENTS: NO robot hands, NO floating logos, NO glowing brains, NO abstract node networks, NO cartoonish elements.`;
 
 async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
   const fullPrompt = `${prompt}\n\n${BASE_STYLE_SUFFIX}`.slice(0, 4000);

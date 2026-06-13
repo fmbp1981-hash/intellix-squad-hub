@@ -349,30 +349,13 @@ ${slideInstruction}`;
     return jsonResponse({ success: true, draft_id, slide_count: allSlides.length });
   }
 
-  // Standard path — single image + text content
-  // If image_url is already set (e.g. Virada Inteligente brand image), preserve it — skip AI generation
-  let imageUrl: string | null = (draft.image_url as string | null) ?? null;
-  if (draft.needs_image && !imageUrl) {
-    try {
-      const b64 = await generateImage(openaiKey, geminiKey, draft.title, draft.pilar);
-      if (b64) {
-        const bytes = b64ToUint8Array(b64);
-        const { error: uploadErr } = await db.storage
-          .from("assets")
-          .upload(`marketing/${draft_id}.png`, bytes, { contentType: "image/png", upsert: true });
-        if (!uploadErr) {
-          const { data: urlData } = db.storage.from("assets").getPublicUrl(`marketing/${draft_id}.png`);
-          imageUrl = urlData.publicUrl;
-        }
-      }
-    } catch (e) {
-      console.error("[marketing-generate] image error (non-fatal):", e);
-    }
-  }
+  // Image generation is handled exclusively by marketing-image-gen (LLM-first approach).
+  // marketing-generate only sets content + status. Virada brand images are pre-set on the idea.
+  const existingImageUrl: string | null = (draft.image_url as string | null) ?? null;
 
   await db.from("marketing_drafts").update({
     content,
-    image_url: imageUrl,
+    image_url: existingImageUrl,
     status: "generated",
   }).eq("id", draft_id);
 

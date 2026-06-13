@@ -2,10 +2,11 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callLLM } from "../_shared/llm-client.ts";
 import { fetchGmailSnippets } from "../_shared/gmail-client.ts";
-import { fetchGoogleNews, fetchInstagramProfile, fetchLinkedInAnthropic } from "../_shared/serp-client.ts";
+import { fetchGoogleNews, fetchInstagramProfile, fetchLinkedInAnthropic, fetchLinkedInIntelliX } from "../_shared/serp-client.ts";
 import { adminClient } from "../_shared/auth.ts";
 
-const INSTAGRAM_PROFILES = ["gestaoai", "thaleslaray", "dumasolucoes", "inventormiguel"];
+// Reference profiles: content style (gestaoai, thaleslaray) + visual style (cathyduraes, cavendishconsultoria)
+const INSTAGRAM_PROFILES = ["gestaoai", "thaleslaray", "dumasolucoes", "cathyduraes", "cavendishconsultoria"];
 
 export interface ResearchSnippet {
   title: string;
@@ -25,19 +26,21 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
 
-  console.log("[marketing-researcher] starting research from 5 sources");
+  console.log("[marketing-researcher] starting research from 7 sources");
+
+  const igProfiles = ["gestaoai", "thaleslaray", "dumasolucoes", "cathyduraes", "cavendishconsultoria"];
 
   const results = await Promise.allSettled([
     fetchGoogleNews("inteligência artificial negócios Brasil automação", 12),
     fetchGmailSnippets(),
-    fetchInstagramProfile("gestaoai", 4),
-    fetchInstagramProfile("thaleslaray", 4),
-    fetchInstagramProfile("dumasolucoes", 4),
-    fetchInstagramProfile("inventormiguel", 4),
-    fetchLinkedInAnthropic(6),
+    ...igProfiles.map((h) => fetchInstagramProfile(h, 3)),
+    fetchLinkedInAnthropic(4),
+    fetchLinkedInIntelliX(4),
   ]);
 
-  const [newsR, gmailR, ig0, ig1, ig2, ig3, linkedinR] = results;
+  const [newsR, gmailR, ...rest] = results;
+  const igResults = rest.slice(0, igProfiles.length);
+  const [linkedinAnthropicR, linkedinIntelliXR] = rest.slice(igProfiles.length);
 
   const allSnippets: ResearchSnippet[] = [];
 
@@ -56,15 +59,19 @@ Deno.serve(async (req) => {
     );
   } else console.warn("[marketing-researcher] gmail failed:", gmailR.reason);
 
-  for (const [igR, handle] of [[ig0, "gestaoai"], [ig1, "thaleslaray"], [ig2, "dumasolucoes"], [ig3, "inventormiguel"]] as const) {
-    if (igR.status === "fulfilled") {
-      allSnippets.push(...igR.value.map((s) => ({ ...s, source: "instagram" as const })));
-    } else console.warn(`[marketing-researcher] instagram @${handle} failed:`, igR.reason);
+  for (let i = 0; i < igProfiles.length; i++) {
+    const igR = igResults[i];
+    if (igR?.status === "fulfilled") {
+      allSnippets.push(...igR.value.map((s: ResearchSnippet) => ({ ...s, source: "instagram" as const })));
+    } else console.warn(`[marketing-researcher] instagram @${igProfiles[i]} failed`);
   }
 
-  if (linkedinR.status === "fulfilled") {
-    allSnippets.push(...linkedinR.value.map((s) => ({ ...s, source: "linkedin" as const })));
-  } else console.warn("[marketing-researcher] linkedin failed:", linkedinR.reason);
+  if (linkedinAnthropicR?.status === "fulfilled") {
+    allSnippets.push(...linkedinAnthropicR.value.map((s: ResearchSnippet) => ({ ...s, source: "linkedin" as const })));
+  }
+  if (linkedinIntelliXR?.status === "fulfilled") {
+    allSnippets.push(...linkedinIntelliXR.value.map((s: ResearchSnippet) => ({ ...s, source: "linkedin" as const })));
+  }
 
   // KB interna
   const db = adminClient();

@@ -29,14 +29,16 @@ function buildApprovalUrl(baseUrl: string, draftId: string, action: string, toke
   return `${baseUrl}/functions/v1/marketing-approval?id=${draftId}&action=${action}&token=${encodeURIComponent(token)}`;
 }
 
-function excerpt(content: string, maxChars = 220): string {
-  return content
-    .replace(/---SLIDE---/g, " | ")
+function excerpt(content: string, maxChars = 280): string {
+  const clean = content
+    .replace(/^---SLIDE---\s*/m, "")   // remove leading ---SLIDE--- if LLM added it
+    .replace(/---SLIDE---/g, "\n\n")   // replace slide breaks with paragraph breaks
     .replace(/\*\*/g, "")
     .replace(/#+\s/g, "")
+    .split("\n\n")[0]                  // take only the first slide/paragraph (the hook)
     .replace(/\n+/g, " ")
-    .trim()
-    .slice(0, maxChars) + (content.length > maxChars ? "..." : "");
+    .trim();
+  return clean.length > maxChars ? clean.slice(0, maxChars) + "..." : clean;
 }
 
 Deno.serve(async (req) => {
