@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
 
   const { data: draft, error: fetchErr } = await db
     .from("marketing_drafts")
-    .select("id, title, angle, pilar, platform, content_type, needs_image, theme_prompt, research_snippets, trigger_mode")
+    .select("id, title, angle, pilar, platform, content_type, needs_image, theme_prompt, research_snippets, trigger_mode, image_url")
     .eq("id", draft_id)
     .eq("status", "idea_pending")
     .single();
@@ -359,6 +359,6 @@ ${slideInstruction}`;
     status: "generated",
   }).eq("id", draft_id);
 
-  console.log(`[marketing-generate] draft=${draft_id} type=${draft.content_type} image=${imageUrl ? "yes" : "no"}`);
-  return jsonResponse({ success: true, draft_id, image_url: imageUrl });
+  console.log(`[marketing-generate] draft=${draft_id} type=${draft.content_type} image=${existingImageUrl ? "yes" : "no"}`);
+  return jsonResponse({ success: true, draft_id, image_url: existingImageUrl });
 });
