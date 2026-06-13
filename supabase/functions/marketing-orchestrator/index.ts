@@ -112,11 +112,24 @@ Deno.serve(async (req) => {
         if (!genRes.ok) { console.error(`[orchestrator] generate failed for ${id}`); continue; }
         console.log(`[orchestrator] content generated for ${id}`);
 
-        // 2. Generate 1 contextual image
-        await fetch(`${fnBase}/marketing-image-gen`, {
-          method: "POST", headers: internalHeaders,
-          body: JSON.stringify({ draft_id: id, count: 1 }),
-        }).catch((e) => console.warn(`[orchestrator] image-gen failed for ${id}:`, e));
+        // 2. Conditionally generate image based on content_type + needs_image
+        // - news_data: OG images already set in slide_images by marketing-generate — skip
+        // - needs_image=false: text-only post — skip
+        // - needs_image=true + promotional/case: generate high-quality AI image
+        const { data: draftMeta } = await db
+          .from("marketing_drafts")
+          .select("needs_image, content_type")
+          .eq("id", id)
+          .single();
+        const shouldGenImage = draftMeta?.needs_image === true && draftMeta?.content_type !== "news_data";
+        if (shouldGenImage) {
+          await fetch(`${fnBase}/marketing-image-gen`, {
+            method: "POST", headers: internalHeaders,
+            body: JSON.stringify({ draft_id: id, count: 1 }),
+          }).catch((e) => console.warn(`[orchestrator] image-gen failed for ${id}:`, e));
+        } else {
+          console.log(`[orchestrator] skipping image-gen for ${id} (needs_image=${draftMeta?.needs_image}, type=${draftMeta?.content_type})`);
+        }
 
         // 3. Send WhatsApp approval notification
         await fetch(`${fnBase}/marketing-notifier`, {

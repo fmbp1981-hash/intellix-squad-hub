@@ -7,12 +7,38 @@ import { adminClient } from "../_shared/auth.ts";
 
 // ─── LLM prompt builder ───────────────────────────────────────────────────────
 
-function buildDirectorSystemPrompt(): string {
+function buildDirectorSystemPrompt(contentType: string): string {
+  const isPromotional = contentType === "product_promotion" || contentType === "virada_inteligente";
+
+  const styleGuide = isPromotional ? `
+## IMAGE TRACK: PREMIUM BRAND / PROMOTIONAL
+Style reference: @cavendishconsultoria — cinematic dark photography, executive silhouettes in premium boardrooms,
+dramatic lighting, confident corporate atmosphere. Maximum visual impact for conversion and CTA posts.
+
+USE:
+- Executive silhouettes (back/side, no faces) in command centers, boardrooms at night, premium offices
+- Cinematic low-key lighting, city lights in background
+- Dramatic contrast, luxury brand feel
+- Bold headline typography integrated as part of the scene
+- Feels like a high-end corporate brand campaign` : `
+## IMAGE TRACK: EDITORIAL / INFORMATIONAL
+Style reference: @gestaoai, @thaleslaray, @cathyduraes — clean editorial, professional but accessible,
+bold typographic compositions, data-driven visuals, authentic business context.
+
+USE:
+- Clean editorial compositions with strong hierarchy
+- Data visualization elements (charts, dashboards, metrics) relevant to the post
+- Professional photography style but less cinematic — more direct and readable
+- Bold headline text as the primary focal element, supported by clean visuals
+- Feels like a well-designed editorial or business magazine spread`;
+
   return `You are a senior creative director specializing in B2B social media visuals for Brazilian AI consulting.
 
 Your task: given a marketing post, write precise and narrative image prompts for GPT Image 2.
 
-## Visual reference style — MANDATORY
+${styleGuide}
+
+## Visual reference style — ALL TRACKS
 Match the quality and style of these reference accounts:
 - @cavendishconsultoria: cinematic dark photography, executive silhouettes in premium boardrooms,
   dramatic lighting, confident corporate atmosphere, real people in real contexts
@@ -61,6 +87,7 @@ function buildDirectorUserPrompt(
   pilar: string,
   platform: string,
   count: number,
+  contentType: string,
 ): string {
   const excerpt = content
     .replace(/---SLIDE---/g, " ")
@@ -82,12 +109,17 @@ function buildDirectorUserPrompt(
     ? "Instagram feed — formato 1:1 quadrado, impacto visual imediato, composição bold"
     : "LinkedIn feed — formato mais sóbrio, executivo, profissional";
 
+  const trackNote = (contentType === "product_promotion" || contentType === "virada_inteligente")
+    ? "TRACK: PREMIUM BRAND — cinematográfico, executivo, máximo impacto para conversão"
+    : "TRACK: EDITORIAL — clean, legível, tipografia forte, visual direto ao ponto";
+
   return `Crie ${count} prompt(s) de imagem DISTINTOS e ESPECÍFICOS para este post:
 
 TÍTULO: ${title}
 ${angle ? `ÂNGULO: ${angle}` : ""}
 PILAR: ${pilarContext[pilar] ?? pilar}
 PLATAFORMA: ${platformNote}
+${trackNote}
 CONTEÚDO:
 ${excerpt}
 
@@ -188,26 +220,26 @@ Deno.serve(async (req) => {
   const db = adminClient();
   const { data: draft, error: fetchErr } = await db
     .from("marketing_drafts")
-    .select("id, title, angle, content, pilar, platform")
+    .select("id, title, angle, content, pilar, platform, content_type")
     .eq("id", draft_id)
     .single();
 
   if (fetchErr || !draft) return jsonResponse({ error: "draft_not_found" }, 404);
 
-  const { title, angle, content, pilar, platform } = draft as {
+  const { title, angle, content, pilar, platform, content_type } = draft as {
     id: string; title: string; angle: string | null;
-    content: string; pilar: string; platform: string;
+    content: string; pilar: string; platform: string; content_type: string | null;
   };
 
-  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} narrative prompt(s) for: "${title}"`);
+  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} prompt(s) for: "${title}" [type=${content_type}]`);
 
   // Step 1: LLM interprets the post and writes specific image prompts
   let imagePrompts: Array<{ prompt: string; style_note: string }> = [];
   try {
     const raw = await callGPT4(
       openaiKey,
-      buildDirectorSystemPrompt(),
-      buildDirectorUserPrompt(title, angle, content, pilar, platform, imageCount),
+      buildDirectorSystemPrompt(content_type ?? "informational"),
+      buildDirectorUserPrompt(title, angle, content, pilar, platform, imageCount, content_type ?? "informational"),
     );
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("no JSON array in response");
