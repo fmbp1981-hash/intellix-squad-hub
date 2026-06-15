@@ -5,7 +5,7 @@ import {
   CheckCircle, XCircle, Upload, Sparkles, Loader2,
   Lightbulb, ChevronDown, ChevronUp, Instagram, ImagePlus, Check,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   useApproveDraft,
@@ -40,6 +40,28 @@ const PLATFORM_ICONS: Record<string, string> = {
   linkedin: "in",
   instagram: "ig",
   whatsapp: "wa",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  idea_pending: "Ideia",
+  generated: "Gerado",
+  approved: "Aprovado",
+  published: "Publicado",
+  rejected: "Rejeitado",
+};
+
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  idea_pending: { bg: "oklch(0.48 0.16 60  / 0.18)", text: "oklch(0.78 0.14 60)"  },
+  generated:    { bg: "oklch(0.45 0.14 240 / 0.18)", text: "oklch(0.70 0.14 240)" },
+  approved:     { bg: "oklch(0.39 0.14 145 / 0.18)", text: "oklch(0.68 0.18 145)" },
+  published:    { bg: "oklch(0.39 0.10 160 / 0.18)", text: "oklch(0.72 0.14 160)" },
+  rejected:     { bg: "oklch(0.42 0.18 15  / 0.18)", text: "oklch(0.72 0.16 15)"  },
+};
+
+const PLATFORM_DISPLAY: Record<string, { label: string; color: string }> = {
+  linkedin:  { label: "LinkedIn",  color: "oklch(0.60 0.16 240)" },
+  instagram: { label: "Instagram", color: "oklch(0.68 0.18 330)" },
+  whatsapp:  { label: "WhatsApp",  color: "oklch(0.68 0.18 145)" },
 };
 
 interface Props { draft: MarketingDraft }
@@ -409,5 +431,146 @@ export function MarketingDraftCard({ draft }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Grid Card (para visualização em grade, estilo Metricool) ────────────────
+
+interface CardProps {
+  draft: MarketingDraft;
+  isSelected?: boolean;
+  onClick: () => void;
+}
+
+export function GridCard({ draft, isSelected, onClick }: CardProps) {
+  const pilarColor = PILAR_COLORS[draft.pilar] ?? PILAR_COLORS.educacao_pratica;
+  const statusColor = STATUS_COLORS[draft.status] ?? STATUS_COLORS.generated;
+  const platform = PLATFORM_DISPLAY[draft.platform];
+
+  return (
+    <button
+      onClick={onClick}
+      className="group relative w-full rounded-xl overflow-hidden text-left transition-all"
+      style={{
+        background: "oklch(0.16 0.01 250)",
+        border: isSelected
+          ? "1.5px solid oklch(0.52 0.18 262)"
+          : "1px solid oklch(0.22 0.01 250)",
+        boxShadow: isSelected ? "0 0 0 3px oklch(0.52 0.18 262 / 0.15)" : "none",
+      }}
+    >
+      {/* Image area or gradient placeholder */}
+      <div
+        className="relative h-28 w-full overflow-hidden"
+        style={{
+          background: draft.image_url
+            ? undefined
+            : `radial-gradient(ellipse at 70% 30%, ${pilarColor.bg} 0%, oklch(0.14 0.01 250) 70%)`,
+        }}
+      >
+        {draft.image_url ? (
+          <img src={draft.image_url} alt={draft.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg opacity-40" style={{ background: pilarColor.text }} />
+          </div>
+        )}
+
+        {/* Platform chip */}
+        <div
+          className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-semibold"
+          style={{ background: "oklch(0.10 0.01 250 / 0.85)", color: platform?.color ?? "oklch(0.75 0.02 250)", backdropFilter: "blur(8px)" }}
+        >
+          {platform?.label ?? draft.platform}
+        </div>
+
+        {/* Status chip */}
+        <div
+          className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-semibold"
+          style={{ background: statusColor.bg, color: statusColor.text }}
+        >
+          {STATUS_LABELS[draft.status]}
+        </div>
+      </div>
+
+      {/* Text area */}
+      <div className="p-3 space-y-1">
+        <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-foreground group-hover:text-white transition-colors">
+          {draft.title}
+        </p>
+        <p className="text-[10px]" style={{ color: "oklch(0.48 0.02 250)" }}>
+          {formatDistanceToNow(new Date(draft.created_at), { addSuffix: true, locale: ptBR })}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// ─── List Card (para visualização em lista, design melhorado) ────────────────
+
+export function ListCard({ draft, isSelected, onClick }: CardProps) {
+  const pilarColor = PILAR_COLORS[draft.pilar] ?? PILAR_COLORS.educacao_pratica;
+  const statusColor = STATUS_COLORS[draft.status] ?? STATUS_COLORS.generated;
+  const platform = PLATFORM_DISPLAY[draft.platform];
+
+  return (
+    <button
+      onClick={onClick}
+      className="group w-full rounded-xl p-3 text-left transition-all"
+      style={{
+        background: isSelected ? "oklch(0.18 0.02 262)" : "oklch(0.16 0.01 250)",
+        border: isSelected
+          ? "1.5px solid oklch(0.52 0.18 262)"
+          : "1px solid oklch(0.22 0.01 250)",
+      }}
+    >
+      <div className="flex items-start gap-3">
+        {/* Pilar color bar */}
+        <div
+          className="mt-0.5 h-8 w-1 shrink-0 rounded-full"
+          style={{ background: pilarColor.text }}
+        />
+
+        {/* Content */}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="line-clamp-1 text-[12px] font-semibold text-foreground group-hover:text-white transition-colors">
+              {draft.title}
+            </p>
+            <div
+              className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold"
+              style={{ background: statusColor.bg, color: statusColor.text }}
+            >
+              {STATUS_LABELS[draft.status]}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-medium" style={{ color: platform?.color ?? "oklch(0.65 0.02 250)" }}>
+              {platform?.label ?? draft.platform}
+            </span>
+            <span className="text-[10px]" style={{ color: "oklch(0.38 0.01 250)" }}>·</span>
+            <span className="text-[10px]" style={{ color: "oklch(0.48 0.02 250)" }}>
+              {PILAR_LABELS[draft.pilar]}
+            </span>
+            {draft.scheduled_for && (
+              <>
+                <span className="text-[10px]" style={{ color: "oklch(0.38 0.01 250)" }}>·</span>
+                <span className="text-[10px]" style={{ color: "oklch(0.60 0.12 240)" }}>
+                  {format(new Date(draft.scheduled_for), "dd/MM HH:mm", { locale: ptBR })}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Thumbnail */}
+        {draft.image_url && (
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg">
+            <img src={draft.image_url} alt="" className="h-full w-full object-cover" />
+          </div>
+        )}
+      </div>
+    </button>
   );
 }
