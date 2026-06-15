@@ -359,6 +359,6 @@ ${slideInstruction}`;
     status: "generated",
   }).eq("id", draft_id);
 
-  console.log(`[marketing-generate] draft=${draft_id} type=${draft.content_type} image=${imageUrl ? "yes" : "no"}`);
-  return jsonResponse({ success: true, draft_id, image_url: imageUrl });
+  console.log(`[marketing-generate] draft=${draft_id} type=${draft.content_type} platform=${draft.platform} format=${format}`);
+  return jsonResponse({ success: true, draft_id, image_url: existingImageUrl });
 });
