@@ -33,6 +33,7 @@ export interface MarketingDraft {
   trigger_mode: string;
   approved_at: string | null;
   published_at: string | null;
+  scheduled_for: string | null;
   created_at: string;
 }
 
@@ -235,5 +236,26 @@ export function usePublishToInstagram() {
       toast({ title: "Publicado no Instagram!" });
     },
     onError: (err) => toast({ title: "Erro ao publicar", description: String(err), variant: "destructive" }),
+  });
+}
+
+export function useUpdateScheduledFor() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, scheduled_for }: { id: string; scheduled_for: string | null }) => {
+      const { error } = await supabase
+        .from("marketing_drafts")
+        .update({ scheduled_for })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK] });
+      toast({ title: "Agendamento atualizado" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar agendamento", variant: "destructive" });
+    },
   });
 }
