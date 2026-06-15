@@ -61,6 +61,11 @@ BEGIN
 END;
 $$;
 
+-- Composite index for efficient conflict detection in trigger
+CREATE INDEX IF NOT EXISTS idx_marketing_drafts_conflict_check
+  ON marketing_drafts (platform, scheduled_for, status)
+  WHERE scheduled_for IS NOT NULL;
+
 -- Drop if exists (idempotent)
 DROP TRIGGER IF EXISTS marketing_drafts_auto_schedule ON marketing_drafts;
 
@@ -88,6 +93,7 @@ BEGIN
     FROM   marketing_drafts
     WHERE  status = 'approved'
     AND    scheduled_for IS NULL
+    ORDER BY created_at
   LOOP
     CASE r.platform
       WHEN 'instagram' THEN v_target_days := ARRAY[2, 4, 6];
