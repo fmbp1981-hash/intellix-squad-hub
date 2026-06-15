@@ -406,6 +406,49 @@ export const VISUAL_IDENTITY = {
   always: "Logo IntelliX.AI em todos os slides. Sentence case. Nunca title case. Nunca emoji decorativo.",
 } as const;
 
+// ─── Tokens Visuais (Design System) ─────────────────────────────────────────
+
+export const VISUAL_TOKENS = {
+  colors: {
+    background: "#171723",
+    primary:    "#196FA8",
+    accent:     "#F2A82A",
+    lightBlue:  "#4FA6CC",
+    textPrimary:   "#FAFAFA",
+    textSecondary: "#BDBDC3",
+    textMuted:     "#8C8C99",
+  },
+  typography: {
+    display: "Space Grotesk",
+    body:    "Space Grotesk",
+    mono:    "JetBrains Mono",
+    weights: [400, 500, 600, 700, 800] as const,
+    minFontSize: "24px",
+  },
+  formats: {
+    carousel:     { width: 1080, height: 1350, ratio: "4:5"  },
+    presentation: { width: 1920, height: 1080, ratio: "16:9" },
+    stories:      { width: 1080, height: 1920, ratio: "9:16" },
+    linkedinPost: { width: 1200, height: 1500, ratio: "4:5"  },
+  },
+  components: {
+    accentRuler: "Régua de 5–6px × 72–100px, gradiente 135° #F2A82A → #196FA8",
+    glassCard:   "rgba(255,255,255,0.035) + blur(8px) + borda 8% branco + raio 16px",
+    iconTile:    "Quadrado arredondado, ícone Lucide stroke 1.7, fundo com opacidade 13%",
+    ctaButton:   "Gradiente âmbar 135°, texto #1A140A, máximo 1 por peça",
+    logoAsset:   "IntelliX.AI — nunca sólido, sempre split gold→blue no wordmark",
+  },
+  rules: [
+    "Fundo #171723 SEMPRE — nunca preto puro (#000) ou branco (#FFF)",
+    "Âmbar #F2A82A APENAS em CTAs e números de turnaround — máximo 1 elemento por slide",
+    "Gradiente de assinatura: 135° de #F2A82A (gold) para #196FA8 (blue)",
+    "Sentence case sempre — nunca Title Case nem TUDO MAIÚSCULO exceto em eyebrows de dados",
+    "Ícones Lucide stroke — nunca emoji decorativo",
+    "Logo IntelliX.AI em TODOS os slides, canto superior esquerdo ou inferior direito",
+    "Fonte mínima: 24px em qualquer elemento de texto",
+  ],
+} as const;
+
 // ─── Função: buildBrandSystemBlock ──────────────────────────────────────────
 // Injeta o contexto completo de marca em qualquer system prompt de agente.
 
@@ -440,9 +483,16 @@ ${AUDIENCE_PAINS.slice(0, 4).map((p, i) => `${i + 1}. ${p}`).join("\n")}
 - Formato B (FAQ 8-10 slides): perguntas + Sim./Não., descredencia hype, resolve objeções, CTA "link na bio"
 - Formato C (Filosófico 5 slides): polarização → confirmação inesperada → síntese paradoxal, sem CTA ou "salva esse post"
 - Formato D (Produto+Descredenciamento 6-8 slides): afasta lead errado, prova com número, CTA baixa pressão
+- Formato E (Data Story 7 slides): Dado âncora → Contexto → Insight → Implicação → Recomendação → IntelliX → CTA
 
 ### REGRA CRÍTICA — CTAs
 NUNCA usar "Comenta [PALAVRA] que eu te envio no direct" ou qualquer variação.
 Não há automação de DM ativa. Lead que comenta e não recebe prejudica a credibilidade da IntelliX.
-CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}`;
+CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}
+
+### Identidade Visual (para direção de arte e prompts de imagem)
+CORES: Fundo ${VISUAL_TOKENS.colors.background} · Azul ${VISUAL_TOKENS.colors.primary} · Âmbar ${VISUAL_TOKENS.colors.accent} (só CTA/números) · Texto ${VISUAL_TOKENS.colors.textPrimary}
+TIPOGRAFIA: ${VISUAL_TOKENS.typography.display} (display/body) + ${VISUAL_TOKENS.typography.mono} (dados/eyebrows) · Mínimo ${VISUAL_TOKENS.typography.minFontSize}
+GRADIENTE DE ASSINATURA: 135° ${VISUAL_TOKENS.colors.accent} → ${VISUAL_TOKENS.colors.primary}
+REGRAS VISUAIS: ${VISUAL_TOKENS.rules.slice(0, 4).join(" · ")}`;
 }
