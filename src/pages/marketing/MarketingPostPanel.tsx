@@ -70,7 +70,7 @@ function ImageGenSection({ draft }: { draft: MarketingDraft }) {
           <Button
             size="sm"
             disabled={generateImages.isPending}
-            onClick={() => generateImages.mutate({ id: draft.id, qty })}
+            onClick={() => generateImages.mutate({ draftId: draft.id, count: qty })}
             className="h-7 gap-1 text-[11px]"
             style={{ background: "oklch(0.22 0.01 250)", color: "oklch(0.75 0.02 250)", border: "1px solid oklch(0.28 0.01 250)" }}
           >
@@ -84,7 +84,7 @@ function ImageGenSection({ draft }: { draft: MarketingDraft }) {
             {images.map((url, i) => (
               <button
                 key={i}
-                onClick={() => selectImage.mutate({ id: draft.id, image_url: selected === url ? null : url })}
+                onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: selected === url ? null : url })}
                 className="relative h-16 w-16 overflow-hidden rounded-md transition-all"
                 style={{
                   border: selected === url ? "2px solid oklch(0.52 0.18 262)" : "2px solid oklch(0.26 0.01 250)",
@@ -102,7 +102,7 @@ function ImageGenSection({ draft }: { draft: MarketingDraft }) {
           </div>
           {selected && (
             <button
-              onClick={() => selectImage.mutate({ id: draft.id, image_url: null })}
+              onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: null })}
               className="text-[10px] transition-colors"
               style={{ color: "oklch(0.48 0.02 250)" }}
             >
