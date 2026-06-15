@@ -113,6 +113,8 @@ function buildDirectorUserPrompt(
     ? "TRACK: PREMIUM BRAND — cinematográfico, executivo, máximo impacto para conversão"
     : "TRACK: EDITORIAL — clean, legível, tipografia forte, visual direto ao ponto";
 
+  const typographyNote = `TYPOGRAPHY DIRECTIVE: Use Space Grotesk bold/800 for the main headline in the image. JetBrains Mono for any data/statistic elements. All text minimum 24px equivalent. Color: white #FAFAFA or gold #F2A82A on dark navy #171723 background.`;
+
   return `Crie ${count} prompt(s) de imagem DISTINTOS e ESPECÍFICOS para este post:
 
 TÍTULO: ${title}
@@ -120,6 +122,7 @@ ${angle ? `ÂNGULO: ${angle}` : ""}
 PILAR: ${pilarContext[pilar] ?? pilar}
 PLATAFORMA: ${platformNote}
 ${trackNote}
+${typographyNote}
 CONTEÚDO:
 ${excerpt}
 
@@ -155,19 +158,23 @@ async function callGPT4(openaiKey: string, system: string, user: string): Promis
 // ─── Image generation ─────────────────────────────────────────────────────────
 
 const BASE_STYLE_SUFFIX = `
+BRAND COLORS: Deep navy background #171723 (never pure black). Blue #196FA8 for technical highlights. Gold #F2A82A for CTAs and standout numbers only — max 1 amber element per image.
+BRAND GRADIENT: 135° from #F2A82A (gold) to #196FA8 (blue) — use on accent elements, titles, or divider lines.
+TYPOGRAPHY: Space Grotesk sans-serif — bold/800 weight for headlines, 600 for body. JetBrains Mono for stats, eyebrows, data labels. Minimum 24px equivalent for any text element.
 STYLE: Cinematic photorealistic editorial photography OR premium illustrated infographic — never generic tech stock art.
-LIGHTING: Dramatic low-key, dark atmosphere, blue-navy tones with gold/amber accents.
-COLORS: Deep navy background #171723, blue #196FA8 highlights, gold #F2A82A accents.
+LIGHTING: Dramatic low-key, dark atmosphere reinforcing the #171723 background.
 COMPOSITION: Square 1:1 format. Clear focal point. Professional, premium B2B feel.
-TEXT: Include the post headline as bold typographic element integrated into the scene — white or gold sans-serif, strong contrast, positioned in bottom or top third.
-BANNED ELEMENTS: NO robot hands, NO floating logos, NO glowing brains, NO abstract node networks, NO cartoonish elements.`;
+TEXT IN IMAGE: Include the post headline as a bold typographic element — Space Grotesk, white (#FAFAFA) or gold (#F2A82A), strong contrast, positioned in bottom or top third. Max 8 words in CAPS for the headline.
+LOGO PLACEMENT: IntelliX.AI wordmark (gold "IntelliX" + blue ".AI") in bottom-left or top-left corner, small and unobtrusive.
+ACCENT RULE: A 5-6px horizontal line with the brand gradient (gold→blue) can be used as a decorative divider.
+BANNED ELEMENTS: NO robot hands, NO floating logos, NO glowing brains, NO abstract node networks, NO cartoonish elements, NO pure black backgrounds, NO white backgrounds.`;
 
 async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
   const fullPrompt = `${prompt}\n\n${BASE_STYLE_SUFFIX}`.slice(0, 4000);
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-    body: JSON.stringify({ model: "gpt-image-2", prompt: fullPrompt, size: "1024x1024", quality: "low" }),
+    body: JSON.stringify({ model: "gpt-image-2", prompt: fullPrompt, size: "1024x1024", quality: "medium" }),
   });
   if (!res.ok) {
     console.error(`[image-gen] OpenAI image ${res.status}: ${await res.text()}`);
