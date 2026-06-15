@@ -15,6 +15,7 @@ import {
   type MarketingDraft,
 } from "@/hooks/useMarketingDrafts";
 import { PostPreview } from "./PostPreview";
+import { getBestTimesForPlatform, formatBestTime } from "./MarketingStrategyConfig";
 
 const PILAR_LABELS: Record<string, string> = {
   resultado_ia: "Resultado IA",
@@ -122,28 +123,55 @@ function ScheduleRow({ draft }: { draft: MarketingDraft }) {
     ? format(new Date(draft.scheduled_for), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })
     : null;
 
+  const bestTimes = (draft.platform === "linkedin" || draft.platform === "instagram")
+    ? getBestTimesForPlatform(draft.platform)
+    : [];
+  const nextBestTime = bestTimes[0] ?? null;
+
+  const applyBestTime = () => {
+    if (!nextBestTime) return;
+    const now = new Date();
+    const target = new Date();
+    const dayDiff = (nextBestTime.dayOfWeek - now.getDay() + 7) % 7;
+    target.setDate(now.getDate() + (dayDiff === 0 ? 7 : dayDiff));
+    target.setHours(nextBestTime.hour, nextBestTime.minute, 0, 0);
+    updateScheduled.mutate({ id: draft.id, scheduled_for: target.toISOString() });
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <Calendar className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.52 0.02 250)" }} />
-      {editing ? (
-        <input
-          type="datetime-local"
-          defaultValue={draft.scheduled_for ? draft.scheduled_for.slice(0, 16) : ""}
-          className="h-6 rounded px-1.5 text-[11px]"
-          style={{ background: "oklch(0.18 0.01 250)", border: "1px solid oklch(0.28 0.01 250)", color: "oklch(0.80 0.02 250)" }}
-          onBlur={(e) => {
-            updateScheduled.mutate({ id: draft.id, scheduled_for: e.target.value ? new Date(e.target.value).toISOString() : null });
-            setEditing(false);
-          }}
-          autoFocus
-        />
-      ) : (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Calendar className="h-3.5 w-3.5 shrink-0" style={{ color: "oklch(0.52 0.02 250)" }} />
+        {editing ? (
+          <input
+            type="datetime-local"
+            defaultValue={draft.scheduled_for ? draft.scheduled_for.slice(0, 16) : ""}
+            className="h-6 rounded px-1.5 text-[11px]"
+            style={{ background: "oklch(0.18 0.01 250)", border: "1px solid oklch(0.28 0.01 250)", color: "oklch(0.80 0.02 250)" }}
+            onBlur={(e) => {
+              updateScheduled.mutate({ id: draft.id, scheduled_for: e.target.value ? new Date(e.target.value).toISOString() : null });
+              setEditing(false);
+            }}
+            autoFocus
+          />
+        ) : (
+          <button
+            onClick={() => setEditing(true)}
+            className="text-[11px] hover:underline transition-colors"
+            style={{ color: formatted ? "oklch(0.70 0.14 240)" : "oklch(0.48 0.02 250)" }}
+          >
+            {formatted ?? "Definir data de publicação"}
+          </button>
+        )}
+      </div>
+      {!formatted && nextBestTime && (
         <button
-          onClick={() => setEditing(true)}
-          className="text-[11px] hover:underline transition-colors"
-          style={{ color: formatted ? "oklch(0.70 0.14 240)" : "oklch(0.48 0.02 250)" }}
+          onClick={applyBestTime}
+          disabled={updateScheduled.isPending}
+          className="flex items-center gap-1 text-[10px] transition-colors hover:underline"
+          style={{ color: "oklch(0.60 0.12 240)", marginLeft: "22px" }}
         >
-          {formatted ?? "Definir data de publicação"}
+          ✦ Melhor horário: {formatBestTime(nextBestTime)}
         </button>
       )}
     </div>

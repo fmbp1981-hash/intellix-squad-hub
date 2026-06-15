@@ -17,6 +17,7 @@ import { MarketingPostPanel } from "./MarketingPostPanel";
 import { MarketingCalendar } from "./MarketingCalendar";
 import { MarketingGridView } from "./MarketingGridView";
 import { MarketingListView } from "./MarketingListView";
+import { MarketingStrategyBanner } from "./MarketingStrategyBanner";
 
 type ViewMode = "calendar" | "grid" | "list";
 
@@ -213,12 +214,14 @@ export default function MarketingPage() {
       <main className="flex flex-1 min-w-0 flex-col overflow-hidden">
         {/* Toolbar */}
         <div
-          className="flex items-center gap-3 px-5 py-3 shrink-0"
+          className="flex flex-wrap items-center gap-4 px-5 py-2.5 shrink-0"
           style={{ borderBottom: "1px solid oklch(0.20 0.01 250)" }}
         >
-          <p className="text-[12px] font-medium text-foreground">
+          <p className="text-[11px] font-medium shrink-0" style={{ color: "oklch(0.52 0.02 250)" }}>
             {filteredDrafts.length} post{filteredDrafts.length !== 1 ? "s" : ""}
           </p>
+          <div className="h-3 w-px shrink-0" style={{ background: "oklch(0.24 0.01 250)" }} />
+          <MarketingStrategyBanner drafts={allDrafts} />
         </div>
 
         {/* View content */}
