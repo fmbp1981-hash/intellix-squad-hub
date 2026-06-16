@@ -268,6 +268,32 @@ export function useAssignSlideImage() {
   });
 }
 
+export function usePublishToLinkedIn() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (draftId: string) => {
+      const res = await supabase.functions.invoke("marketing-linkedin-publisher", {
+        body: { draft_id: draftId },
+      });
+      if (res.error) throw res.error;
+      const data = res.data as {
+        published: number;
+        results: Array<{ id: string; status: string; linkedin_post_id?: string; reason?: string }>;
+      };
+      const result = data.results?.find((r) => r.id === draftId);
+      if (result?.status === "error") throw new Error(result.reason ?? "publish_failed");
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK] });
+      toast({ title: "Publicado no LinkedIn!" });
+    },
+    onError: (err) =>
+      toast({ title: "Erro ao publicar no LinkedIn", description: String(err), variant: "destructive" }),
+  });
+}
+
 export function usePublishToInstagram() {
   const qc = useQueryClient();
   const { toast } = useToast();

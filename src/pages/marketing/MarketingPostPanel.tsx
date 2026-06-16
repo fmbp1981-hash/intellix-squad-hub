@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   X, CheckCircle, XCircle, Upload, Instagram,
-  Loader2, Calendar,
+  Loader2, Calendar, Sparkles, Linkedin,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  useApproveDraft, useRejectDraft, useMarkPublished, usePublishToInstagram,
+  useApproveDraft, useRejectDraft, useMarkPublished,
+  usePublishToInstagram, usePublishToLinkedIn,
   useGenerateFromIdea, useRejectIdea,
   useUpdateScheduledFor,
   type MarketingDraft,
@@ -108,6 +109,7 @@ export function MarketingPostPanel({ draft, onClose }: MarketingPostPanelProps) 
   const reject = useRejectDraft();
   const markPublished = useMarkPublished();
   const publishIG = usePublishToInstagram();
+  const publishLI = usePublishToLinkedIn();
   const generate = useGenerateFromIdea();
   const rejectIdea = useRejectIdea();
 
@@ -311,6 +313,21 @@ export function MarketingPostPanel({ draft, onClose }: MarketingPostPanelProps) 
                 >
                   {publishIG.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Instagram className="h-3.5 w-3.5" />}
                   Publicar no Instagram
+                </Button>
+              )}
+              {draft.platform === "linkedin" && (
+                <Button
+                  className="w-full h-8 gap-1.5 text-[12px]"
+                  disabled={publishLI.isPending}
+                  onClick={() => publishLI.mutate(draft.id)}
+                  style={{
+                    background: "linear-gradient(135deg, #0077b5, #00a0dc)",
+                    color: "white",
+                    border: "none",
+                  }}
+                >
+                  {publishLI.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Linkedin className="h-3.5 w-3.5" />}
+                  Publicar no LinkedIn
                 </Button>
               )}
               <Button
