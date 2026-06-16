@@ -1,21 +1,13 @@
 // supabase/functions/marketing-publisher/index.ts
 // Publishes approved Instagram drafts on their scheduled_for date.
 // Phase 1: single-image posts (image_url set, no carousel)
-// Phase 2: carousel posts — generates per-slide images via GPT Image 2
+// Phase 2: carousel posts — renders slides via marketing-carousel-render (Playwright)
 
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 
 const GRAPH_VERSION = "v21.0";
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
-
-const STYLE_BY_PILAR: Record<string, string> = {
-  resultado_ia:     "clean data visualization, modern dark dashboard, teal and indigo tones, infographic layout",
-  educacao_pratica: "minimalist educational illustration, soft purple gradient, clean geometric shapes",
-  bastidores:       "authentic developer workspace, dark moody lighting, code editor aesthetic",
-  posicionamento:   "bold geometric composition, deep purple to midnight blue, strong typographic feel",
-  comercial:        "modern SaaS product visual, gradient indigo to violet, professional and confident",
-};
 
 // ─── Instagram Graph API helpers ─────────────────────────────────────────────
 
@@ -56,51 +48,6 @@ async function publishContainer(igUserId: string, token: string, creationId: str
   return data.id as string;
 }
 
-// ─── Slide image generation (GPT Image 2) ────────────────────────────────────
-
-function buildSlideImagePrompt(slideText: string, pilar: string): string {
-  const style = STYLE_BY_PILAR[pilar] ?? "modern B2B tech illustration, dark theme, purple accents";
-  const headline = slideText.replace(/\*\*/g, "").split("\n")[0]?.slice(0, 120) ?? slideText.slice(0, 120);
-  return `Professional branded Instagram carousel slide for IntelliX.AI (AI consulting). Theme: "${headline}". Style: ${style}. Dark background #171723, accents blue #196FA8 and gold #F2A82A. Abstract/conceptual visual — no text, no people. Clean, minimal, high-quality B2B design.`;
-}
-
-async function generateAndStoreSlideImage(
-  openaiKey: string,
-  db: ReturnType<typeof adminClient>,
-  draftId: string,
-  slideIndex: number,
-  slideText: string,
-  pilar: string,
-): Promise<string | null> {
-  try {
-    const prompt = buildSlideImagePrompt(slideText, pilar);
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({ model: "gpt-image-2", prompt, size: "1024x1024", quality: "low" }),
-    });
-    if (!res.ok) { console.error(`[publisher] gpt-image-2 ${res.status}`); return null; }
-
-    const data = await res.json() as { data: Array<{ b64_json: string }> };
-    const b64 = data.data?.[0]?.b64_json;
-    if (!b64) return null;
-
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-    const path = `marketing/${draftId}/slide_${slideIndex}.png`;
-    const { error } = await db.storage.from("assets").upload(path, bytes, { contentType: "image/png", upsert: true });
-    if (error) { console.error(`[publisher] storage upload failed:`, error); return null; }
-
-    const { data: urlData } = db.storage.from("assets").getPublicUrl(path);
-    return urlData.publicUrl;
-  } catch (e) {
-    console.error(`[publisher] slide ${slideIndex} image generation failed:`, e);
-    return null;
-  }
-}
-
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -116,7 +63,6 @@ Deno.serve(async (req) => {
 
   const igUserId = Deno.env.get("INSTAGRAM_USER_ID") ?? "";
   const igToken = Deno.env.get("INSTAGRAM_ACCESS_TOKEN") ?? "";
-  const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
 
   if (!igUserId || !igToken) return jsonResponse({ error: "INSTAGRAM_USER_ID and INSTAGRAM_ACCESS_TOKEN not configured" }, 500);
 
@@ -170,26 +116,44 @@ Deno.serve(async (req) => {
         igPostId = await publishContainer(igUserId, igToken, containerId);
 
       } else if (isCarousel) {
-        // ── Phase 2: Carousel — generate slide images then publish ─────────
-        console.log(`[publisher] Phase 2 — carousel: ${draft.title}`);
+        // ── Phase 2: Carousel — render slides via Playwright ──────────────────
+        console.log(`[publisher] Phase 2 — carousel (Playwright): ${draft.title}`);
         const slides = draft.content.split("---SLIDE---").map((s: string) => s.trim()).filter(Boolean);
 
-        // Generate images for all slides in parallel
-        const imageUrls = await Promise.all(
-          slides.map((text: string, i: number) =>
-            generateAndStoreSlideImage(openaiKey, db, draft.id, i, text, draft.pilar)
-          )
-        );
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const carouselRes = await fetch(`${supabaseUrl}/functions/v1/marketing-carousel-render`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            draft_id: draft.id,
+            slides: slides.map((content: string, i: number) => ({
+              content,
+              slideIndex: i,
+              totalSlides: slides.length,
+              pilar: draft.pilar,
+              title: draft.title,
+            })),
+          }),
+        });
 
-        const validUrls = imageUrls.filter((u): u is string => u !== null);
+        if (!carouselRes.ok) {
+          const errText = await carouselRes.text();
+          console.error(`[publisher] carousel-render failed for ${draft.id}:`, errText);
+          results.push({ id: draft.id, status: "error", reason: `carousel_render_failed: ${errText}` });
+          continue;
+        }
 
-        if (validUrls.length < 2) {
-          console.error(`[publisher] only ${validUrls.length} images generated for carousel ${draft.id} — need ≥2`);
+        const { urls: validUrls } = await carouselRes.json() as { urls: string[] };
+
+        if (!validUrls || validUrls.length < 2) {
+          console.error(`[publisher] only ${validUrls?.length ?? 0} slide URLs — need ≥2`);
           results.push({ id: draft.id, status: "skipped", reason: "insufficient_slide_images" });
           continue;
         }
 
-        // Instagram carousel: max 10 slides
         const carouselUrls = validUrls.slice(0, 10);
 
         const childIds = await Promise.all(
