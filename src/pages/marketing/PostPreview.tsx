@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { MarketingDraft, SlideImage } from "@/hooks/useMarketingDrafts";
 import intellixLogo from "@/assets/intellix-logo-transparent.png";
+import { InstagramAppShell, LinkedInAppShell, WhatsAppAppShell } from "./SocialAppFrame";
 
 interface Props {
   draft: MarketingDraft;
@@ -558,10 +559,38 @@ function WhatsAppPreview({ draft }: Props) {
   );
 }
 
-// ─── Export ───────────────────────────────────────────────────────────────────
+// ─── Exports ──────────────────────────────────────────────────────────────────
 
 export function PostPreview({ draft }: Props) {
   if (draft.platform === "instagram") return <InstagramPreview draft={draft} />;
   if (draft.platform === "whatsapp") return <WhatsAppPreview draft={draft} />;
   return <LinkedInPreview draft={draft} />;
+}
+
+// PostPreviewWithFrame: wraps each post card inside the authentic social network
+// app shell (top nav + stories/feed context) so the preview mirrors what
+// followers actually see in their feed — inspired by Metricool's right panel.
+export function PostPreviewWithFrame({ draft }: Props) {
+  if (draft.platform === "instagram") {
+    return (
+      <InstagramAppShell>
+        <InstagramPreview draft={draft} />
+      </InstagramAppShell>
+    );
+  }
+  if (draft.platform === "linkedin") {
+    return (
+      <LinkedInAppShell>
+        <LinkedInPreview draft={draft} />
+      </LinkedInAppShell>
+    );
+  }
+  if (draft.platform === "whatsapp") {
+    return (
+      <WhatsAppAppShell>
+        <WhatsAppPreview draft={draft} />
+      </WhatsAppAppShell>
+    );
+  }
+  return <PostPreview draft={draft} />;
 }

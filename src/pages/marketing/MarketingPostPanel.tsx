@@ -14,7 +14,7 @@ import {
   useUpdateScheduledFor,
   type MarketingDraft,
 } from "@/hooks/useMarketingDrafts";
-import { PostPreview } from "./PostPreview";
+import { PostPreviewWithFrame } from "./PostPreview";
 import { getBestTimesForPlatform, formatBestTime } from "./MarketingStrategyConfig";
 
 const PILAR_LABELS: Record<string, string> = {
@@ -287,13 +287,13 @@ export function MarketingPostPanel({ draft, onClose }: MarketingPostPanelProps) 
             </div>
           )}
 
-          {/* Post preview */}
+          {/* Post preview — social network shell (Metricool-style) */}
           {!isIdea && (
             <div className="space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "oklch(0.48 0.02 250)" }}>
                 Preview
               </p>
-              <PostPreview draft={draft} />
+              <PostPreviewWithFrame draft={draft} />
             </div>
           )}
 
