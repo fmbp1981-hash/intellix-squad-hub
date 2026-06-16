@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
         .slice(0, 2200); // Instagram caption limit
 
       let igPostId: string;
+      let carouselUrls: string[] | undefined;
 
       if (draft.image_url && !isCarousel) {
         // ── Phase 1: Single image post ─────────────────────────────────────
@@ -154,7 +155,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const carouselUrls = validUrls.slice(0, 10);
+        carouselUrls = validUrls.slice(0, 10);
 
         const childIds = await Promise.all(
           carouselUrls.map((url: string) => createCarouselItemContainer(igUserId, igToken, url))
@@ -172,7 +173,29 @@ Deno.serve(async (req) => {
       await db.from("marketing_drafts").update({
         status: "published",
         published_at: new Date().toISOString(),
+        instagram_post_id: igPostId,
       }).eq("id", draft.id);
+
+      // Fire-and-forget Drive backup
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const backupBody: { draft_id: string; rendered_slide_urls?: string[]; single_image_url?: string } = {
+        draft_id: draft.id,
+      };
+      if (carouselUrls) {
+        backupBody.rendered_slide_urls = carouselUrls;
+      } else if (draft.image_url) {
+        backupBody.single_image_url = draft.image_url;
+      }
+      fetch(`${supabaseUrl}/functions/v1/marketing-drive-backup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(backupBody),
+      }).catch((e) =>
+        console.error("[publisher] drive-backup fire error:", e)
+      );
 
       console.log(`[publisher] ✅ published draft ${draft.id} → IG post ${igPostId}`);
       results.push({ id: draft.id, status: "published", ig_post_id: igPostId });
