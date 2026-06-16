@@ -217,12 +217,17 @@ Deno.serve(async (req) => {
   const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
   if (!openaiKey) return jsonResponse({ error: "OPENAI_API_KEY not configured" }, 500);
 
-  const body = await req.json().catch(() => ({})) as { draft_id?: string; count?: number };
-  const { draft_id, count = 1 } = body;
+  const body = await req.json().catch(() => ({})) as {
+    draft_id?: string;
+    count?: number;
+    slide_content?: string;
+    slide_index?: number;
+  };
+  const { draft_id, count = 1, slide_content, slide_index } = body;
 
   if (!draft_id) return jsonResponse({ error: "draft_id required" }, 400);
 
-  const imageCount = Math.min(Math.max(Math.floor(count), 1), 4);
+  const imageCount = Math.min(Math.max(Math.floor(count), 1), 10);
 
   const db = adminClient();
   const { data: draft, error: fetchErr } = await db
@@ -238,7 +243,12 @@ Deno.serve(async (req) => {
     content: string; pilar: string; platform: string; content_type: string | null;
   };
 
-  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} prompt(s) for: "${title}" [type=${content_type}]`);
+  const effectiveContent = slide_content
+    ? `[SLIDE ${(slide_index ?? 0) + 1}]\n${slide_content}\n\nPOST TITLE: ${title}`
+    : content;
+
+  const slideLabel = slide_index !== undefined ? ` [slide ${slide_index + 1}]` : "";
+  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} prompt(s) for: "${title}"${slideLabel} [type=${content_type}]`);
 
   // Step 1: LLM interprets the post and writes specific image prompts
   let imagePrompts: Array<{ prompt: string; style_note: string }> = [];
@@ -246,7 +256,7 @@ Deno.serve(async (req) => {
     const raw = await callGPT4(
       openaiKey,
       buildDirectorSystemPrompt(content_type ?? "informational"),
-      buildDirectorUserPrompt(title, angle, content, pilar, platform, imageCount, content_type ?? "informational"),
+      buildDirectorUserPrompt(title, angle, effectiveContent, pilar, platform, imageCount, content_type ?? "informational"),
     );
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("no JSON array in response");

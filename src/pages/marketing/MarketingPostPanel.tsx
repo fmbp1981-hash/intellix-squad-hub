@@ -3,18 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   X, CheckCircle, XCircle, Upload, Instagram,
-  Sparkles, Loader2, ImagePlus, Check, Calendar,
+  Loader2, Calendar,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useApproveDraft, useRejectDraft, useMarkPublished, usePublishToInstagram,
-  useGenerateFromIdea, useRejectIdea, useGenerateDraftImages, useSelectDraftImage,
+  useGenerateFromIdea, useRejectIdea,
   useUpdateScheduledFor,
   type MarketingDraft,
 } from "@/hooks/useMarketingDrafts";
 import { PostPreviewWithFrame } from "./PostPreview";
+import { ImageGenSection } from "./ImageGenSection";
 import { getBestTimesForPlatform, formatBestTime } from "./MarketingStrategyConfig";
 
 const PILAR_LABELS: Record<string, string> = {
@@ -38,82 +39,6 @@ interface MarketingPostPanelProps {
   onClose: () => void;
 }
 
-function ImageGenSection({ draft }: { draft: MarketingDraft }) {
-  const [qty, setQty] = useState(2);
-  const generateImages = useGenerateDraftImages();
-  const selectImage = useSelectDraftImage();
-
-  const images = draft.generated_images ?? [];
-  const selected = draft.image_url;
-
-  return (
-    <div className="space-y-2 rounded-lg p-3" style={{ background: "oklch(0.14 0.01 250)", border: "1px solid oklch(0.22 0.01 250)" }}>
-      <div className="flex items-center gap-2">
-        <ImagePlus className="h-3.5 w-3.5" style={{ color: "oklch(0.55 0.02 250)" }} />
-        <span className="text-[11px] font-medium" style={{ color: "oklch(0.55 0.02 250)" }}>
-          Imagem gerada por IA
-        </span>
-      </div>
-
-      {images.length === 0 ? (
-        <div className="flex items-center gap-2">
-          <select
-            value={qty}
-            onChange={(e) => setQty(Number(e.target.value))}
-            className="h-7 rounded-md px-2 text-[11px]"
-            style={{ background: "oklch(0.18 0.01 250)", border: "1px solid oklch(0.26 0.01 250)", color: "oklch(0.75 0.02 250)" }}
-          >
-            {[1, 2, 3, 4].map((n) => (
-              <option key={n} value={n}>{n} opção{n > 1 ? "s" : ""}</option>
-            ))}
-          </select>
-          <Button
-            size="sm"
-            disabled={generateImages.isPending}
-            onClick={() => generateImages.mutate({ draftId: draft.id, count: qty })}
-            className="h-7 gap-1 text-[11px]"
-            style={{ background: "oklch(0.22 0.01 250)", color: "oklch(0.75 0.02 250)", border: "1px solid oklch(0.28 0.01 250)" }}
-          >
-            {generateImages.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-            Gerar imagem
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-1.5">
-            {images.map((url, i) => (
-              <button
-                key={i}
-                onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: selected === url ? null : url })}
-                className="relative h-16 w-16 overflow-hidden rounded-md transition-all"
-                style={{
-                  border: selected === url ? "2px solid oklch(0.52 0.18 262)" : "2px solid oklch(0.26 0.01 250)",
-                  opacity: selectImage.isPending ? 0.6 : 1,
-                }}
-              >
-                <img src={url} alt={`opção ${i + 1}`} className="h-full w-full object-cover" />
-                {selected === url && (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: "oklch(0.52 0.18 262 / 0.35)" }}>
-                    <Check className="h-4 w-4 text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-          {selected && (
-            <button
-              onClick={() => selectImage.mutate({ draftId: draft.id, imageUrl: null })}
-              className="text-[10px] transition-colors"
-              style={{ color: "oklch(0.48 0.02 250)" }}
-            >
-              Remover seleção
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ScheduleRow({ draft }: { draft: MarketingDraft }) {
   const updateScheduled = useUpdateScheduledFor();

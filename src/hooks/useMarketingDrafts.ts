@@ -30,6 +30,7 @@ export interface MarketingDraft {
   image_url: string | null;
   slide_images: SlideImage[] | null;
   generated_images: string[] | null;
+  slide_image_map: Record<string, string> | null;
   trigger_mode: string;
   approved_at: string | null;
   published_at: string | null;
@@ -182,9 +183,24 @@ export function useGenerateDraftImages() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ draftId, count }: { draftId: string; count: number }) => {
+    mutationFn: async ({
+      draftId,
+      count,
+      slideContent,
+      slideIndex,
+    }: {
+      draftId: string;
+      count: number;
+      slideContent?: string;
+      slideIndex?: number;
+    }) => {
       const res = await supabase.functions.invoke("marketing-image-gen", {
-        body: { draft_id: draftId, count },
+        body: {
+          draft_id: draftId,
+          count,
+          ...(slideContent !== undefined && { slide_content: slideContent }),
+          ...(slideIndex !== undefined && { slide_index: slideIndex }),
+        },
       });
       if (res.error) throw res.error;
       return res.data as { urls: string[]; total: number };
@@ -201,18 +217,54 @@ export function useSelectDraftImage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ draftId, imageUrl }: { draftId: string; imageUrl: string }) => {
+    mutationFn: async ({ draftId, imageUrl }: { draftId: string; imageUrl: string | null }) => {
       const { error } = await supabase
         .from("marketing_drafts")
         .update({ image_url: imageUrl })
         .eq("id", draftId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: [QK] });
-      toast({ title: "Imagem selecionada" });
+      toast({ title: variables.imageUrl ? "Imagem selecionada" : "Seleção removida" });
     },
     onError: (err) => toast({ title: "Erro ao selecionar imagem", description: String(err), variant: "destructive" }),
+  });
+}
+
+export function useAssignSlideImage() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({
+      draftId,
+      slideIndex,
+      imageUrl,
+      currentMap,
+    }: {
+      draftId: string;
+      slideIndex: number;
+      imageUrl: string | null;
+      currentMap: Record<string, string> | null;
+    }) => {
+      const next = { ...(currentMap ?? {}) };
+      if (imageUrl === null) {
+        delete next[String(slideIndex)];
+      } else {
+        next[String(slideIndex)] = imageUrl;
+      }
+      const { error } = await supabase
+        .from("marketing_drafts")
+        .update({ slide_image_map: next })
+        .eq("id", draftId);
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK] });
+    },
+    onError: (err) =>
+      toast({ title: "Erro ao atribuir imagem", description: String(err), variant: "destructive" }),
   });
 }
 
