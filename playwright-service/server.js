@@ -59,10 +59,10 @@ app.post('/render', async (req, res) => {
       const page = await b.newPage();
       try {
         await page.setViewportSize({ width: 1080, height: 1350 });
-        await page.setContent(html, { waitUntil: 'networkidle', timeout: 20000 });
+        await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
         const screenshot = await page.screenshot({ type: 'png', fullPage: false });
         images.push(screenshot.toString('base64'));
-        console.log(`[playwright-service] slide ${i + 1}/${slides.length} done`);
+        console.log(`[playwright-service] slide ${i + 1}/${slides.length} ✅`);
       } finally {
         await page.close();
       }
@@ -71,12 +71,15 @@ app.post('/render', async (req, res) => {
     res.json({ success: true, images });
   } catch (e) {
     console.error('[playwright-service] render error:', e);
+    // Reset browser singleton so next request gets a fresh browser
+    try { if (browser) await browser.close(); } catch (_) {}
+    browser = null;
     res.status(500).json({ error: String(e) });
   }
 });
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, pid: process.pid });
+  res.json({ ok: true, pid: process.pid, browser_connected: browser?.isConnected() ?? false });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
