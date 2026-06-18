@@ -2,8 +2,28 @@
 // Step 1: GPT-4o interprets the post and writes N distinct, narrative-specific image prompts
 // Step 2: GPT Image 2 generates each image from its unique prompt
 
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { adminClient } from "../_shared/auth.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function adminClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } },
+  );
+}
 
 // ─── LLM prompt builder ───────────────────────────────────────────────────────
 

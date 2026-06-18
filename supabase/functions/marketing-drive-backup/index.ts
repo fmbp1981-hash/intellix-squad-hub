@@ -1,7 +1,6 @@
-// marketing-drive-backup
-// Backs up a published post to Google Drive via the Lovable Gateway.
-// Creates a subfolder per post under ROOT_FOLDER with formal naming,
-// then uploads: _metadata.json, _post.txt, and slide PNGs or _imagem.png.
+// marketing-drive-backup v3
+// Backs up a published post to Google Drive using Google Drive API v3 directly.
+// Auth: OAuth2 refresh token flow (GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 
@@ -10,6 +9,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const DRIVE_META   = "https://www.googleapis.com/drive/v3";
+const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
+const ROOT_FOLDER  = "175K1IwARKVWL6dyW4EQEpLzp7i_z2bQy";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -26,11 +29,36 @@ function adminClient() {
   );
 }
 
-const DRIVE_META   = "https://connector-gateway.lovable.dev/google_drive/drive/v3";
-const DRIVE_UPLOAD = "https://connector-gateway.lovable.dev/google_drive/upload/drive/v3";
-const ROOT_FOLDER  = "175K1IwARKVWL6dyW4EQEpLzp7i_z2bQy";
+// ─── Google OAuth2 refresh token → access token ───────────────────────────────
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+async function getGoogleAccessToken(): Promise<string> {
+  const clientId     = Deno.env.get("GOOGLE_CLIENT_ID") ?? "";
+  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET") ?? "";
+  const refreshToken = Deno.env.get("GOOGLE_REFRESH_TOKEN") ?? "";
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN not configured");
+  }
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type:    "refresh_token",
+      client_id:     clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+    }),
+  });
+
+  const data = await res.json() as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(`Google token refresh failed: ${JSON.stringify(data)}`);
+  }
+  return data.access_token as string;
+}
+
+// ─── Drive helpers ────────────────────────────────────────────────────────────
 
 function slugify(text: string): string {
   return text
@@ -54,23 +82,13 @@ function buildPrefix(draft: {
   return `${datePart}_${timePart}_${slugify(draft.pilar)}_${draft.platform.toLowerCase()}_${slugify(draft.title)}`;
 }
 
-async function driveRequest(
-  baseUrl: string,
-  path: string,
-  apiKey: string,
-  init: RequestInit = {},
-): Promise<Response> {
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${apiKey}`);
-  if (!headers.has("Content-Type") && init.body && typeof init.body === "string") {
-    headers.set("Content-Type", "application/json");
-  }
-  return fetch(`${baseUrl}${path}`, { ...init, headers });
-}
-
-async function createDriveFolder(name: string, parentId: string, apiKey: string): Promise<string> {
-  const res = await driveRequest(DRIVE_META, "/files?fields=id", apiKey, {
+async function createDriveFolder(name: string, parentId: string, token: string): Promise<string> {
+  const res = await fetch(`${DRIVE_META}/files?fields=id`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       name,
       mimeType: "application/vnd.google-apps.folder",
@@ -90,7 +108,7 @@ async function uploadFileToDrive(
   folderId: string,
   content: string | Uint8Array,
   mimeType: string,
-  apiKey: string,
+  token: string,
 ): Promise<string> {
   const boundary = `bkp_${crypto.randomUUID().replace(/-/g, "")}`;
   const meta = JSON.stringify({ name: filename, parents: [folderId] });
@@ -120,13 +138,16 @@ async function uploadFileToDrive(
     bodyBytes.set(footer, header.length + content.length);
   }
 
-  const uploadHeaders = new Headers({
-    Authorization: `Bearer ${apiKey}`,
-    "Content-Type": `multipart/related; boundary=${boundary}`,
-  });
   const res = await fetch(
     `${DRIVE_UPLOAD}/files?uploadType=multipart&fields=id`,
-    { method: "POST", headers: uploadHeaders, body: bodyBytes },
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body: bodyBytes,
+    },
   );
   if (!res.ok) {
     const err = await res.text();
@@ -147,9 +168,6 @@ Deno.serve(async (req) => {
   const isApiKey = apiKey && auth === `Bearer ${apiKey}`;
   const isJwt = auth.startsWith("Bearer ey");
   if (!isApiKey && !isJwt) return jsonResponse({ error: "unauthorized" }, 401);
-
-  const driveKey = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("GOOGLE_DRIVE_API_KEY") ?? "";
-  if (!driveKey) return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
 
   const body = await req.json().catch(() => ({})) as {
     draft_id?: string;
@@ -182,8 +200,10 @@ Deno.serve(async (req) => {
   console.log(`[drive-backup] Starting backup ${d.id} → "${prefix}"`);
 
   try {
+    const token = await getGoogleAccessToken();
+
     // 1. Criar subpasta
-    const folderId = await createDriveFolder(prefix, ROOT_FOLDER, driveKey);
+    const folderId = await createDriveFolder(prefix, ROOT_FOLDER, token);
     console.log(`[drive-backup] Folder created: ${folderId}`);
 
     // 2. Metadata JSON
@@ -205,7 +225,7 @@ Deno.serve(async (req) => {
       folderId,
       JSON.stringify(metadata, null, 2),
       "application/json",
-      driveKey,
+      token,
     );
     console.log(`[drive-backup] Uploaded metadata.json`);
 
@@ -218,7 +238,7 @@ Deno.serve(async (req) => {
       folderId,
       cleanText,
       "text/plain",
-      driveKey,
+      token,
     );
     console.log(`[drive-backup] Uploaded post.txt`);
 
@@ -239,7 +259,7 @@ Deno.serve(async (req) => {
             folderId,
             buf,
             "image/png",
-            driveKey,
+            token,
           );
           console.log(`[drive-backup] Uploaded slide-${slideNum}.png`);
         } catch (e) {
@@ -258,7 +278,7 @@ Deno.serve(async (req) => {
               folderId,
               buf,
               "image/png",
-              driveKey,
+              token,
             );
             console.log(`[drive-backup] Uploaded imagem.png`);
           }

@@ -1,6 +1,6 @@
-// marketing-linkedin-publisher
-// Publishes approved LinkedIn drafts via ugcPosts API v2.
-// Supports single-image posts with asset upload via LinkedIn Assets API.
+// marketing-linkedin-publisher v4
+// Uses LinkedIn REST API /rest/posts (version 202506) + /rest/images for uploads.
+// Author URN must be urn:li:person:{sub} from OpenID Connect userinfo.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 
@@ -9,6 +9,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const LI_VERSION = "202506";
+const LI_REST = "https://api.linkedin.com/rest";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -25,54 +28,49 @@ function adminClient() {
   );
 }
 
-const LINKEDIN_API = "https://api.linkedin.com/v2";
-
-// ─── LinkedIn API helpers ────────────────────────────────────────────────────
+function liHeaders(token: string) {
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "LinkedIn-Version": LI_VERSION,
+    "X-Restli-Protocol-Version": "2.0.0",
+  };
+}
 
 async function liPost(
   path: string,
   token: string,
   body: unknown,
-): Promise<Record<string, unknown>> {
-  const res = await fetch(`${LINKEDIN_API}${path}`, {
+): Promise<{ data: Record<string, unknown>; headers: Headers }> {
+  const res = await fetch(`${LI_REST}${path}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
+    headers: liHeaders(token),
     body: JSON.stringify(body),
   });
-  const data = await res.json() as Record<string, unknown>;
+  const text = await res.text();
+  const data = text ? JSON.parse(text) as Record<string, unknown> : {};
   if (!res.ok) {
     throw new Error(
       `LinkedIn API ${res.status} on ${path}: ${JSON.stringify(data)}`,
     );
   }
-  return data;
+  return { data, headers: res.headers };
 }
+
+// ─── Image upload (REST images API) ─────────────────────────────────────────
 
 async function registerImageUpload(
   token: string,
   personUrn: string,
-): Promise<{ uploadUrl: string; asset: string }> {
-  const data = await liPost("/assets?action=registerUpload", token, {
-    registerUploadRequest: {
-      owner: personUrn,
-      recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
-      serviceRelationships: [
-        {
-          identifier: "urn:li:userGeneratedContent",
-          relationshipType: "OWNER",
-        },
-      ],
-    },
+): Promise<{ uploadUrl: string; imageUrn: string }> {
+  const { data } = await liPost("/images?action=initializeUpload", token, {
+    initializeUploadRequest: { owner: personUrn },
   });
   const value = data.value as Record<string, unknown>;
-  const mechanism = (
-    value.uploadMechanism as Record<string, unknown>
-  )["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"] as Record<string, unknown>;
-  return { uploadUrl: mechanism.uploadUrl as string, asset: value.asset as string };
+  return {
+    uploadUrl: value.uploadUrl as string,
+    imageUrn: value.image as string,
+  };
 }
 
 async function uploadImageToLinkedIn(
@@ -85,7 +83,10 @@ async function uploadImageToLinkedIn(
   const buf = await imgRes.arrayBuffer();
   const upRes = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "image/png",
+    },
     body: buf,
   });
   if (!upRes.ok) {
@@ -94,36 +95,36 @@ async function uploadImageToLinkedIn(
   }
 }
 
-function buildUgcPost(
+// ─── Build post payload ──────────────────────────────────────────────────────
+
+function buildPost(
   personUrn: string,
   text: string,
-  imageAsset?: string,
+  imageUrn?: string,
 ): unknown {
-  return {
+  const payload: Record<string, unknown> = {
     author: personUrn,
+    commentary: text.slice(0, 3000),
+    visibility: "PUBLIC",
+    distribution: {
+      feedDistribution: "MAIN_FEED",
+      targetEntities: [],
+      thirdPartyDistributionChannels: [],
+    },
     lifecycleState: "PUBLISHED",
-    specificContent: {
-      "com.linkedin.ugc.ShareContent": {
-        shareCommentary: { text: text.slice(0, 3000) },
-        shareMediaCategory: imageAsset ? "IMAGE" : "NONE",
-        ...(imageAsset
-          ? {
-              media: [
-                {
-                  status: "READY",
-                  description: { text: "" },
-                  media: imageAsset,
-                  title: { text: "" },
-                },
-              ],
-            }
-          : {}),
-      },
-    },
-    visibility: {
-      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-    },
+    isReshareDisabledByAuthor: false,
   };
+
+  if (imageUrn) {
+    payload.content = {
+      media: {
+        title: "",
+        id: imageUrn,
+      },
+    };
+  }
+
+  return payload;
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
@@ -139,7 +140,9 @@ Deno.serve(async (req) => {
   if (!isApiKey && !isJwt) return jsonResponse({ error: "unauthorized" }, 401);
 
   const token = Deno.env.get("LINKEDIN_ACCESS_TOKEN");
-  const personUrn = Deno.env.get("LINKEDIN_PERSON_URN");
+  const rawUrn = Deno.env.get("LINKEDIN_PERSON_URN") ?? "";
+  // Normalize legacy urn:li:member: → urn:li:person: (REST API uses person)
+  const personUrn = rawUrn.replace("urn:li:member:", "urn:li:person:");
   if (!token || !personUrn) {
     return jsonResponse(
       { error: "LINKEDIN_ACCESS_TOKEN / LINKEDIN_PERSON_URN not configured" },
@@ -196,23 +199,33 @@ Deno.serve(async (req) => {
     scheduled_for: string;
   }>) {
     try {
-      const text = draft.content
-        .replace(/---SLIDE---/g, "\n\n")
-        .replace(/\*\*/g, "")
-        .trim();
+      // Extract LEGENDA LINKEDIN section if present (generated content format)
+      // Falls back to stripping slide markers for legacy drafts
+      const legendaMatch = draft.content.match(
+        /##\s*LEGENDA LINKEDIN\s*\n+([\s\S]+?)(?:\n---+\s*$|\n##\s|$)/i
+      );
+      const text = legendaMatch
+        ? legendaMatch[1].trim()
+        : draft.content
+            .replace(/---SLIDE---/g, "\n\n")
+            .replace(/\*\*/g, "")
+            .trim();
 
-      let imageAsset: string | undefined;
+      let imageUrn: string | undefined;
       if (draft.image_url) {
         console.log(`[linkedin-publisher] Uploading image for ${draft.id}`);
-        const { uploadUrl, asset } = await registerImageUpload(token, personUrn);
+        const { uploadUrl, imageUrn: urn } = await registerImageUpload(token, personUrn);
         await uploadImageToLinkedIn(uploadUrl, token, draft.image_url);
-        imageAsset = asset;
-        console.log(`[linkedin-publisher] Image → ${asset}`);
+        imageUrn = urn;
+        console.log(`[linkedin-publisher] Image → ${imageUrn}`);
       }
 
-      const ugcPost = buildUgcPost(personUrn, text, imageAsset);
-      const postData = await liPost("/ugcPosts", token, ugcPost);
-      const linkedinPostId = postData.id as string;
+      const postPayload = buildPost(personUrn, text, imageUrn);
+      const { data: postData, headers: postHeaders } = await liPost("/posts", token, postPayload);
+
+      // REST /posts returns post URN in X-RestLi-Id header (201 response)
+      const linkedinPostId =
+        (postHeaders.get("x-restli-id") ?? postHeaders.get("X-RestLi-Id") ?? postData.id ?? "") as string;
 
       await db
         .from("marketing_drafts")
