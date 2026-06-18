@@ -88,3 +88,21 @@ export async function fetchLinkedInIntelliX(numResults = 5): Promise<SerpSnippet
     date: r.date,
   }));
 }
+
+export async function fetchLinkedInRBI(numResults = 4): Promise<SerpSnippet[]> {
+  const query = `site:linkedin.com "RBI" inteligência artificial OR IA OR automação OR inovação`;
+  const res = await serpFetch({ engine: "google", q: query, num: "10", tbs: "qdr:w", hl: "pt-br", gl: "br" });
+  if (!res.ok) throw new Error(`[serp-client] linkedin/RBI failed ${res.status}`);
+
+  const data = await res.json() as {
+    organic_results?: Array<{ title: string; snippet?: string; link: string; date?: string }>;
+  };
+
+  return (data.organic_results ?? []).slice(0, numResults).map((r) => ({
+    title: r.title,
+    snippet: r.snippet ?? r.title,
+    url: r.link,
+    source: "linkedin/RBI",
+    date: r.date,
+  }));
+}

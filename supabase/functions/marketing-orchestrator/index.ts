@@ -13,6 +13,8 @@ const MARKETING_TOPICS = [
   "Shadow AI governança empresarial",
   "resultados reais com IA em empresas B2B",
   "letramento em IA equipes corporativas",
+  "novidades e lançamentos de ferramentas de IA — ChatGPT, Claude, Gemini, Copilot e novas features que impactam negócios",
+  "novas ferramentas e plataformas de IA lançadas — o que muda para empresas brasileiras",
 ];
 
 Deno.serve(async (req) => {

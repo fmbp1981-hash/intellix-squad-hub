@@ -2,17 +2,25 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callLLM } from "../_shared/llm-client.ts";
 import { fetchGmailSnippets } from "../_shared/gmail-client.ts";
-import { fetchGoogleNews, fetchInstagramProfile, fetchLinkedInAnthropic, fetchLinkedInIntelliX } from "../_shared/serp-client.ts";
+import { fetchGoogleNews, fetchInstagramProfile, fetchLinkedInAnthropic, fetchLinkedInIntelliX, fetchLinkedInRBI } from "../_shared/serp-client.ts";
+import { fetchPerplexityNews } from "../_shared/perplexity-client.ts";
 import { adminClient } from "../_shared/auth.ts";
 
-// Reference profiles: content style (gestaoai, thaleslaray) + visual style (cathyduraes, cavendishconsultoria)
-const INSTAGRAM_PROFILES = ["gestaoai", "thaleslaray", "dumasolucoes", "cathyduraes", "cavendishconsultoria"];
+// Content-style references + AI voices worth monitoring
+const INSTAGRAM_PROFILES = [
+  "gestaoai",
+  "thaleslaray",
+  "dumasolucoes",
+  "cathyduraes",
+  "cavendishconsultoria",
+  "inventormiguel",
+];
 
 export interface ResearchSnippet {
   title: string;
   snippet: string;
   url: string;
-  source: "google_news" | "gmail" | "instagram" | "linkedin" | "kb";
+  source: "google_news" | "gmail" | "instagram" | "linkedin" | "kb" | "perplexity";
   relevance_score?: number;
 }
 
@@ -26,21 +34,21 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
 
-  console.log("[marketing-researcher] starting research from 7 sources");
-
-  const igProfiles = ["gestaoai", "thaleslaray", "dumasolucoes", "cathyduraes", "cavendishconsultoria"];
+  console.log("[marketing-researcher] starting research — 11 sources in parallel");
 
   const results = await Promise.allSettled([
-    fetchGoogleNews("inteligência artificial negócios Brasil automação", 12),
-    fetchGmailSnippets(),
-    ...igProfiles.map((h) => fetchInstagramProfile(h, 3)),
-    fetchLinkedInAnthropic(4),
-    fetchLinkedInIntelliX(4),
+    fetchGoogleNews("inteligência artificial negócios Brasil automação", 12),  // [0]
+    fetchGmailSnippets(),                                                       // [1]
+    fetchPerplexityNews(),                                                      // [2]
+    ...INSTAGRAM_PROFILES.map((h) => fetchInstagramProfile(h, 3)),             // [3..8]
+    fetchLinkedInAnthropic(4),                                                  // [9]
+    fetchLinkedInIntelliX(4),                                                   // [10]
+    fetchLinkedInRBI(4),                                                        // [11]
   ]);
 
-  const [newsR, gmailR, ...rest] = results;
-  const igResults = rest.slice(0, igProfiles.length);
-  const [linkedinAnthropicR, linkedinIntelliXR] = rest.slice(igProfiles.length);
+  const [newsR, gmailR, perplexityR, ...rest] = results;
+  const igResults = rest.slice(0, INSTAGRAM_PROFILES.length);
+  const [linkedinAnthropicR, linkedinIntelliXR, linkedinRBIR] = rest.slice(INSTAGRAM_PROFILES.length);
 
   const allSnippets: ResearchSnippet[] = [];
 
@@ -59,11 +67,15 @@ Deno.serve(async (req) => {
     );
   } else console.warn("[marketing-researcher] gmail failed:", gmailR.reason);
 
-  for (let i = 0; i < igProfiles.length; i++) {
+  if (perplexityR.status === "fulfilled") {
+    allSnippets.push(...perplexityR.value.map((s) => ({ ...s, source: "perplexity" as const })));
+  } else console.warn("[marketing-researcher] perplexity failed:", perplexityR.reason);
+
+  for (let i = 0; i < INSTAGRAM_PROFILES.length; i++) {
     const igR = igResults[i];
     if (igR?.status === "fulfilled") {
       allSnippets.push(...igR.value.map((s: ResearchSnippet) => ({ ...s, source: "instagram" as const })));
-    } else console.warn(`[marketing-researcher] instagram @${igProfiles[i]} failed`);
+    } else console.warn(`[marketing-researcher] instagram @${INSTAGRAM_PROFILES[i]} failed`);
   }
 
   if (linkedinAnthropicR?.status === "fulfilled") {
@@ -71,6 +83,9 @@ Deno.serve(async (req) => {
   }
   if (linkedinIntelliXR?.status === "fulfilled") {
     allSnippets.push(...linkedinIntelliXR.value.map((s: ResearchSnippet) => ({ ...s, source: "linkedin" as const })));
+  }
+  if (linkedinRBIR?.status === "fulfilled") {
+    allSnippets.push(...linkedinRBIR.value.map((s: ResearchSnippet) => ({ ...s, source: "linkedin" as const })));
   }
 
   // KB interna
@@ -100,7 +115,7 @@ Deno.serve(async (req) => {
   }
 
   const snippetList = allSnippets
-    .map((s, i) => `[${i}] ${s.title}\n${s.snippet}`)
+    .map((s, i) => `[${i}] [${s.source}] ${s.title}\n${s.snippet}`)
     .join("\n\n");
 
   let ranked: ResearchSnippet[] = allSnippets;
@@ -109,7 +124,7 @@ Deno.serve(async (req) => {
     const rankResponse = await callLLM(
       { provider: "anthropic", model: "claude-haiku-4-5-20251001", temperature: 0.1, maxTokens: 1024 },
       "Você ranqueia snippets de pesquisa por relevância para marketing de IA.",
-      `Avalie cada snippet (0-10) por relevância para criar posts sobre automação com IA em negócios brasileiros para a IntelliX.AI. Responda SOMENTE em JSON: [{"index": 0, "score": 8}, ...]\n\n${snippetList}`
+      `Avalie cada snippet (0-10) por relevância para criar posts sobre automação com IA em negócios brasileiros para a IntelliX.AI. Priorize: novidades de ferramentas de IA (ChatGPT, Claude, Gemini), impacto em negócios, dados e estatísticas reais. Responda SOMENTE em JSON: [{"index": 0, "score": 8}, ...]\n\n${snippetList}`
     );
 
     const jsonMatch = rankResponse.match(/\[[\s\S]*\]/);
