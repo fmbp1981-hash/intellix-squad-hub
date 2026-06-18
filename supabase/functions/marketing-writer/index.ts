@@ -1,4 +1,4 @@
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+﻿import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/auth.ts";
 import { buildBrandSystemBlock, PILAR_CONTEXT, CONTENT_FORMATS, CAPTION_STRATEGY, ContentFormat } from "../_shared/brand-context.ts";
 import { z } from "https://esm.sh/zod@3.23.8";
@@ -178,11 +178,18 @@ ${captionGuide}
 CTAs permitidos: ${CAPTION_STRATEGY.allowedCTAs.slice(0, 5).join(" | ")}
 NUNCA usar: Comenta [PALAVRA] ou variações — sem automação de DM ativa.
 
+## Integridade de dados (INVIOLÁVEL)
+- NUNCA invente relatos, depoimentos ou resultados de clientes — use apenas estimativas genéricas como "empresas como a sua" ou "times que adotam IA".
+- NUNCA crie números, estatísticas, datas ou fatos que não estejam no contexto de pesquisa fornecido.
+- Para posts de notícia/novidade (news_data): use APENAS dados presentes nos snippets recebidos. Se um dado não veio no contexto, não o inclua.
+- Quando usar dados de pesquisa, indique a origem de forma natural: "segundo [fonte]", "de acordo com [estudo]", "dados de [empresa]".
+- Se não houver dados suficientes no contexto, escreva de forma principiológica e qualitativa — sem inventar números.
+
 ## Diretrizes de escrita
 - Voz coloquial brasileira inteligente: use "pra", "tá", "ninguém te conta" quando soar natural.
 - Frases curtas — máximo 2 linhas por parágrafo.
 - Nunca comece com "Olá" ou introdução — vá direto ao gancho.
-- Prefira números reais a adjetivos vagos.
+- Prefira números reais a adjetivos vagos — mas SOMENTE se os números vierem do contexto de pesquisa.
 - Sentence case em PT-BR sempre.
 
 ## Formato e plataforma
