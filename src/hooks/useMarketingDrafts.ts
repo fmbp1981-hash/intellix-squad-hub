@@ -6,7 +6,7 @@ export type MarketingStatus = "idea_pending" | "generated" | "approved" | "rejec
 export type MarketingPilar = "resultado_ia" | "educacao_pratica" | "bastidores" | "posicionamento" | "comercial";
 export type MarketingPlatform = "linkedin" | "instagram" | "whatsapp";
 
-export type MarketingContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data";
+export type MarketingContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data" | "weekly_roundup" | "news_carousel";
 
 export interface SlideImage {
   slide: number;

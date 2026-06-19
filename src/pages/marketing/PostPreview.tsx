@@ -360,7 +360,7 @@ function InstagramPreview({ draft }: Props) {
     return Array.isArray(rawSlideImages) ? rawSlideImages : null;
   })();
 
-  const isNewsDigest = draft.content_type === "news_data" && parsedSlideImages && parsedSlideImages.length > 0;
+  const isNewsDigest = (draft.content_type === "news_data" || draft.content_type === "weekly_roundup" || draft.content_type === "news_carousel") && parsedSlideImages && parsedSlideImages.length > 0;
 
   // virada_inteligente com image_url → sempre imagem única, nunca carrossel
   const isVirada = draft.content_type === "virada_inteligente" && Boolean(draft.image_url);

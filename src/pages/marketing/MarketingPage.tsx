@@ -12,8 +12,9 @@ import {
   type MarketingPilar,
   type MarketingDraft,
 } from "@/hooks/useMarketingDrafts";
+import { AnimatePresence } from "framer-motion";
 import { MarketingProposeDialog } from "./MarketingProposeDialog";
-import { MarketingPostPanel } from "./MarketingPostPanel";
+import { MarketingPostEditor } from "./MarketingPostEditor";
 import { MarketingCalendar } from "./MarketingCalendar";
 import { MarketingGridView } from "./MarketingGridView";
 import { MarketingListView } from "./MarketingListView";
@@ -251,15 +252,15 @@ export default function MarketingPage() {
         </div>
       </main>
 
-      {/* ── Right Detail Panel ────────────────────────────────────── */}
-      {syncedSelectedDraft && (
-        <aside className="w-80 shrink-0 xl:w-96 overflow-hidden">
-          <MarketingPostPanel
+      {/* ── Fullscreen Post Editor ────────────────────────────────── */}
+      <AnimatePresence>
+        {syncedSelectedDraft && (
+          <MarketingPostEditor
             draft={syncedSelectedDraft}
             onClose={() => setSelectedDraft(null)}
           />
-        </aside>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Propose Dialog */}
       <MarketingProposeDialog open={showPropose} onClose={() => setShowPropose(false)} />
