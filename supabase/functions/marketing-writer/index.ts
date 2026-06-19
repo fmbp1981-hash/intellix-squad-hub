@@ -8,12 +8,12 @@ const IdeaSchema = z.object({
   pilar: z.enum(["resultado_ia", "educacao_pratica", "bastidores", "posicionamento", "comercial"]),
   angle: z.string(),
   platform: z.enum(["linkedin", "instagram", "whatsapp"]),
-  content_type: z.enum(["informational", "product_promotion", "virada_inteligente", "news_data"]).default("informational"),
+  content_type: z.enum(["informational", "product_promotion", "virada_inteligente", "news_data", "weekly_roundup", "news_carousel"]).default("informational"),
   needs_image: z.boolean().default(false),
 });
 
 const SnippetSchema = z.object({
-  source: z.enum(["knowledge", "perplexity", "linkedin"]),
+  source: z.enum(["knowledge", "perplexity", "linkedin", "google_news", "gmail", "instagram", "kb"]),
   url: z.string(),
   title: z.string(),
   snippet: z.string(),
@@ -32,7 +32,8 @@ const platformGuidance: Record<string, string> = {
   whatsapp: "Mensagem WhatsApp: informal, direta, até 300 chars, sem hashtags.",
 };
 
-function pickFormat(pilar: string, platform: string): ContentFormat {
+function pickFormat(pilar: string, platform: string, contentType?: string): ContentFormat {
+  if (contentType === "weekly_roundup" || contentType === "news_carousel") return "F";
   if (platform === "instagram") return "A";
   if (pilar === "comercial") return "D";
   if (pilar === "posicionamento" || pilar === "bastidores") return "C";
@@ -148,7 +149,7 @@ Deno.serve(async (req) => {
     .map((s) => `Fonte (${s.source}): ${s.title}\n${s.snippet}`)
     .join("\n\n");
 
-  const format = pickFormat(idea.pilar, idea.platform);
+  const format = pickFormat(idea.pilar, idea.platform, idea.content_type);
   const formatGuidance = buildFormatGuidance(format, idea.platform);
 
   const pilarCtx = PILAR_CONTEXT[idea.pilar];
@@ -196,7 +197,7 @@ NUNCA usar: Comenta [PALAVRA] ou variações — sem automação de DM ativa.
 ${formatGuidance}
 ${idea.platform !== "whatsapp" ? `\n${platformGuidance[idea.platform]}` : ""}`;
 
-  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7 };
+  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7, E: 7, F: 9 };
   const isCarousel = idea.platform === "instagram";
   const slideInstruction = isCarousel
     ? `Gere EXATAMENTE ${SLIDE_COUNT[format]} slides separados por ---SLIDE--- (sem texto antes do primeiro slide nem depois do último).

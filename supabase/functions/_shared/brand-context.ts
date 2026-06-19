@@ -125,8 +125,8 @@ export const CONTENT_MIX = {
 
 // ─── Tipos de Conteúdo ────────────────────────────────────────────────────────
 
-export type ContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data";
-export type ContentFormat = "A" | "B" | "C" | "D" | "E";
+export type ContentType = "informational" | "product_promotion" | "virada_inteligente" | "news_data" | "weekly_roundup" | "news_carousel";
+export type ContentFormat = "A" | "B" | "C" | "D" | "E" | "F";
 
 // ─── Formatos de Conteúdo (Templates) ────────────────────────────────────────
 
@@ -306,6 +306,34 @@ export const CONTENT_FORMATS: Record<ContentFormat, {
     visualStyle: "Slide 1: fundo dark #171723 + número em fonte MÁXIMA com accent #F2A82A ou #196FA8 — hierarquia extrema, zero ruído. Slides 2-4: labels em accent ('DADO:', 'INSIGHT:', 'IMPLICAÇÃO:') + texto branco. Slide 5: borda lateral accent + fundo ligeiramente diferente (#1F1F2E) para destacar a recomendação. Logo IntelliX em todos os slides.",
     needsImage: false,
   },
+
+  F: {
+    name: "Carrossel de Notícias — Template Branco",
+    reference: "@gestaoai / @ai_intellix",
+    slides: "7–10 slides",
+    goal: "Curadoria de IA · Autoridade editorial · Alcance orgânico",
+    structure: [
+      "SLIDE CAPA: imagem da entidade noticiada (logo/símbolo) ou imagem-tema + headline curta bold em fundo branco. Eyebrow 'IA ESTA SEMANA' ou nome do tema em mono uppercase. Slide 1/N no canto.",
+      "SLIDES DE NOTÍCIA (1 por item): headline em bold preto (CAPITALIZA palavras-chave) + 1-2 linhas de contexto em cinza + 'Como usar HOJE:' com ação concreta. Imagem da notícia (OG ou gerada) na metade superior.",
+      "SLIDE FECHAMENTO/ASSINATURA: 'Seguir @ai_intellix pra mais curadoria de IA' + logo IntelliX.AI centralizado. Zero CTA comercial nesse formato.",
+    ],
+    copyTechniques: [
+      "Manchete como hook: CAPITALIZA palavras-chave no headline de cada slide — captura atenção no scroll",
+      "Voz de curador, não produtor: seleciona e traduz para contexto de negócio — não repete a notícia",
+      "Benefício imediato: 'Como usar HOJE:' em cada slide — 1 ação concreta aplicável hoje mesmo",
+      "Brevidade extrema: máximo 4 linhas por slide — o visual (imagem) domina, o texto ancora",
+      "Série editorial: contador 'N/total' reforça o hábito de seguir e aguardar próximos episódios",
+    ],
+    intellixExamples: [
+      "ANTHROPIC lança Claude 4 — o que muda pra quem usa IA no trabalho",
+      "Como usar HOJE: substitua seu resumo de reunião manual por Claude — corta 30min de trabalho",
+      "OPENAI anuncia GPT-5 — impacto direto em chatbots de atendimento ao cliente",
+      "Como usar HOJE: teste a nova versão no seu agente de WhatsApp antes de migrar toda a base",
+    ],
+    ctaPattern: "Seguir @ai_intellix | Salva esse post | Sem CTA comercial — objetivo é alcance e autoridade editorial",
+    visualStyle: "TEMPLATE BRANCO. Fundo: #FFFFFF. Header (fixo em todo slide): logo circular IntelliX.AI (40×40px) + 'IntelliX.AI' bold preto #111111 + '@ai_intellix' cinza #888888, canto superior esquerdo + linha accent de 2px gold #F2A82A abaixo do header. Texto: headlines #111111 Space Grotesk 700, corpo #555555 Space Grotesk 400. Slide counter 'N/total' cinza #AAAAAA no canto superior direito. Seta '›' gold #F2A82A no canto inferior direito. Imagem da notícia ocupa ~50% superior do slide (acima do texto). Sem backgrounds escuros. Sem emojis nos slides (permitido apenas na legenda).",
+    needsImage: true,
+  },
 };
 
 // ─── Pilar Context (para redação) ────────────────────────────────────────────
@@ -404,6 +432,7 @@ export const VISUAL_IDENTITY = {
   formatD_product: "Fundo dark #171723 + gradiente sutil + screenshot real do produto + texto branco + ✅ no slide de entregáveis + logo IntelliX.",
   formatE_datastory: "Slide 1: fundo dark #171723 + dado em fonte MÁXIMA accent (#F2A82A) — hierarquia extrema. Slides 2-4: labels em accent ('DADO / INSIGHT / IMPLICAÇÃO') + texto branco estruturado. Slide 5: borda lateral accent + fundo #1F1F2E destacando a recomendação. Sem imagem — o dado é o visual.",
   always: "Logo IntelliX.AI em todos os slides. Sentence case. Nunca title case. Nunca emoji decorativo.",
+  formatF_newsWhite: "Template BRANCO: fundo #FFFFFF. Header: logo IntelliX.AI circular + wordmark bold preto + '@ai_intellix' cinza + linha accent dourada. Texto preto #111111. Imagem da notícia no topo de cada slide. Contador cinza + seta gold. Não escurece nem inverte — é o oposto do padrão dark IntelliX, mas mantém os mesmos tokens de accent e tipografia.",
 } as const;
 
 // ─── Tokens Visuais (Design System) ─────────────────────────────────────────
@@ -484,6 +513,7 @@ ${AUDIENCE_PAINS.slice(0, 4).map((p, i) => `${i + 1}. ${p}`).join("\n")}
 - Formato C (Filosófico 5 slides): polarização → confirmação inesperada → síntese paradoxal, sem CTA ou "salva esse post"
 - Formato D (Produto+Descredenciamento 6-8 slides): afasta lead errado, prova com número, CTA baixa pressão
 - Formato E (Data Story 7 slides): Dado âncora → Contexto → Insight → Implicação → Recomendação → IntelliX → CTA
+- Formato F (Notícias 7-10 slides — TEMPLATE BRANCO): Capa com imagem → N slides de notícia (cada um: headline + contexto + "Como usar HOJE:") → Assinatura @ai_intellix. Fundo branco, texto preto bold, accent dourado. Usado para weekly_roundup e news_carousel.
 
 ### REGRA CRÍTICA — CTAs
 NUNCA usar "Comenta [PALAVRA] que eu te envio no direct" ou qualquer variação.

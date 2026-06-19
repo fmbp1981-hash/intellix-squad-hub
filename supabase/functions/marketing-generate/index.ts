@@ -77,7 +77,8 @@ async function generateImageGemini(geminiKey: string, prompt: string, openaiKey:
   }
 }
 
-function pickFormat(pilar: string, platform: string): ContentFormat {
+function pickFormat(pilar: string, platform: string, contentType?: string): ContentFormat {
+  if (contentType === "weekly_roundup" || contentType === "news_carousel") return "F";
   // Instagram: resultado_ia e educacao_pratica usam Formato E (Data Story — Narrativa Prescritiva)
   if (platform === "instagram" && (pilar === "resultado_ia" || pilar === "educacao_pratica")) return "E";
   if (platform === "instagram") return "A";
@@ -231,7 +232,7 @@ Deno.serve(async (req) => {
     .map((s: { title: string }, i: number) => `[${i + 1}] ${s.title}`)
     .join("\n");
 
-  const format = pickFormat(draft.pilar, draft.platform);
+  const format = pickFormat(draft.pilar, draft.platform, draft.content_type);
   const formatDef = CONTENT_FORMATS[format];
   const formatGuidance = draft.platform === "whatsapp"
     ? platformGuidance.whatsapp
@@ -280,7 +281,7 @@ NUNCA usar: Comenta [PALAVRA] ou variações — sem automação de DM ativa.
 ${formatGuidance}
 ${draft.platform !== "whatsapp" ? `\n${platformGuidance[draft.platform] ?? ""}` : ""}`;
 
-  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7, E: 7 };
+  const SLIDE_COUNT: Record<ContentFormat, number> = { A: 9, B: 9, C: 5, D: 7, E: 7, F: 9 };
   const isCarousel = draft.platform === "instagram";
 
   // Formato E: instrução específica por slide (Anatomia Carla Feder)
@@ -331,6 +332,106 @@ ${slideInstruction}`;
 
   const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
+
+  // weekly_roundup — Template Branco: mesmo fluxo do news_data mas com template visual branco
+  // O campo slide_images é populado com template: "white" para o frontend renderizar corretamente
+  if (draft.content_type === "weekly_roundup" && draft.platform === "instagram") {
+    const snippets = (draft.research_snippets ?? []) as NewsSnippet[];
+    const { content: digestContent, slideImages } = await generateNewsDigest(snippets, llmConfig);
+
+    const allSlides = [
+      {
+        slide: 1, title: "Resumão da Semana em IA", image_url: null, template: "white",
+        copy: "Tudo que rolou de IA essa semana — curado pela IntelliX.AI pra você não precisar garimpar.\n\nSalva esse post 👇", practical_tip: "",
+      },
+      ...slideImages.map((s) => ({ ...s, template: "white" })),
+      {
+        slide: slideImages.length + 2, title: "Siga @ai_intellix", image_url: null, template: "white",
+        copy: "Toda semana a IntelliX.AI seleciona o que realmente importa em IA pra negócios.\n\nSiga @ai_intellix pra não perder.", practical_tip: "",
+      },
+    ];
+
+    await db.from("marketing_drafts").update({
+      content: digestContent,
+      slide_images: allSlides,
+      status: "generated",
+    }).eq("id", draft_id);
+
+    console.log(`[marketing-generate] weekly_roundup draft=${draft_id} slides=${allSlides.length}`);
+    return jsonResponse({ success: true, draft_id, slide_count: allSlides.length });
+  }
+
+  // news_carousel — Template Branco: deep dive em uma notícia específica, com imagem gerada por slide
+  // Formato F: Capa (imagem AI da entidade) → slides de contexto/fatos/impacto/recomendação → CTA
+  if (draft.content_type === "news_carousel" && draft.platform === "instagram") {
+    const snippets = (draft.research_snippets ?? []) as NewsSnippet[];
+    const topSnippets = snippets.slice(0, 5);
+
+    const ncSystemPrompt = `Você é curador de IA da IntelliX.AI. Escreve carrosséis educativos sobre uma notícia específica de IA.
+Voz: direta, traduz implicações para negócios. Use "pra", "tá", "essa semana". Sem jargão técnico solto.
+INTEGRIDADE: use APENAS fatos dos snippets fornecidos. NUNCA invente dados.
+Formato: manchetes com PALAVRAS-CHAVE em maiúsculas (ex: "ANTHROPIC lança Claude 4"). Máx 4 linhas por slide.`;
+
+    const ncUserPrompt = `Escreva um carrossel de 7 slides sobre este tema: "${draft.title}"
+
+Notícias de contexto:
+${topSnippets.map((s, i) => `[${i + 1}] ${s.title}\n${s.snippet}`).join("\n\n")}
+
+Estrutura EXATA dos 7 slides (separe com ---SLIDE---):
+SLIDE 1 (CAPA): eyebrow "IA AGORA" + headline impactante do tema (máx 2 linhas bold)
+SLIDE 2 (O QUE ACONTECEU): fato principal + fonte natural ("segundo [empresa]")
+SLIDE 3 (POR QUE IMPORTA): impacto para empresas e líderes brasileiros
+SLIDE 4 (O QUE MUDA): antes vs. agora — mudança concreta no mercado
+SLIDE 5 (COMO USAR HOJE): ação imediata, verbo imperativo, resultado esperado
+SLIDE 6 (INTELLIX): 1 frase de como a IntelliX.AI aplica isso (sem vender diretamente)
+SLIDE 7 (ASSINATURA): "Siga @ai_intellix pra mais curadoria de IA — toda semana."
+
+NUNCA use "Comenta [PALAVRA]". Frases curtíssimas. Máx 4 linhas por slide.`;
+
+    const carouselRaw = await callLLM(llmConfig, ncSystemPrompt, ncUserPrompt).catch(() => "");
+    const carouselSlides = carouselRaw.split("---SLIDE---").map((s) => s.trim()).filter(Boolean);
+
+    // OG images from top snippets
+    const ogResults = await extractOgImages(topSnippets.slice(0, carouselSlides.length));
+
+    // Cover: AI-generated image of the news entity logo/symbol (Gemini Flash, white bg)
+    let coverImageB64: string | null = null;
+    if (geminiKey) {
+      const coverPrompt = `Clean white background. Centered logo or symbolic icon of the main entity in this news: "${draft.title}". Minimal, professional, high contrast. No text. Square 1:1. PNG.`;
+      coverImageB64 = await generateImageGemini(geminiKey, coverPrompt, openaiKey).catch(() => null);
+    }
+
+    let coverImageUrl: string | null = null;
+    if (coverImageB64) {
+      const coverBytes = b64ToUint8Array(coverImageB64);
+      const coverPath = `marketing/${draft_id}_cover.png`;
+      const { error: upErr } = await db.storage.from("assets").upload(coverPath, coverBytes, { contentType: "image/png", upsert: true });
+      if (!upErr) {
+        const { data: urlData } = db.storage.from("assets").getPublicUrl(coverPath);
+        coverImageUrl = urlData.publicUrl;
+      }
+    }
+
+    const slideImages: SlideImage[] = carouselSlides.map((copy, i) => ({
+      slide: i + 1,
+      title: copy.split("\n")[0] ?? draft.title,
+      image_url: i === 0 ? coverImageUrl : (ogResults[i - 1]?.ogImage ?? null),
+      copy,
+      practical_tip: "",
+      template: "white",
+    } as SlideImage & { template: string }));
+
+    const legenda = `${draft.title}\n\n${carouselSlides[1]?.split("\n")[0] ?? ""}\n\nSiga @ai_intellix pra mais curadoria de IA — toda semana.\n\n#IA #InteligenciaArtificial #IAnegócios #IntelliXAI`;
+
+    await db.from("marketing_drafts").update({
+      content: legenda,
+      slide_images: slideImages,
+      status: "generated",
+    }).eq("id", draft_id);
+
+    console.log(`[marketing-generate] news_carousel draft=${draft_id} slides=${slideImages.length}`);
+    return jsonResponse({ success: true, draft_id, slide_count: slideImages.length });
+  }
 
   // News digest carrossel — special path: per-slide copy + OG images + CTA
   if (draft.content_type === "news_data" && draft.platform === "instagram") {
