@@ -201,22 +201,16 @@ function MediaViewer({ draft }: { draft: MarketingDraft }) {
         .map((s, i) => ({ slide: i, title: `Slide ${i + 1}`, image_url: null, copy: s.trim(), practical_tip: "" }))
     : null;
 
-  const singleSlide: SlideImage[] | null = (!parsedSlides && !contentSlides && draft.image_url)
-    ? [{ slide: 0, title: draft.title, image_url: draft.image_url, copy: draft.content, practical_tip: "" }]
-    : null;
+  // Always fallback to a text card so the media viewer is never empty
+  const singleSlide: SlideImage[] = [{
+    slide: 0,
+    title: draft.title,
+    image_url: draft.image_url ?? null,
+    copy: draft.content || draft.angle || "",
+    practical_tip: ""
+  }];
 
   const slides = parsedSlides ?? contentSlides ?? singleSlide;
-
-  if (!slides || slides.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center flex-col gap-3">
-        <p style={{ color: "oklch(0.45 0.02 250)" }}>Sem mídia disponível</p>
-        <p className="text-[12px]" style={{ color: "oklch(0.35 0.01 250)" }}>
-          Gere imagens ou conteúdo primeiro
-        </p>
-      </div>
-    );
-  }
 
   const current = slides[slideIdx];
   const total = slides.length;

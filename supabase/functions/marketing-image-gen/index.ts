@@ -1,5 +1,5 @@
 // marketing-image-gen — LLM-first image generation
-// Step 1: GPT-4o interprets the post and writes N distinct, narrative-specific image prompts
+// Step 1: GPT-4o interprets the post and writes N distinct, contextual image prompts in Portuguese
 // Step 2: GPT Image 2 generates each image from its unique prompt
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
@@ -25,77 +25,87 @@ function adminClient() {
   );
 }
 
+// ─── Style tracks por pilar ───────────────────────────────────────────────────
+
+const PILAR_STYLE: Record<string, string> = {
+  resultado_ia: `
+VISUAL STYLE: Authentic corporate photography — real people in real business moments celebrating or reviewing results.
+ENVIRONMENTS: Bright modern offices, meeting rooms with natural light, open coworking spaces, executives reviewing dashboards on screens.
+LIGHTING: Natural light from windows, warm office lighting, bright and energetic — NOT dark or cinematic.
+HUMAN ELEMENT: Diverse Brazilian professionals (varied ages, skin tones, gender) — genuine smiles, team collaboration, handshakes, reviewing screens together.
+AVOID: Dark dramatic scenes, silhouettes only, overly technical visuals.`,
+
+  educacao_pratica: `
+VISUAL STYLE: Editorial educational photography — knowledge transfer, learning, workshops.
+ENVIRONMENTS: Training rooms, whiteboards with diagrams, laptop-focused work sessions, digital presentations on big screens, team workshops.
+LIGHTING: Clean bright lighting, professional but approachable.
+HUMAN ELEMENT: Trainers presenting to groups, professionals taking notes, interactive learning sessions, people pointing at screens.
+AVOID: Dark moody scenes, purely abstract visuals.`,
+
+  bastidores: `
+VISUAL STYLE: Behind-the-scenes documentary photography — authentic moments showing the IntelliX team building things.
+ENVIRONMENTS: Home office setups, small team rooms, code on screens, sticky notes on whiteboards, post-it planning sessions, candid work moments.
+LIGHTING: Varied — natural light, monitor glow, mixed real environments.
+HUMAN ELEMENT: Candid shots, people focused on work, screens visible with interfaces.
+AVOID: Overly polished corporate stock photography.`,
+
+  posicionamento: `
+VISUAL STYLE: Premium brand editorial — confident leadership and market positioning.
+ENVIRONMENTS: High-end boardrooms, executive offices with city views, speaking events, stage presentations, outdoor business district.
+LIGHTING: Dramatic but not dark — cinematic with premium feel, sunset tones, architectural lighting.
+HUMAN ELEMENT: Confident executive silhouettes (side/back, no faces) OR leaders presenting on stage.
+AVOID: Generic office scenes, overly casual contexts.`,
+
+  comercial: `
+VISUAL STYLE: Conversion-focused premium brand — high visual impact, aspirational B2B.
+ENVIRONMENTS: Premium boardrooms, executive presentations, deal-closing moments, celebration of partnership/contract.
+LIGHTING: Cinematic, dramatic, confident — gold and blue tones.
+HUMAN ELEMENT: Professional handshakes, executives in conversation, confident body language.
+AVOID: Generic stock images, cartoonish representations.`,
+};
+
 // ─── LLM prompt builder ───────────────────────────────────────────────────────
 
-function buildDirectorSystemPrompt(contentType: string): string {
-  const isPromotional = contentType === "product_promotion" || contentType === "virada_inteligente";
+function buildDirectorSystemPrompt(pilar: string): string {
+  const styleTrack = PILAR_STYLE[pilar] ?? PILAR_STYLE.educacao_pratica;
 
-  const styleGuide = isPromotional ? `
-## IMAGE TRACK: PREMIUM BRAND / PROMOTIONAL
-Style reference: @cavendishconsultoria — cinematic dark photography, executive silhouettes in premium boardrooms,
-dramatic lighting, confident corporate atmosphere. Maximum visual impact for conversion and CTA posts.
+  return `You are a senior creative director for IntelliX.AI, a Brazilian B2B AI consulting company.
+Your task: given a marketing post, write DISTINCT and CONTEXTUALLY SPECIFIC image prompts for GPT Image 2.
 
-USE:
-- Executive silhouettes (back/side, no faces) in command centers, boardrooms at night, premium offices
-- Cinematic low-key lighting, city lights in background
-- Dramatic contrast, luxury brand feel
-- Bold headline typography integrated as part of the scene
-- Feels like a high-end corporate brand campaign` : `
-## IMAGE TRACK: EDITORIAL / INFORMATIONAL
-Style reference: @gestaoai, @thaleslaray, @cathyduraes — clean editorial, professional but accessible,
-bold typographic compositions, data-driven visuals, authentic business context.
+## Brand Identity
+- Company: IntelliX.AI (Brazilian AI consulting — helps companies apply AI practically)
+- Audience: Brazilian business leaders, managers, entrepreneurs
+- Feel: Professional, trustworthy, results-oriented — NOT generic tech startup
 
-USE:
-- Clean editorial compositions with strong hierarchy
-- Data visualization elements (charts, dashboards, metrics) relevant to the post
-- Professional photography style but less cinematic — more direct and readable
-- Bold headline text as the primary focal element, supported by clean visuals
-- Feels like a well-designed editorial or business magazine spread`;
+## Style track for this post
+${styleTrack}
 
-  return `You are a senior creative director specializing in B2B social media visuals for Brazilian AI consulting.
+## Universal rules for ALL images
+- DIVERSITY: Show racially diverse Brazilian professionals (Black, Brown, White, Asian Brazilians) in realistic proportions
+- REALISM: Photorealistic photography style — NOT illustrations, NOT cartoons, NOT 3D renders
+- CONTEXT: Each image must clearly represent the SPECIFIC post topic — a viewer must understand the subject from the image alone
+- NO TEXT IN IMAGE: Do NOT include any text, words, titles, labels, or typography in the generated image. The design team will add text separately.
+- COMPOSITION: Square 1:1. Clear focal point. Professional but human.
+- BACKGROUNDS: Mix of dark, medium, and bright environments depending on context — avoid ALL images being dark
+- ENVIRONMENT VARIETY: Each variation must show a DIFFERENT setting (office, outdoor, home office, meeting room, stage, etc.)
 
-Your task: given a marketing post, write precise and narrative image prompts for GPT Image 2.
-
-${styleGuide}
-
-## Visual reference style — ALL TRACKS
-Match the quality and style of these reference accounts:
-- @cavendishconsultoria: cinematic dark photography, executive silhouettes in premium boardrooms,
-  dramatic lighting, confident corporate atmosphere, real people in real contexts
-- @cathyduraes: clean editorial design, strong typography hierarchy, professional photography,
-  authentic business moments, warm-to-dark lighting
-- @gestaoai: bold typographic compositions, data-driven visuals, editorial photography with text overlay,
-  professional and direct, no decorative elements
-- @thaleslaray: storytelling imagery, authentic human moments in business context, emotional editorial
-
-## ABSOLUTE BANS — these kill the quality instantly
-- NO robot hands, NO robotic arms, NO mechanical fingers pointing at anything
-- NO floating logos (WhatsApp, OpenAI, Meta, etc.) in space
-- NO generic "neural network nodes" floating in blue space
-- NO digital brain / glowing brain illustrations
-- NO holographic floating interfaces without human context
-- NO stock-art tech patterns (circuit boards, binary code, abstract nodes)
-- NO cartoonish 3D characters or avatars
-- Each image must be RECOGNIZABLY about the specific post topic
-
-## What works — DO THIS
-- Real executive silhouettes (from behind, side profile — no visible faces) in command centers, boardrooms, offices at night
-- Cinematic photography: dramatic low-key lighting, city lights in background, premium environments
-- Specific scenarios tied to the post content (team meeting about AI, executive reviewing dashboards, etc.)
-- Bold typography integrated into the scene as part of the composition
-- High-contrast, premium feel — like a luxury B2B brand campaign
-
-## IntelliX.AI brand
-- Background: #171723 (deep navy-black)
-- Primary: #196FA8 (corporate blue)
-- Accent: #F2A82A (gold)
-- Feel: premium, sober, Brazilian B2B, confidence without arrogance
+## Absolute bans
+- NO robot hands, arms, or mechanical fingers
+- NO floating logos (WhatsApp, OpenAI, Meta, Instagram, etc.)
+- NO glowing brains or digital brain illustrations
+- NO abstract neural networks / node graphs floating in space
+- NO holographic interfaces without human context
+- NO stock-art circuit boards, binary code, or generic tech patterns
+- NO cartoonish 3D avatars or characters
+- NO stereotyped or tokenized representation of diversity
+- NO pure black backgrounds (#000000) — use #171723 deep navy if dark
+- NO text, words, captions, or typography of any kind
 
 ## Response format — JSON only, no markdown:
 [
   {
-    "prompt": "complete prompt in English for GPT Image 2, with specific scene, lighting, composition, mood",
-    "style_note": "1-line description of this variation's visual concept"
+    "prompt": "complete, specific image prompt in English for GPT Image 2 — 4-6 sentences describing scene, people, environment, lighting, composition, mood",
+    "style_note": "1-line description of this variation's visual concept in Portuguese"
   }
 ]`;
 }
@@ -107,7 +117,6 @@ function buildDirectorUserPrompt(
   pilar: string,
   platform: string,
   count: number,
-  contentType: string,
 ): string {
   const excerpt = content
     .replace(/---SLIDE---/g, " ")
@@ -115,45 +124,39 @@ function buildDirectorUserPrompt(
     .replace(/#+\s/g, "")
     .replace(/\n+/g, " ")
     .trim()
-    .slice(0, 500);
+    .slice(0, 600);
 
   const pilarContext: Record<string, string> = {
-    resultado_ia: "cases e resultados reais de IA aplicada em negócios",
-    educacao_pratica: "educação e letramento em IA para líderes e equipes",
-    bastidores: "bastidores da IntelliX.AI, processo interno, como a IA é construída",
-    posicionamento: "posicionamento de mercado, liderança, visão estratégica sobre IA",
-    comercial: "proposta comercial, produto IntelliX.AI, captação de clientes",
+    resultado_ia: "Cases e resultados reais de IA aplicada em negócios brasileiros",
+    educacao_pratica: "Educação e letramento em IA para líderes e equipes brasileiras",
+    bastidores: "Bastidores da IntelliX.AI — como a IA é construída e entregue",
+    posicionamento: "Posicionamento de mercado e visão estratégica sobre IA",
+    comercial: "Proposta comercial IntelliX.AI — captação e conversão de clientes",
   };
 
   const platformNote = platform === "instagram"
-    ? "Instagram feed — formato 1:1 quadrado, impacto visual imediato, composição bold"
-    : "LinkedIn feed — formato mais sóbrio, executivo, profissional";
+    ? "Instagram feed — 1:1 square, immediate visual impact, bold composition"
+    : "LinkedIn feed — professional, executive, credibility-forward";
 
-  const trackNote = (contentType === "product_promotion" || contentType === "virada_inteligente")
-    ? "TRACK: PREMIUM BRAND — cinematográfico, executivo, máximo impacto para conversão"
-    : "TRACK: EDITORIAL — clean, legível, tipografia forte, visual direto ao ponto";
+  return `Create ${count} DISTINCT image prompt(s) for this specific post:
 
-  const typographyNote = `TYPOGRAPHY DIRECTIVE: Use Space Grotesk bold/800 for the main headline in the image. JetBrains Mono for any data/statistic elements. All text minimum 24px equivalent. Color: white #FAFAFA or gold #F2A82A on dark navy #171723 background.`;
+POST TITLE: ${title}
+${angle ? `POST ANGLE: ${angle}` : ""}
+POST PILAR: ${pilarContext[pilar] ?? pilar}
+PLATFORM: ${platformNote}
 
-  return `Crie ${count} prompt(s) de imagem DISTINTOS e ESPECÍFICOS para este post:
-
-TÍTULO: ${title}
-${angle ? `ÂNGULO: ${angle}` : ""}
-PILAR: ${pilarContext[pilar] ?? pilar}
-PLATAFORMA: ${platformNote}
-${trackNote}
-${typographyNote}
-CONTEÚDO:
+POST CONTENT SUMMARY:
 ${excerpt}
 
-Requisitos para cada prompt:
-1. Descreva uma CENA ESPECÍFICA que representa visualmente este post — não genérica
-2. Inclua: ambiente, iluminação, composição, elementos visuais específicos ao tema
-3. Pode incluir silhuetas de pessoas em contextos profissionais (sem rostos visíveis)
-4. Pode incluir elementos de interface/dashboard RELEVANTES ao tema do post
-5. Cada variação deve ter um conceito visual DIFERENTE das outras
-6. OBRIGATÓRIO: inclua no prompt uma instrução para inserir o título do post como headline bold tipográfico na imagem. Use as primeiras palavras mais impactantes do título (máximo 6-8 palavras em CAPS), posicionado na parte superior ou inferior da imagem, fonte sans-serif branca ou dourada com alto contraste sobre o fundo escuro
-7. Escreva o prompt em inglês, detalhado, 3-5 frases`;
+Requirements for each prompt:
+1. The image must visually represent THIS SPECIFIC post topic — not a generic AI or business scene
+2. Describe concrete elements: who is in the scene, what they are doing, where they are, what time of day
+3. Each variation must show a COMPLETELY DIFFERENT environment/scenario/composition
+4. Include specific contextual details that connect to the post's message (e.g., if post is about reducing email time with AI, show a professional looking relieved at their inbox on a laptop)
+5. Explicitly state diverse Brazilian professionals in the scene when humans are present
+6. DO NOT include any text, titles, words, or labels in the image prompt — the design team adds text separately
+7. Lighting and background should VARY between prompts — not all dark, not all bright
+8. Write each prompt in English, 4-6 specific sentences`;
 }
 
 async function callGPT4(openaiKey: string, system: string, user: string): Promise<string> {
@@ -162,8 +165,8 @@ async function callGPT4(openaiKey: string, system: string, user: string): Promis
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      temperature: 0.9,
-      max_tokens: 2048,
+      temperature: 0.95,
+      max_tokens: 2500,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -178,16 +181,12 @@ async function callGPT4(openaiKey: string, system: string, user: string): Promis
 // ─── Image generation ─────────────────────────────────────────────────────────
 
 const BASE_STYLE_SUFFIX = `
-BRAND COLORS: Deep navy background #171723 (never pure black). Blue #196FA8 for technical highlights. Gold #F2A82A for CTAs and standout numbers only — max 1 amber element per image.
-BRAND GRADIENT: 135° from #F2A82A (gold) to #196FA8 (blue) — use on accent elements, titles, or divider lines.
-TYPOGRAPHY: Space Grotesk sans-serif — bold/800 weight for headlines, 600 for body. JetBrains Mono for stats, eyebrows, data labels. Minimum 24px equivalent for any text element.
-STYLE: Cinematic photorealistic editorial photography OR premium illustrated infographic — never generic tech stock art.
-LIGHTING: Dramatic low-key, dark atmosphere reinforcing the #171723 background.
-COMPOSITION: Square 1:1 format. Clear focal point. Professional, premium B2B feel.
-TEXT IN IMAGE: Include the post headline as a bold typographic element — Space Grotesk, white (#FAFAFA) or gold (#F2A82A), strong contrast, positioned in bottom or top third. Max 8 words in CAPS for the headline.
-LOGO PLACEMENT: IntelliX.AI wordmark (gold "IntelliX" + blue ".AI") in bottom-left or top-left corner, small and unobtrusive.
-ACCENT RULE: A 5-6px horizontal line with the brand gradient (gold→blue) can be used as a decorative divider.
-BANNED ELEMENTS: NO robot hands, NO floating logos, NO glowing brains, NO abstract node networks, NO cartoonish elements, NO pure black backgrounds, NO white backgrounds.`;
+PHOTOGRAPHY STYLE: Photorealistic, high-quality corporate/editorial photography. Shot with a professional camera — natural depth of field, realistic textures, authentic lighting.
+NO TEXT: Absolutely no words, letters, numbers, labels, titles, captions, or any typography in the image. The image must be purely visual, no text whatsoever.
+NO AI CLICHÉS: No robot hands, no glowing brains, no floating interfaces, no neural network nodes, no circuit patterns.
+COMPOSITION: Square 1:1 format. Clear main subject. Well-balanced composition with breathing room.
+DIVERSITY: Racially and gender-diverse Brazilian professionals when humans appear.
+BRAND COLORS (environment accents only, not text): Deep navy #171723 for dark elements, Corporate blue #196FA8 for highlights, Gold #F2A82A for warm accent elements.`;
 
 async function generateImage(openaiKey: string, prompt: string): Promise<string | null> {
   const fullPrompt = `${prompt}\n\n${BASE_STYLE_SUFFIX}`.slice(0, 4000);
@@ -258,7 +257,7 @@ Deno.serve(async (req) => {
 
   if (fetchErr || !draft) return jsonResponse({ error: "draft_not_found" }, 404);
 
-  const { title, angle, content, pilar, platform, content_type } = draft as {
+  const { title, angle, content, pilar, platform } = draft as {
     id: string; title: string; angle: string | null;
     content: string; pilar: string; platform: string; content_type: string | null;
   };
@@ -268,20 +267,20 @@ Deno.serve(async (req) => {
     : content;
 
   const slideLabel = slide_index !== undefined ? ` [slide ${slide_index + 1}]` : "";
-  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} prompt(s) for: "${title}"${slideLabel} [type=${content_type}]`);
+  console.log(`[image-gen] step 1 — GPT-4o writing ${imageCount} prompt(s) for: "${title}"${slideLabel} [pilar=${pilar}]`);
 
   // Step 1: LLM interprets the post and writes specific image prompts
   let imagePrompts: Array<{ prompt: string; style_note: string }> = [];
   try {
     const raw = await callGPT4(
       openaiKey,
-      buildDirectorSystemPrompt(content_type ?? "informational"),
-      buildDirectorUserPrompt(title, angle, effectiveContent, pilar, platform, imageCount, content_type ?? "informational"),
+      buildDirectorSystemPrompt(pilar),
+      buildDirectorUserPrompt(title, angle, effectiveContent, pilar, platform, imageCount),
     );
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("no JSON array in response");
     imagePrompts = JSON.parse(jsonMatch[0]);
-    console.log(`[image-gen] prompts generated: ${imagePrompts.map(p => p.style_note).join(" | ")}`);
+    console.log(`[image-gen] prompts: ${imagePrompts.map(p => p.style_note).join(" | ")}`);
   } catch (e) {
     console.error("[image-gen] prompt generation failed:", e);
     return jsonResponse({ error: "prompt_generation_failed" }, 500);
